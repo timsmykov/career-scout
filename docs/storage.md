@@ -1,9 +1,9 @@
 # Хранение
 
-## Реализовано: schema v2
+## Реализовано: schema v3
 
-SQLite WAL, foreign_keys=ON, PRAGMA user_version=2. Пустая БД создаётся в одной
-транзакции; v1 переносится с обязательным backup, неизвестная версия отклоняется.
+SQLite WAL, foreign_keys=ON, PRAGMA user_version=3. Пустая БД создаётся в одной
+транзакции; v1/v2 переносятся с обязательным backup, неизвестная версия отклоняется.
 Ключ `(source,source_id)` поддерживает четыре пространства идентификаторов.
 
 | Таблица | Ключ / назначение |
@@ -16,11 +16,15 @@ SQLite WAL, foreign_keys=ON, PRAGMA user_version=2. Пустая БД созда
 | discoveries | run+query+source+source_id; FK запрещают смешать source или чужой query |
 | events | Технические события без auth/body |
 | source_state | Независимый cooldown каждого source |
+| filter_policies | Hash значений политики + версия движка, immutable definition |
+| run_filter_policies | Активная политика run; первоначальный plan не меняется |
+| filter_decisions | Source version+normalizer+policy, решение с причинами/цитатами |
 
 [Миграция и нормализация](normalization.md): все исходные snapshot строки/хеши,
 run/query/event/cooldown данные сохранены; raw и normalized версии раздельны.
 После успешной миграции старые временные таблицы удаляются в той же транзакции,
-backup v1 остаётся. Ошибка или авария до commit оставляет старую схему целиком.
+backup старой схемы остаётся. V2→v3 только добавляет три таблицы фильтров;
+существующие строки не переписываются. [Контракт отбора](filtering.md). Ошибка или авария до commit оставляет старую схему целиком.
 
 Один writer на ledger через flock, сеть вне транзакции. Cursor/discoveries и
 snapshot/current pointer/projection записываются атомарно. Нормализация сама по себе
@@ -34,7 +38,7 @@ CSV, неизменяемый version set по run и consumer cursor ещё н�
 ## Целевая модель общего коллектора
 
 MVP: SQLite WAL на локальном диске; foreign keys включены; версия схемы и миграции.
-Таблицы ниже — будущая общая модель, а не буквальные имена текущей schema v2.
+Таблицы ниже — будущая общая модель, а не буквальные имена текущей schema v3.
 Текущий этап реализует только source/run/query/vacancy/discovery/filter/work/event
 сущности. resumes/evaluations/routing и model checkpoints отложены.
 

@@ -12,10 +12,12 @@ from pathlib import Path
 from typing import get_args
 
 from career_scout.common import SourceError, digest, utcnow
+from career_scout.filtering import evaluate
 from career_scout.hh import listing_hash
-from career_scout.migrations import backup_v1, upgrade_v1
+from career_scout.migrations import backup_schema, backup_v1, upgrade_v1, upgrade_v2
 from career_scout.models import Identity, Source
 from career_scout.normalization import NORMALIZER, project_snapshot
+from career_scout.search_config import ENGINE_VERSION, FilterPolicy
 
 SCHEMA = """
 CREATE TABLE runs (
@@ -65,18 +67,23 @@ class Store:
         self.backup_path = None
         try:
             version = self.db.execute("PRAGMA user_version").fetchone()[0]
-            if version not in (0, 1, 2):
+            if version not in (0, 1, 2, 3):
                 raise SourceError("unsupported_database_version")
             self.db.execute("PRAGMA journal_mode=WAL")
-            if version < 2:
+            if version < 3:
                 with self.lock():
                     version = self.db.execute("PRAGMA user_version").fetchone()[0]
                     if version == 0:
                         self.db.executescript("BEGIN IMMEDIATE;\n" + SCHEMA)
-                        upgrade_v1(self.db)
+                        upgrade_v1(self.db, commit=False)
+                        upgrade_v2(self.db)
                     elif version == 1:
                         self.backup_path = backup_v1(self.db, self.path)
-                        upgrade_v1(self.db)
+                        upgrade_v1(self.db, commit=False)
+                        upgrade_v2(self.db)
+                    elif version == 2:
+                        self.backup_path = backup_schema(self.db, self.path, 2)
+                        upgrade_v2(self.db)
         except BaseException:
             self.db.close()
             raise
@@ -109,6 +116,7 @@ class Store:
         ttl_hours: float,
         *,
         source: Source = "hh",
+        plan_snapshot: dict | None = None,
     ) -> str:
         if source not in get_args(Source):
             raise SourceError("unknown_source")
@@ -121,6 +129,18 @@ class Store:
             "per_page": per_page,
             "ttl_hours": ttl_hours,
         }
+        if plan_snapshot is not None:
+            for key in plan:
+                if plan_snapshot.get(key) != plan[key]:
+                    raise SourceError("plan_snapshot_mismatch")
+            plan = plan_snapshot
+            if plan.get("filter_policy"):
+                policy = FilterPolicy.model_validate(plan["filter_policy"])
+                if (
+                    plan.get("filter_policy_hash") != policy.key()
+                    or plan.get("filter_engine") != ENGINE_VERSION
+                ):
+                    raise SourceError("plan_filter_policy_mismatch")
         with self.db:
             self.db.execute(
                 "INSERT INTO runs(id,created_at,plan_json,source) VALUES(?,?,?,?)",
@@ -131,6 +151,8 @@ class Store:
                 [(run_id, query, start, end) for query in plan["queries"]],
             )
             self.db.execute("INSERT OR IGNORE INTO source_state(id) VALUES(?)", (source,))
+            if plan.get("filter_policy"):
+                self.activate_policy(run_id, FilterPolicy.model_validate(plan["filter_policy"]))
         return run_id
 
     def run(self, run_id: str):
@@ -364,6 +386,7 @@ class Store:
             "truncated_queries": sum(q["truncated"] for q in queries),
             "rejected_rows": run["rejected"],
             "plan": json.loads(run["plan_json"]),
+            "filtering": self.filter_summary(run_id),
         }
 
     def inspect(self, vid: str, source: Source = "hh") -> dict:
@@ -402,6 +425,14 @@ class Store:
                 )
             ],
             "discoveries": discoveries,
+            "filter_history": [
+                json.loads(row[0])
+                for row in self.db.execute(
+                    "SELECT payload FROM filter_decisions WHERE source=? AND source_id=? "
+                    "ORDER BY evaluated_at",
+                    (source, vid),
+                )
+            ],
         }
 
     def ready(self, run_id: str):
@@ -416,15 +447,136 @@ class Store:
         ).fetchall()
         return [dict(json.loads(row[0]), detail_fetched_at=row[1]) for row in rows]
 
-    def export(self, run_id: str):
+    def export(self, run_id: str, *, include_excluded: bool = False):
         # One consistent SQLite read snapshot, even while a collector writes in WAL mode.
         self.db.execute("BEGIN")
         try:
+            records = self.ready(run_id)
+            summary = self.filter_summary(run_id)
+            decisions = self.current_decisions(run_id)
+            if summary["applied"] and not include_excluded:
+                allowed = {
+                    (d["source"], d["source_id"], d["content_hash"])
+                    for d in decisions
+                    if d["result"]["status"] in ("KEEP", "KEEP_UNKNOWN")
+                }
+                records = [
+                    v
+                    for v in records
+                    if (v["source"], v["source_id"], v["content_hash"]) in allowed
+                ]
             return {
                 "schema_version": 2,
                 "normalizer_version": NORMALIZER,
                 "report": self.report(run_id),
-                "vacancies": self.ready(run_id),
+                "selection": {"scope": "all" if include_excluded else "selected", **summary},
+                "filter_decisions": decisions,
+                "vacancies": records,
             }
         finally:
             self.db.rollback()
+
+    def activate_policy(self, run_id: str, policy: FilterPolicy):
+        self.run(run_id)
+        self.db.execute(
+            "INSERT OR IGNORE INTO filter_policies VALUES(?,?,?,?)",
+            (
+                policy.key(),
+                ENGINE_VERSION,
+                json.dumps(policy.model_dump(mode="json"), ensure_ascii=False),
+                utcnow(),
+            ),
+        )
+        self.db.execute(
+            "INSERT INTO run_filter_policies VALUES(?,?) ON CONFLICT(run_id) "
+            "DO UPDATE SET policy_hash=excluded.policy_hash",
+            (run_id, policy.key()),
+        )
+
+    def active_policy(self, run_id: str):
+        return self.db.execute(
+            "SELECT p.* FROM filter_policies p JOIN run_filter_policies r "
+            "ON p.policy_hash=r.policy_hash WHERE r.run_id=?",
+            (run_id,),
+        ).fetchone()
+
+    def filter_run(self, run_id: str, policy: FilterPolicy | None = None):
+        # Caller owns the collector lock. Evaluate all full current versions; repeat is idempotent.
+        with self.db:
+            if policy is not None:
+                self.activate_policy(run_id, policy)
+            saved = self.active_policy(run_id)
+            if saved is None:
+                return
+            if saved["engine_version"] != ENGINE_VERSION:
+                raise SourceError("filter_engine_version_unavailable")
+            policy = FilterPolicy.model_validate_json(saved["policy_json"])
+            for vacancy in self.ready(run_id):
+                key = (
+                    vacancy["source"],
+                    vacancy["source_id"],
+                    vacancy["content_hash"],
+                    NORMALIZER,
+                    policy.key(),
+                )
+                if self.db.execute(
+                    "SELECT 1 FROM filter_decisions WHERE source=? AND source_id=? "
+                    "AND content_hash=? AND normalizer_version=? AND policy_hash=?",
+                    key,
+                ).fetchone():
+                    continue
+                result = evaluate(vacancy, policy)
+                self.db.execute(
+                    "INSERT INTO filter_decisions VALUES(?,?,?,?,?,?,?,?)",
+                    (
+                        *key,
+                        result.status,
+                        json.dumps(result.model_dump(mode="json"), ensure_ascii=False),
+                        utcnow(),
+                    ),
+                )
+
+    def current_decisions(self, run_id: str):
+        rows = self.db.execute(
+            "SELECT f.source,f.source_id,f.content_hash,f.payload "
+            "FROM filter_decisions f "
+            "JOIN run_filter_policies r ON r.policy_hash=f.policy_hash AND r.run_id=? "
+            "JOIN vacancies v ON v.source=f.source AND v.source_id=f.source_id "
+            "AND v.content_hash=f.content_hash WHERE f.normalizer_version=? "
+            "AND v.detail_status='full' "
+            "AND EXISTS(SELECT 1 FROM discoveries d WHERE d.run_id=r.run_id "
+            "AND d.source=f.source AND d.source_id=f.source_id) ORDER BY f.source,f.source_id",
+            (run_id, NORMALIZER),
+        ).fetchall()
+        return [
+            {
+                "source": row["source"],
+                "source_id": row["source_id"],
+                "content_hash": row["content_hash"],
+                "result": json.loads(row["payload"]),
+            }
+            for row in rows
+        ]
+
+    def filter_summary(self, run_id: str):
+        policy = self.active_policy(run_id)
+        if policy is None:
+            return {"applied": False, "policy_hash": None}
+        decisions = self.current_decisions(run_id)
+        counts = {
+            status: sum(d["result"]["status"] == status for d in decisions)
+            for status in ("KEEP", "KEEP_UNKNOWN", "FILTERED_OUT")
+        }
+        full = self.db.execute(
+            "SELECT COUNT(*) FROM vacancies v WHERE detail_status='full' "
+            "AND EXISTS(SELECT 1 FROM discoveries d WHERE d.run_id=? AND d.source=v.source "
+            "AND d.source_id=v.source_id)",
+            (run_id,),
+        ).fetchone()[0]
+        return {
+            "applied": True,
+            "policy_hash": policy["policy_hash"],
+            "engine_version": policy["engine_version"],
+            **counts,
+            "pending": full - len(decisions),
+        }

@@ -6,7 +6,10 @@
 пагинация, окна дат, история изменений и продолжение после сбоя работают через CLI.
 Остальные три адаптера и общий контроль качества ещё предстоит реализовать.
 Реализованы общий формат вакансии v2, source+source_id, typed зарплата/опыт/формат
-и миграция SQLite v1→v2 с backup. LangGraph и анализ по резюме отложены.
+и миграция SQLite v1/v2→v3 с backup. Поиск и фильтры настраиваются в
+[configs/search.toml](configs/search.toml): IT/финтех/ИИ/ML, стажёр/junior/middle,
+без опыта/1–3 года; unknown сохраняется, зарплата не ограничивает отбор.
+LangGraph и анализ по резюме отложены.
 Отклики не отправляются. [Контракт и сохранность данных](docs/normalization.md).
 
 ## Что строим
@@ -60,7 +63,8 @@ uv run --no-sync python -m career_scout export RUN_ID --output data/exports/run.
 
 `partial` и exit code 2 означают незавершённый сбор; остаток виден в отчёте.
 Полный справочник аргументов и восстановление: [development.md](docs/development.md).
-CLI пока читает `.env` и аргументы, а не проектные TOML-шаблоны.
+CLI читает `.env`, [рабочий TOML](configs/search.toml) и аргументы. Без `--query`
+используются четыре поисковых семейства. [Правила отбора и refilter](docs/filtering.md).
 [Проверенный HH-срез и ограничения](docs/collector-readiness.md).
 
 ## Docker

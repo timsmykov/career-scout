@@ -54,11 +54,11 @@ INSERT INTO discoveries SELECT run_id,query_id,'hh',vacancy_id FROM legacy_disco
 """
 
 
-def backup_v1(db: sqlite3.Connection, path: Path) -> Path:
+def backup_schema(db: sqlite3.Connection, path: Path, version: int) -> Path:
     folder = path.parent / "backups"
     folder.mkdir(parents=True, exist_ok=True, mode=0o700)
     stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
-    target = folder / f"{path.name}.v1-{stamp}-{uuid.uuid4().hex[:8]}.sqlite3"
+    target = folder / f"{path.name}.v{version}-{stamp}-{uuid.uuid4().hex[:8]}.sqlite3"
     fd = os.open(target, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
     os.close(fd)
     with sqlite3.connect(target) as copy:
@@ -68,7 +68,11 @@ def backup_v1(db: sqlite3.Connection, path: Path) -> Path:
     return target
 
 
-def upgrade_v1(db: sqlite3.Connection):
+def backup_v1(db: sqlite3.Connection, path: Path) -> Path:
+    return backup_schema(db, path, 1)
+
+
+def upgrade_v1(db: sqlite3.Connection, *, commit: bool = True):
     """Caller holds the process lock; new databases may already have a transaction."""
     try:
         if not db.in_transaction:
@@ -115,10 +119,49 @@ def upgrade_v1(db: sqlite3.Connection):
         for table in ("legacy_discoveries", "legacy_snapshots", "legacy_vacancies"):
             db.execute("DROP TABLE " + table)
         db.execute("PRAGMA user_version=2")
-        db.commit()
+        if commit:
+            db.commit()
     except (ValidationError, ValueError, KeyError, TypeError):
         db.rollback()
         raise SourceError("migration_normalization_failed") from None
+    except BaseException:
+        db.rollback()
+        raise
+
+
+FILTER_DDL = """
+CREATE TABLE filter_policies (
+ policy_hash TEXT PRIMARY KEY, engine_version TEXT NOT NULL,
+ policy_json TEXT NOT NULL, created_at TEXT NOT NULL
+);
+CREATE TABLE run_filter_policies (
+ run_id TEXT PRIMARY KEY REFERENCES runs(id),
+ policy_hash TEXT NOT NULL REFERENCES filter_policies(policy_hash)
+);
+CREATE TABLE filter_decisions (
+ source TEXT NOT NULL, source_id TEXT NOT NULL, content_hash TEXT NOT NULL,
+ normalizer_version TEXT NOT NULL,
+ policy_hash TEXT NOT NULL REFERENCES filter_policies(policy_hash),
+ decision TEXT NOT NULL CHECK(decision IN ('KEEP','KEEP_UNKNOWN','FILTERED_OUT')),
+ payload TEXT NOT NULL, evaluated_at TEXT NOT NULL,
+ PRIMARY KEY(source,source_id,content_hash,normalizer_version,policy_hash),
+ FOREIGN KEY(source,source_id,content_hash,normalizer_version)
+ REFERENCES normalized_snapshots(source,source_id,content_hash,normalizer_version)
+);
+"""
+
+
+def upgrade_v2(db: sqlite3.Connection):
+    try:
+        if not db.in_transaction:
+            db.execute("BEGIN IMMEDIATE")
+        for statement in FILTER_DDL.split(";"):
+            if statement.strip():
+                db.execute(statement)
+        if db.execute("PRAGMA foreign_key_check").fetchall():
+            raise SourceError("migration_foreign_key_error")
+        db.execute("PRAGMA user_version=3")
+        db.commit()
     except BaseException:
         db.rollback()
         raise

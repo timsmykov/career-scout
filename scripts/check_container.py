@@ -14,6 +14,7 @@ import httpx
 from career_scout.hh import Credentials, HHClient, normalize
 from career_scout.storage import Store, SCHEMA
 from career_scout.collector import collect
+from career_scout.search_config import load_config, plan
 
 p=Path('/tmp/test.env')
 p.write_text('HH_USER_AGENT=OfflineContainerTest\nHH_CLIENT_ID=test-app\nHH_ACCESS_TOKEN=initial-test\n')
@@ -34,7 +35,7 @@ if phase=='first':
         old.execute('INSERT INTO snapshots VALUES(?,?,?,?)',
           ('0',original['content_hash'],original['detail_fetched_at'],json.dumps(original)))
 s=Store(Path('/data/ledger.sqlite3'))
-assert s.db.execute('PRAGMA user_version').fetchone()[0]==2
+assert s.db.execute('PRAGMA user_version').fetchone()[0]==3
 assert s.inspect('0')['snapshots'][0]['description']=='Legacy text'
 assert s.inspect('0')['normalized_snapshots'][0]['description']=='Legacy text'
 committed=(set(json.loads(Path('/data/first-full-ids.json').read_text()))
@@ -48,11 +49,15 @@ def handler(req):
           'pages':3,'per_page':100,'found':300})
     vid=req.url.path.split('/')[-1]
     assert vid not in committed, 'committed detail was fetched twice'
-    return httpx.Response(200,json={'id':vid,'name':'Synthetic role',
-      'description':'<p>Complete synthetic text '+vid+'</p>'})
+    return httpx.Response(200,json={'id':vid,
+      'name':('Senior' if int(vid)%3==0 else 'Junior')+' analyst',
+      'experience':{'id':'between1And3'}, 'salary':None,
+      'description':'<p>Complete synthetic IT text '+vid+'</p>'})
 
 if phase=='first':
-    rid=s.create(['test'],'2026-11-10T00:00:00+00:00','2026-11-11T00:00:00+00:00',100,24)
+    config=load_config(Path('/app/configs/search.toml'))
+    frozen=plan(config,queries=['test'])
+    rid=s.create(frozen['queries'],frozen['start'],frozen['end'],100,24,plan_snapshot=frozen)
     Path('/data/run-id').write_text(rid)
 else:
     rid=Path('/data/run-id').read_text()
@@ -67,8 +72,12 @@ else:
     assert report['requests']==303, report
     exported=s.export(rid)
     assert exported['schema_version']==2
-    assert len(exported['vacancies'])==300
-    assert len({x['source_id'] for x in exported['vacancies']})==300
+    assert len(exported['vacancies'])==200
+    assert len({x['source_id'] for x in exported['vacancies']})==200
+    assert len(s.export(rid,include_excluded=True)['vacancies'])==300
+    assert report['filtering']['KEEP']==200
+    assert report['filtering']['FILTERED_OUT']==100
+    assert report['filtering']['pending']==0
     assert s.db.execute('PRAGMA quick_check').fetchone()[0]=='ok'
     assert not s.db.execute('PRAGMA foreign_key_check').fetchall()
 print(json.dumps({'phase':phase,'full':report['full_details'],'status':report['status']}))

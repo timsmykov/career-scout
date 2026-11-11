@@ -7,8 +7,8 @@ LangGraph, LLM-оценка, импорт резюме и настройка м�
 
 ## Реализованный срез HH — 11.11.2026
 
-Работают `plan/collect/resume/status/inspect/export`, полный HH detail, курсор
-страницы в одной транзакции с discoveries, SQLite WAL/schema v2, дедупликация,
+Работают `plan/collect/resume/status/inspect/export/refilter`, полный HH detail, курсор
+страницы в одной транзакции с discoveries, SQLite WAL/schema v3, дедупликация,
 история содержательных версий, разбиение выдачи свыше 2000 по времени, finite
 retries, request budget и сохранённый cooldown 429. Один процесс на БД через flock;
 общих leases и других адаптеров пока нет. Запуск/перезапуск проверены offline и
@@ -28,8 +28,8 @@ volume recreation проверены; 300 synthetic карточек прохо�
 | HH auth/search/detail | Реализовано, CS-005/006 complete | Длительная эксплуатационная проверка |
 | Страницы/версии/дочитывание | Работают для HH | Общие source contracts и reconciliation |
 | Размещение | Docker CLI + external SQLite volume | Backup policy/расписание — отдельная будущая потребность |
-| Поиск/конфигурация | Явные query/даты/бюджеты CLI | TOML, география/атрибуты, query families, doctor |
-| Условия/фильтры | Typed зарплата/опыт/work formats, raw/provenance/null/conflicts сохранены | Grade/technology, причины фильтров и mappings других source |
+| Поиск/конфигурация | Валидируемый TOML, четыре семейства, география, frozen plan/resume | Doctor, измерение охвата |
+| Условия/фильтры | Domain/grade/experience, unknown/conflict, зарплата нейтральна, история/refilter/export | Mappings других source, дальнейший контроль потерь |
 | Другие источники | Только прежние bounded API probes | Три runtime адаптера ещё не реализованы |
 | Готовый набор | Текущий JSON export | CSV, закреплённые версии, manifest/cursor, expiry/retention |
 
@@ -39,9 +39,10 @@ volume recreation проверены; 300 synthetic карточек прохо�
    `(source,source_id)`, composite Trudvsem ID, typed salary/experience/work formats,
    отдельные normalized projections и миграция рабочих317 snapshots без потерь.
    [Контракт и proof](normalization.md). Другие API mappings ещё не реализованы.
-2. **Рабочий config/query planner и доказуемые фильтры (CS-003/007/008/014).**
-   Подключить TOML/атрибуты, географию, поисковые семейства, причины исключений;
-   проверить на контрольной выборке, а не объявлять численность мерой релевантности.
+2. **Рабочий config/query planner и фильтры реализованы.** CS-003/007/014 complete,
+   CS-008 partial (нет doctor). Четыре семейства, TOML, unknown/conflict, история
+   решений и offline refilter; зарплата не фильтрует. [Контракт и проверки](filtering.md).
+   Численность и лексические сигналы не считаются мерой соответствия резюме.
 3. **Остальные источники (CS-015/016/017/018/019):** Trudvsem → Habr → SuperJob,
    с контрактами каждой площадки и отдельной приёмкой; прежние вопросы доступа/
    допустимого хранения не выдавать за решённые. Один недоступный источник не
@@ -51,7 +52,7 @@ volume recreation проверены; 300 synthetic карточек прохо�
    Многопроцессные leases нужны при введении параллельных исполнителей, а не
    только из-за появления Docker; сейчас действует один writer на ledger.
 
-Пункт 1 реализован; следующий этап — пункт 2. Остальные пункты не выполнены этим изменением.
+Пункты 1–2 реализованы в указанном объёме; следующий этап — другие источники (пункт 3). Остальные пункты не выполнены этим изменением.
 LangGraph/оценщики/резюме остаются deferred. Статусы ниже синхронизированы с
 backlog.json; in_progress означает частичную реализацию, не закрытый acceptance.
 
@@ -146,7 +147,7 @@ HTTP API или брокер без отдельной потребности н
 - Предшественники: CS-001.
 - Результат: config.py, env loader, config validation.
 - Готово, когда: Читается единый .env; missing key диагностируется без печати значения.
-- Статус: in_progress.
+- Статус: complete.
 
 ### CS-004 · HTTP и source budget (M1)
 
@@ -174,7 +175,7 @@ HTTP API или брокер без отдельной потребности н
 - Предшественники: CS-001, CS-003.
 - Результат: collectors/planner.py, versioned search config.
 - Готово, когда: Union четырёх семейств, title-only/AI-only не обязательны, fair ordering, immutable plan.
-- Статус: in_progress.
+- Статус: complete.
 
 ### CS-008 · CLI plan и проверка конфигурации (M1)
 
@@ -223,7 +224,7 @@ HTTP API или брокер без отдельной потребности н
 - Предшественники: CS-002, CS-010.
 - Результат: domain/filtering.py, storage/filter_decisions.py.
 - Готово, когда: Unknown/conflict сохранены; senior-коллега не означает senior-вакансию; версия фильтра.
-- Статус: planned.
+- Статус: complete.
 
 ### CS-015 · Trudvsem адаптер (M3)
 

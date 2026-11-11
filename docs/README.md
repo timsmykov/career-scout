@@ -20,7 +20,7 @@
 - [collector-readiness.md](collector-readiness.md) — live-доступ и остаток реализации.
 - [collector.md](collector.md) — поиск, страницы, окна, бюджет и полнота.
 - [sources/README.md](sources/README.md) — четыре площадки и статус доступа.
-- [filtering.md](filtering.md) — допустимые грейды и работа с неизвестным.
+- [filtering.md](filtering.md) — рабочий TOML, семейства, допустимые грейды, unknown и история решений.
 - [evaluation.md](evaluation.md) — вход/выход, маршрутизация, определения вердиктов.
 - [storage.md](storage.md) — идентичность, версии, очередь и транзакции.
 - [security.md](security.md) — секреты, данные, действия и tracing.

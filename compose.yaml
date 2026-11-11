@@ -12,6 +12,12 @@ services:
       - /tmp:mode=1777,size=32m
     volumes:
       - data:/data
+      - type: bind
+        source: ./configs/search.toml
+        target: /app/configs/search.toml
+        read_only: true
+        bind:
+          create_host_path: false
     secrets:
       - career_env
     # The host's canonical .env is root-owned 0600. No secrets in image/env vars.

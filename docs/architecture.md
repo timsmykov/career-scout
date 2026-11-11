@@ -5,10 +5,10 @@
 
 Реализовано сейчас: HH transport/normalizer (`hh.py`), SQLite (`storage.py`),
 последовательный исполнитель (`collector.py`) и CLI (`cli.py`). Общая vacancy v2
-и source identity — models.py, нормализация условий — normalization.py; SQLite v2
+и source identity — models.py, нормализация условий — normalization.py; SQLite v3
 и lossless migration/backups — storage.py/migrations.py. [Контракт](normalization.md). Для одной БД
 действует процессная блокировка; leases нескольких воркеров пока нет. Полная схема
-ниже — целевая архитектура. В первом срезе нет фильтров, expiry/retention и стабильного
+ниже — целевая архитектура. В HH-срезе реализованы TOML/planner и фильтры без LLM; нет expiry/retention и стабильного
 cursor экспорта; экспорт — согласованный текущий снимок SQLite. Подробности:
 [development.md](development.md), [storage.md](storage.md).
 
@@ -20,7 +20,9 @@ cursor экспорта; экспорт — согласованный теку�
 4. Collection/detail service: страницы, дочитывание, обновления и сохранённый cursor.
 5. Normalization: полное содержание, условия, даты, unknown/conflict, source provenance.
 6. SQLite ledger: identity, версии, discoveries, query progress и очередь задач.
-7. Quality/report/export: полнота, ошибки, готовый набор и интерфейс будущему анализу.
+7. Deterministic filters: domain/grade/experience, unknown/conflict, история решений;
+   конфигурация и контракты — [filtering.md](filtering.md).
+8. Quality/report/export: полнота, ошибки, готовый набор и интерфейс будущему анализу.
 
 ```text
 plan → source pages → identity/discovery → detail queue

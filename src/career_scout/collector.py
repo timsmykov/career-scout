@@ -44,6 +44,7 @@ def collect(store: Store, client: HHClient, run_id: str, *, max_details: int = 3
                     query["end"],
                     query["next_page"],
                     plan["per_page"],
+                    area_ids=plan.get("source_options", {}).get("area_ids", []),
                 )
                 if page.found > 2000 and query["next_page"] == 0 and store.split(query, page.found):
                     continue
@@ -52,4 +53,5 @@ def collect(store: Store, client: HHClient, run_id: str, *, max_details: int = 3
             error = exc
         except KeyboardInterrupt:
             error = SourceError("interrupted")
+        store.filter_run(run_id)
         return store.finish(run_id, error)

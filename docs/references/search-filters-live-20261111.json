@@ -1,0 +1,178 @@
+{
+  "mode": "production",
+  "schema_version": 3,
+  "vacancy_schema_version": 2,
+  "policy_hash": "682f94c57f52e8e309c85b52b5b2aa94a3c76c2ac3bb69173ea47f1bf813c59f",
+  "existing_tables_byte_equivalent": true,
+  "before": {
+    "runs": {
+      "rows": 2,
+      "sha256": "2d228b996901aece6349318082606764666093d9dac008e58428b9655a62a2d5"
+    },
+    "queries": {
+      "rows": 3,
+      "sha256": "abc69312a1a59ecbde29610b6a7ad26462911adc5aa42162b555c75fcbb1b3f9"
+    },
+    "vacancies": {
+      "rows": 317,
+      "sha256": "8ca45156c3bb1f98c023cae7f42f3707771353a6261e03df2ee4c0fdfcf146e7"
+    },
+    "snapshots": {
+      "rows": 317,
+      "sha256": "79cea73c85f3c1112da9fb1fb7a07b2539525311fb57d57267bc8e34c6ca4a83"
+    },
+    "normalized_snapshots": {
+      "rows": 317,
+      "sha256": "b58a39b46b540dc89053fd9c27b81ed1f24a19f85cbd3682a35398a8a3f92c34"
+    },
+    "discoveries": {
+      "rows": 634,
+      "sha256": "dbfb114334bdec90777752df9fd40d5683707f446544da3ab4d3d6a5504aabb4"
+    },
+    "events": {
+      "rows": 2,
+      "sha256": "402951c301788f5eff19675307c0ce45d7682c7a5636e4f42f3c51b447c0ea0d"
+    },
+    "source_state": {
+      "rows": 1,
+      "sha256": "f028565dbad988e3e7c376295513fcf7d935f3fe48c6844c6de5970c57342a81"
+    }
+  },
+  "after": {
+    "runs": {
+      "rows": 2,
+      "sha256": "2d228b996901aece6349318082606764666093d9dac008e58428b9655a62a2d5"
+    },
+    "queries": {
+      "rows": 3,
+      "sha256": "abc69312a1a59ecbde29610b6a7ad26462911adc5aa42162b555c75fcbb1b3f9"
+    },
+    "vacancies": {
+      "rows": 317,
+      "sha256": "8ca45156c3bb1f98c023cae7f42f3707771353a6261e03df2ee4c0fdfcf146e7"
+    },
+    "snapshots": {
+      "rows": 317,
+      "sha256": "79cea73c85f3c1112da9fb1fb7a07b2539525311fb57d57267bc8e34c6ca4a83"
+    },
+    "normalized_snapshots": {
+      "rows": 317,
+      "sha256": "b58a39b46b540dc89053fd9c27b81ed1f24a19f85cbd3682a35398a8a3f92c34"
+    },
+    "discoveries": {
+      "rows": 634,
+      "sha256": "dbfb114334bdec90777752df9fd40d5683707f446544da3ab4d3d6a5504aabb4"
+    },
+    "events": {
+      "rows": 2,
+      "sha256": "402951c301788f5eff19675307c0ce45d7682c7a5636e4f42f3c51b447c0ea0d"
+    },
+    "source_state": {
+      "rows": 1,
+      "sha256": "f028565dbad988e3e7c376295513fcf7d935f3fe48c6844c6de5970c57342a81"
+    }
+  },
+  "runs": [
+    {
+      "run_id": "8736b90e-c8a7-49d8-94f9-056225bc5433",
+      "full_details": 315,
+      "selected": 141,
+      "filtering": {
+        "applied": true,
+        "policy_hash": "682f94c57f52e8e309c85b52b5b2aa94a3c76c2ac3bb69173ea47f1bf813c59f",
+        "engine_version": "rules-2",
+        "KEEP": 4,
+        "KEEP_UNKNOWN": 137,
+        "FILTERED_OUT": 174,
+        "pending": 0
+      }
+    },
+    {
+      "run_id": "b15f3b0e-983f-4276-8007-15b3e551d77a",
+      "full_details": 4,
+      "selected": 4,
+      "filtering": {
+        "applied": true,
+        "policy_hash": "682f94c57f52e8e309c85b52b5b2aa94a3c76c2ac3bb69173ea47f1bf813c59f",
+        "engine_version": "rules-2",
+        "KEEP": 0,
+        "KEEP_UNKNOWN": 4,
+        "FILTERED_OUT": 0,
+        "pending": 0
+      }
+    }
+  ],
+  "unique_full_cards": 317,
+  "decisions": {
+    "KEEP_UNKNOWN": 139,
+    "FILTERED_OUT": 174,
+    "KEEP": 4
+  },
+  "salary_missing_decisions": {
+    "KEEP_UNKNOWN": 67,
+    "FILTERED_OUT": 90,
+    "KEEP": 3
+  },
+  "salary_counterfactuals_per_card": 5,
+  "salary_counterfactuals_unchanged": true,
+  "excluded_criteria_counts": {
+    "experience": 151,
+    "grade": 91
+  },
+  "quick_check": "ok",
+  "foreign_key_violations": 0,
+  "automatic_backup": "/data/backups/ledger.sqlite3.v2-20261111T193208Z-0476716c.sqlite3",
+  "network_calls": 0,
+  "verified_at_utc": "2026-11-11T19:36:42.646200+00:00",
+  "engine_version": "rules-2",
+  "rehearsal": true,
+  "hh_search_probe": {
+    "status": "ok",
+    "searches": [
+      {
+        "query": "(\"менеджер продукта\") AND (\"IT\" OR \"финтех\" OR \"ИИ\" OR \"ML\")",
+        "found": 512,
+        "returned": 1,
+        "valid_page": true
+      },
+      {
+        "query": "(\"бизнес аналитик\") AND (\"IT\" OR \"финтех\" OR \"ИИ\" OR \"ML\")",
+        "found": 451,
+        "returned": 1,
+        "valid_page": true
+      },
+      {
+        "query": "(\"бизнес ассистент\") AND (\"IT\" OR \"финтех\" OR \"ИИ\" OR \"ML\")",
+        "found": 145,
+        "returned": 1,
+        "valid_page": true
+      },
+      {
+        "query": "(\"автоматизация процессов\") AND (\"IT\" OR \"финтех\" OR \"ИИ\" OR \"ML\")",
+        "found": 478,
+        "returned": 1,
+        "valid_page": true
+      }
+    ],
+    "no_vacancies_saved": true
+  },
+  "container_test": {
+    "offline": true,
+    "first_full": 20,
+    "recreated_full": 300,
+    "selected": 200,
+    "excluded": 100
+  },
+  "runtime_source_sha256": {
+    "career_scout.search_config": "6f9058c5ecec1966ef70777290ecbd24fa319619c663c74fdb5cfb4a4b8b6f7f",
+    "career_scout.filtering": "d5b0700be5cf1e25829d270dcdcb1896700c1a882ff2a043917be6c1453d6e0b",
+    "career_scout.storage": "1d242edfe8a5b929b74647f950b1ee5f12ba5d7c16b9a5932b66e8f4993b5bb6",
+    "career_scout.hh": "5bcb928bcfc8c3a18c333b1b5c9c9140720c82bd4bcd7384e08230b0101ef1cc",
+    "career_scout.collector": "8f6ff3d2e364942b436392ebd05e06e2b4a90a6bc751ef13b0a516823feaba5f",
+    "career_scout.cli": "d7acc77548f5d06a3369824a0127610ba9617a100fe26c1704d1e5c406fdeb54"
+  },
+  "scope": "HH deterministic search/filter; no resume evaluation or LLM; lexical rules do not prove market coverage",
+  "offline_pytest_passed": 149,
+  "runtime_source_matches_checkout": true,
+  "method": "SQLite backup under flock; v2 to v3 rehearsal and production; ordered exact old-table values hashed as UTF-8 JSON; all317 cards re-evaluated with five structured salary variants each; no source rows rewritten."
+}

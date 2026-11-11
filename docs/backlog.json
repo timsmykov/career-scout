@@ -40,14 +40,14 @@
       "id": "CS-003",
       "milestone": "M1",
       "title": "Конфигурация и секреты",
-      "status": "in_progress",
+      "status": "complete",
       "depends_on": [
         "CS-001"
       ],
       "deliverable": "config.py, env loader, config validation",
       "acceptance": "Читается единый .env; missing key диагностируется без печати значения",
       "scope": "collector",
-      "implementation_note": "CLI/env плюс Docker read-only credentials и persistent token cache реализованы; TOML config и doctor впереди."
+      "implementation_note": "Валидируемый configs/search.toml, --config/CLI overrides, safe env/token cache и ошибки без секретов; invalid config отклоняется до БД/HTTP."
     },
     {
       "id": "CS-004",
@@ -94,7 +94,7 @@
       "id": "CS-007",
       "milestone": "M1",
       "title": "Планирование запросов",
-      "status": "in_progress",
+      "status": "complete",
       "depends_on": [
         "CS-001",
         "CS-003"
@@ -102,7 +102,7 @@
       "deliverable": "collectors/planner.py, versioned search config",
       "acceptance": "Union четырёх семейств, title-only/AI-only не обязательны, fair ordering, immutable plan",
       "scope": "collector",
-      "implementation_note": "Повторяемые явные query и immutable временной план; общий planner четырёх семейств впереди."
+      "implementation_note": "HH planner: union четырёх семейств, focused+broad запросы, round-robin, exact dedup/provenance, UTC-окно/география/бюджет/policy hash закреплены в run; resume не перечитывает TOML."
     },
     {
       "id": "CS-008",
@@ -116,7 +116,7 @@
       "deliverable": "cli.py: plan, doctor",
       "acceptance": "Plan без сети; doctor различает отсутствие credentials, неподтверждённый order и disabled sources",
       "scope": "collector",
-      "implementation_note": "plan без БД/сети работает; doctor и TOML config validation впереди."
+      "implementation_note": "Plan без БД/сети и Pydantic TOML validation реализованы; doctor остаётся будущей командой."
     },
     {
       "id": "CS-009",
@@ -130,7 +130,7 @@
       "deliverable": "storage/migrations, connection.py",
       "acceptance": "WAL, foreign keys, schema version, транзакции на временной БД",
       "scope": "collector",
-      "implementation_note": "Schema v2, composite keys/FK, WAL, backup + atomic v1 migration; rollback/process death/writer lock/idempotence проверены, рабочие317 snapshots сохранены."
+      "implementation_note": "Schema v3; v1/v2 backup + atomic upgrade, rollback/writer lock/process death проверены. Рабочие317 source snapshots и все прежние строки сохранены; история решений отдельная."
     },
     {
       "id": "CS-010",
@@ -191,14 +191,15 @@
       "id": "CS-014",
       "milestone": "M2",
       "title": "Фильтры с основаниями",
-      "status": "planned",
+      "status": "complete",
       "depends_on": [
         "CS-002",
         "CS-010"
       ],
       "deliverable": "domain/filtering.py, storage/filter_decisions.py",
       "acceptance": "Unknown/conflict сохранены; senior-коллега не означает senior-вакансию; версия фильтра",
-      "scope": "collector"
+      "scope": "collector",
+      "implementation_note": "Детерминированные domain/grade/experience, unknown/conflict KEEP_UNKNOWN, зарплата полностью нейтральна; hash/версия/цитаты, offline refilter и export selected/all. Проверены synthetic и317 сохранённых real карточек; это не оценка соответствия резюме и не доказательство полноты рынка."
     },
     {
       "id": "CS-015",

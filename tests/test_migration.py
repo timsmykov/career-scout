@@ -101,7 +101,7 @@ def test_v1_upgrade_is_lossless_and_idempotent(tmp_path):
             "SELECT vacancy_id,content_hash,fetched_at,payload FROM snapshots ORDER BY content_hash"
         ).fetchall()
     store = Store(path)
-    assert store.db.execute("PRAGMA user_version").fetchone()[0] == 2
+    assert store.db.execute("PRAGMA user_version").fetchone()[0] == 3
     assert [
         tuple(r)
         for r in store.db.execute(
@@ -159,7 +159,7 @@ def test_migration_failure_rolls_back_schema_rows_and_cursor(tmp_path, monkeypat
         )
     monkeypatch.setattr(migrations, "project_snapshot", original)
     migrated = Store(path)
-    assert migrated.db.execute("PRAGMA user_version").fetchone()[0] == 2
+    assert migrated.db.execute("PRAGMA user_version").fetchone()[0] == 3
     migrated.close()
 
 
@@ -284,7 +284,7 @@ def test_cli_migration_and_namespaced_inspect_need_no_credentials(tmp_path, monk
     monkeypatch.setattr(cli, "HHClient", lambda *a, **kw: pytest.fail("no HTTP during migration"))
     assert cli.main(["--db", str(path), "migrate"]) == 0
     output = json.loads(capsys.readouterr().out)
-    assert output["schema_version"] == 2 and Path(output["backup_path"]).exists()
+    assert output["schema_version"] == 3 and Path(output["backup_path"]).exists()
     store = Store(path)
     rid = store.create(["test"], "2026-11-10", "2026-11-11", 2, 24, source="habr")
     store.save_page(store.next_query(rid), page("1"), 24)
@@ -337,3 +337,56 @@ def test_legacy_pending_run_resumes_after_upgrade_without_refetching_saved_card(
     assert len(store.inspect("1")["snapshots"]) == 2
     assert store.export("run")["schema_version"] == 2
     store.close()
+
+
+def v2_database(path):
+    old_database(path)
+    with sqlite3.connect(path) as db:
+        db.row_factory = sqlite3.Row
+        db.execute("PRAGMA foreign_keys=ON")
+        migrations.upgrade_v1(db)
+    return path
+
+
+def table_rows(path):
+    with sqlite3.connect(path) as db:
+        names = [
+            r[0]
+            for r in db.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")
+        ]
+        return {
+            name: sorted(db.execute("SELECT * FROM " + name).fetchall(), key=repr) for name in names
+        }
+
+
+def test_v2_filter_migration_only_adds_tables_and_creates_recoverable_backup(tmp_path):
+    path = v2_database(tmp_path / "v2.sqlite3")
+    before = table_rows(path)
+    store = Store(path)
+    assert store.db.execute("PRAGMA user_version").fetchone()[0] == 3
+    assert store.report("run")["filtering"]["applied"] is False
+    assert len(store.export("run")["vacancies"]) == 1
+    backup = store.backup_path
+    store.close()
+    after = table_rows(path)
+    assert all(after[name] == rows for name, rows in before.items())
+    assert table_rows(backup) == before
+    with sqlite3.connect(backup) as db:
+        assert db.execute("PRAGMA user_version").fetchone()[0] == 2
+    assert backup.stat().st_mode & 0o777 == 0o600
+
+
+@pytest.mark.parametrize("version", [1, 2])
+def test_filter_schema_failure_rolls_back_entire_upgrade(tmp_path, monkeypatch, version):
+    path = tmp_path / "old.sqlite3"
+    if version == 1:
+        old_database(path)
+    else:
+        v2_database(path)
+    before = table_rows(path)
+    monkeypatch.setattr(migrations, "FILTER_DDL", migrations.FILTER_DDL + ";INVALID SQL")
+    with pytest.raises(sqlite3.OperationalError):
+        Store(path)
+    assert table_rows(path) == before
+    with sqlite3.connect(path) as db:
+        assert db.execute("PRAGMA user_version").fetchone()[0] == version

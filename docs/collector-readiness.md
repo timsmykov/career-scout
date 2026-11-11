@@ -74,7 +74,7 @@ source snapshots,634 discoveries и query/run состояния сохране�
 
 | Площадка | Что нужно реализовать/проверить |
 |---|---|
-| HH | Первый runtime реализован; остаются общий config/query planner, типизированные cross-source условия/фильтры, watermark reconciliation, retention и длительная эксплуатационная приёмка |
+| HH | Первый runtime реализован; config/query planner и фильтры реализованы; остаются mappings других source, watermark reconciliation, retention и длительная эксплуатационная приёмка |
 | SuperJob | App key injection, фактический page size, more/cap, окна дат, quota-like 503, сбор всех текстовых разделов; прояснить хранение/LLM-передачу |
 | Работа России | Offset как page 0/1/2; companycode+id; корректная сборка duty/qualification/условий, даты, dedup при обновлении |
 | Habr | Frontend schema contract, SSR/JSON-LD parser и identity; лимит страниц, deferred/stale; TTL detail даже при неизменном listing; anti-bot как blocked |
@@ -85,16 +85,17 @@ false: ещё нет runtime-адаптера и согласованной по
 ## Общие пробелы реализации
 
 1. **Другие источники и общие контракты.** Identity/schema v2/common normalizer реализованы и
-   backfilled без потерь. Остальные API adapters и transport/config ещё впереди.
+   backfilled без потерь. Рабочий TOML реализован; остальные API adapters и общий transport ещё впереди.
 2. **Систематизация условий.** Typed salary/gross/period/experience/work formats и
-   unknown/conflict/provenance реализованы. Grade/technology и фильтры ещё впереди.
+   unknown/conflict/provenance реализованы. Grade/technology/experience фильтры с историей реализованы;
+   зарплата не ограничивает отбор, unknown/conflict сохраняются. [Проверки](filtering.md).
 3. **Очередь и обновления.** HH использует один процесс/flock, не lease workers.
    TTL проверяется при повторном discovery; нет полного source reconciliation,
    auto-expiry и retention/purge. Старые run читают текущие версии БД.
 4. **Экспорт.** HH JSON работает из одного согласованного read snapshot, но CSV,
    неизменяемый version set по run, stable consumer cursor и retention ещё впереди.
    Source HH snapshot v1 immutable, текущий общий export имеет schema v2; worker/bootstrap v1 отложен.
-5. **Качество охвата.** HH-проверка сотен карточек пройдена; широкие query families, ручной контроль
+5. **Качество охвата.** HH-проверка сотен карточек пройдена; query families реализованы; ручной контроль
    потерь рынка и длительная multi-source нагрузка ещё впереди. Анализ резюме/LangGraph отложен.
 
 ## Порядок работ

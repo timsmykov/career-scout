@@ -336,18 +336,21 @@ class HHClient:
             except (ValueError, TypeError):
                 raise SourceError("invalid_json") from None
 
-    def search(self, query: str, start: str, end: str, page: int, per_page: int) -> Page:
-        body = self.get(
-            "/vacancies",
-            {
-                "text": query,
-                "date_from": start,
-                "date_to": end,
-                "page": page,
-                "per_page": per_page,
-                "order_by": "publication_time",
-            },
-        )
+    def search(
+        self, query: str, start: str, end: str, page: int, per_page: int, *, area_ids=None
+    ) -> Page:
+        params = {
+            "text": query,
+            "date_from": start,
+            "date_to": end,
+            "page": page,
+            "per_page": per_page,
+            "order_by": "publication_time",
+            "no_magic": "true",
+        }
+        if area_ids:
+            params["area"] = area_ids
+        body = self.get("/vacancies", params)
         try:
             result = Page.model_validate(body)
         except ValidationError:

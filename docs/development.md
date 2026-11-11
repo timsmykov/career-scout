@@ -19,28 +19,33 @@ uv build
 
 ## Действующий CLI
 
-Общая форма: `uv run --no-sync python -m career_scout [--db PATH] [--env PATH] COMMAND`.
+Общая форма: `uv run --no-sync python -m career_scout [--db PATH] [--env PATH] [--config PATH] COMMAND`.
 Общие аргументы идут **до** команды. Опциональный `--token-file PATH` включает
 отдельный writable cache токена для read-only исходного env; [Docker](docker.md). По умолчанию `data/ledger.sqlite3` и `.env`.
-Другие площадки, evaluate, doctor и TOML-конфигурация пока не подключены.
+Рабочий config — `configs/search.toml`; [семейства и фильтры](filtering.md).
+Другие площадки, evaluate и doctor пока не подключены.
 
 | Команда | Действие |
 |---|---|
-| `migrate` | SQLite v1→v2 с backup, без сети; первое открытие v1 также мигрирует автоматически |
-| `plan --query TEXT` | Показать план без сети, credentials и открытия БД |
-| `collect --query TEXT` | Создать run с фиксированными запросами/датами и начать HH сбор |
+| `migrate` | SQLite v1/v2→v3 с backup, без сети; первое открытие также мигрирует автоматически |
+| `plan [--query TEXT]` | Показать план без сети, credentials и открытия БД |
+| `collect [--query TEXT]` | Создать run с фиксированными запросами/датами и начать HH сбор |
 | `resume RUN_ID` | Продолжить сохранённый план, включая незагруженные карточки |
+| `refilter RUN_ID` | Применить текущие правила TOML к full карточкам run без сети, сохранив историю |
 | `status RUN_ID` | JSON отчёт без сети |
 | `inspect VACANCY_ID [--source hh]` | Состояние, source snapshots, общие проекции и происхождение; default HH |
-| `export RUN_ID --output PATH` | Локальный JSON из согласованного read snapshot БД |
+| `export RUN_ID --output PATH` | Локальный JSON выбранных карточек; `--include-excluded` — все full, решения сохранены |
 
-`--query` можно повторять; одинаковые строки объединяются. `plan/collect`:
+Без `--query` берётся union четырёх семейств из TOML. `--query` заменяет их;
+можно повторять, одинаковые строки объединяются. Настройки ниже — defaults TOML;
+CLI их переопределяет. `plan/collect`:
 `--days` (7 по умолчанию, положительное целое), `--per-page` (100, диапазон 1–100),
 `--refresh-hours` (24, конечное неотрицательное число). На момент создания run
 фиксируется UTC-окно `[now-days, now]`. Это lookback, а не расписание.
 
-`collect/resume`: `--requests` (50, положительное целое), `--details` (30, целое ≥0),
+`plan/collect/resume`: `--requests` (50, положительное целое), `--details` (30, целое ≥0),
 `--interval` (1 секунда, конечное число ≥0), `--retries` (2, диапазон 0–5).
+В новом run настройки фиксируются в плане; resume не перечитывает TOML.
 Это бюджет **текущего вызова**: новый `resume` получает новый бюджет, накопленные
 резервации остаются в отчёте. Token acquire, повторные HTTP и проверочные запросы
 перед разбиением окна также расходуют бюджет. `--details 0` сохраняет только списки,
@@ -98,7 +103,8 @@ HH выдача свыше 2000 делится пополам по UTC-дата�
 
 При новом discovery изменение listing или истечение refresh-hours делает старую
 карточку stale до дочитывания. 404/410 — unavailable; archived сохраняется отдельно.
-Экспорт содержит только текущие full карточки, включая `source_payload`; это личный
+Обычный экспорт содержит текущие full карточки с KEEP/KEEP_UNKNOWN,
+`--include-excluded` — все full, включая `source_payload`; это личный
 экспорт с текстами, не публичный отчёт. Старые snapshot доступны через inspect.
 Экспорт не перезаписывает существующий файл и публикуется атомарно. Файл остаётся
 неизменяемым снимком, но следующий экспорт старого run использует текущие карточки
@@ -112,7 +118,8 @@ refresh TTL проверяется при discovery, самостоятельн�
 ([схема](../schemas/hh-snapshot.schema.json)); export теперь использует
 [vacancy-v2.schema.json](../schemas/vacancy-v2.schema.json) с typed salary/experience/
 work_formats. Миграция/backfill и примеры — [normalization.md](normalization.md).
-Предметные фильтры, raw retention, CSV, стабильный consumer cursor, leases,
+Предметные фильтры и история решений реализованы в `filtering.py/search_config.py`.
+Raw retention, CSV, стабильный consumer cursor, leases,
 прочие адаптеры и расписание впереди. Worker input v1 bootstrap остаётся отложенным.
 Графы/модели не импортируются и не вызываются. Зависимости bootstrap оставлены
 без изменений; обновление lock — только явным `uv lock` с проверкой.

@@ -15,7 +15,7 @@ docker compose build
 
 Образ `career-scout:local` собирается в два этапа: Python 3.12 и uv 0.13.6 по
 зафиксированным digest, установка по `uv.lock --locked --no-dev --no-editable`.
-Финальный образ содержит установленный пакет и окружение, без исходных секретов,
+Финальный образ содержит установленный пакет, рабочий search.toml и окружение, без исходных секретов,
 рабочих БД, экспортов, Git и host `.venv`. `.dockerignore` задаёт allowlist.
 Bootstrap-зависимости проекта оставлены прежними; код моделей не импортируется.
 
@@ -44,6 +44,11 @@ Default prefix entrypoint:
 `--db /data/ledger.sqlite3 --env /run/secrets/career_env --token-file /data/auth/hh-token.json`.
 Общие аргументы можно переопределить до подкоманды, например:
 `docker compose run --rm collector --db /data/test.sqlite3 status RUN_ID`.
+
+`configs/search.toml` встроен в образ и в Compose перекрывается read-only bind
+того же host-файла. Для смены параметров не требуется пересборка. Новый collect
+читает config; resume сохраняет условия старого run, refilter меняет их явно.
+Подробнее: [фильтры](filtering.md).
 
 ## Где находятся данные и ключи
 
@@ -81,8 +86,8 @@ commits могут находиться в WAL. Для следующей миг
 
 ## Обновление схемы
 
-Текущая база в volume имеет schema v2 и общий export v2. Первый запуск нового
-образа на v1 делает backup и атомарный перенос; явная команда:
+Текущая база в volume имеет schema v3 и общий export v2. Первый запуск нового
+образа на v1/v2 делает backup и атомарный перенос; явная команда:
 `docker compose run --rm collector migrate`. Инструкция и доказательства —
 [normalization.md](normalization.md). Исходные v1 payload не переписываются.
 
@@ -98,7 +103,9 @@ python3 scripts/check_container.py
 собираются 300 новых synthetic карточек. Первый контейнер сохраняет 20 full и partial, удаляется; второй читает ту же БД,
 cache и run ID, продолжает до 300 full/complete. HTTP полностью MockTransport,
 Docker network=none. Проверены отсутствие повторного detail для сохранённых ID,
-303 попытки на 3 страницы/300 карточек, export и SQLite integrity. После теста
+303 попытки на 3 страницы/300 карточек, export и SQLite integrity.
+Рабочий config прочитан из образа; из 300 карточек без зарплаты выбираются
+200 junior, 100 senior исключаются с сохранением всех 300 full в архиве. После теста
 удаляется только его synthetic volume; рабочий `career-scout-data` не затрагивается.
 Проверка включена в отдельный CI job.
 
