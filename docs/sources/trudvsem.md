@@ -1,5 +1,8 @@
 # Работа России / Trudvsem
 
+Runtime реализован в adapters.py/source_normalization.py; [общий запуск и точный статус](../multi-source.md).
+
+
 Официальный контракт:
 https://opendata.trudvsem.ru/api/v1/vacancies/application.wadl
 https://trudvsem.ru/opendata/api

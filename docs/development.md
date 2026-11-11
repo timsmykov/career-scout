@@ -1,4 +1,4 @@
-# Разработка и HH CLI
+# Разработка и multi-source CLI
 
 Python 3.12, uv, Git; Linux/macOS (процессная блокировка через `fcntl.flock`). Из корня:
 
@@ -23,13 +23,16 @@ uv build
 Общие аргументы идут **до** команды. Опциональный `--token-file PATH` включает
 отдельный writable cache токена для read-only исходного env; [Docker](docker.md). По умолчанию `data/ledger.sqlite3` и `.env`.
 Рабочий config — `configs/search.toml`; [семейства и фильтры](filtering.md).
-Другие площадки, evaluate и doctor пока не подключены.
+HH/Trudvsem/Habr/SuperJob подключены; evaluate и doctor пока нет.
+`--source hh|trudvsem|habr|superjob|all` доступен у plan/collect/probe; default hh.
+Бюджет batch задаётся на источник. [Native контракты и статус](multi-source.md).
 
 | Команда | Действие |
 |---|---|
-| `migrate` | SQLite v1/v2→v3 с backup, без сети; первое открытие также мигрирует автоматически |
+| `migrate` | SQLite v1/v2/v3→v4 с backup, без сети; первое открытие также мигрирует автоматически |
 | `plan [--query TEXT]` | Показать план без сети, credentials и открытия БД |
-| `collect [--query TEXT]` | Создать run с фиксированными запросами/датами и начать HH сбор |
+| `collect [--query TEXT]` | Создать run с фиксированными запросами/датами и начать сбор выбранного источника |
+| `probe [--source all]` | Search+detail в памяти без БД и сохранения текста; используется также для SuperJob |
 | `resume RUN_ID` | Продолжить сохранённый план, включая незагруженные карточки |
 | `refilter RUN_ID` | Применить текущие правила TOML к full карточкам run без сети, сохранив историю |
 | `status RUN_ID` | JSON отчёт без сети |
@@ -111,15 +114,16 @@ HH выдача свыше 2000 делится пополам по UTC-дата�
 БД: run не закрепляет content hash навсегда. Возраст карточки виден в detail_fetched_at;
 refresh TTL проверяется при discovery, самостоятельного expiry/purge пока нет.
 
-## Границы первого среза
+## Границы реализации
 
-Реализовано: `hh.py`, `storage.py`, `collector.py`, `cli.py`; описание таблиц —
+Реализовано: `hh.py`, `adapters.py`, `transport.py`, `source_normalization.py`,
+`storage.py`, `collector.py`, `cli.py`; описание таблиц —
 [storage.md](storage.md). Source HH snapshot v1 остаётся immutable
 ([схема](../schemas/hh-snapshot.schema.json)); export теперь использует
 [vacancy-v2.schema.json](../schemas/vacancy-v2.schema.json) с typed salary/experience/
 work_formats. Миграция/backfill и примеры — [normalization.md](normalization.md).
 Предметные фильтры и история решений реализованы в `filtering.py/search_config.py`.
 Raw retention, CSV, стабильный consumer cursor, leases,
-прочие адаптеры и расписание впереди. Worker input v1 bootstrap остаётся отложенным.
+source reconciliation и расписание впереди. Worker input v1 bootstrap остаётся отложенным.
 Графы/модели не импортируются и не вызываются. Зависимости bootstrap оставлены
 без изменений; обновление lock — только явным `uv lock` с проверкой.

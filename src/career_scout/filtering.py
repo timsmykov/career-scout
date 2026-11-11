@@ -57,11 +57,42 @@ def grade(vacancy, policy):
     if recipient:
         # Later grades can describe the person supported, rather than the assistant.
         matches = [(key, m) for key, m in matches if m.start() < recipient.start()]
+    negated = re.search(r"\b(?:не|not|без)\s+(?:senior|junior|middle|lead|стаж[её]р)", title, re.I)
+    source_grade = None
+    if vacancy.get("source") == "habr":
+        raw_grade = (vacancy.get("source_payload", {}).get("vacancy") or {}).get("qualification")
+        source_grade = (
+            {
+                "Intern": "intern",
+                "Junior": "junior",
+                "Middle": "middle",
+                "Senior": "senior",
+                "Lead": "lead",
+            }.get(raw_grade)
+            if isinstance(raw_grade, str)
+            else None
+        )
+    if source_grade:
+        allowed = source_grade in policy.allowed_grades
+        title_allowed = [key in policy.allowed_grades for key, _ in matches]
+        conflict = negated or (title_allowed and any(x != allowed for x in title_allowed))
+        return Criterion(
+            status="conflict" if conflict else "allowed" if allowed else "excluded",
+            reasons=[
+                "grade.api_title_disagree"
+                if conflict
+                else "grade.allowed"
+                if allowed
+                else "grade.outside_allowed"
+            ],
+            evidence=[Evidence(field="source_payload.vacancy.qualification", quote=raw_grade)]
+            + ([Evidence(field="title", quote=m.group(0)) for _, m in matches] if conflict else [])
+            + ([Evidence(field="title", quote=negated.group(0))] if negated else []),
+        )
     if not matches:
         return Criterion(status="unknown", reasons=["grade.not_stated"])
     evidence = [Evidence(field="title", quote=m.group(0)) for _, m in matches]
     allowed = [key in policy.allowed_grades for key, _ in matches]
-    negated = re.search(r"\b(?:не|not|без)\s+(?:senior|junior|middle|lead|стаж[её]р)", title, re.I)
     if negated or (any(allowed) and not all(allowed)):
         return Criterion(status="conflict", reasons=["grade.mixed_or_negated"], evidence=evidence)
     return Criterion(
@@ -105,6 +136,14 @@ def experience(vacancy, policy):
     evidence = []
     if category:
         evidence.append(Evidence(field="attributes.experience.category", quote=category))
+    if base is None:
+        structured = vacancy.get("attributes", {}).get("experience") or {}
+        minimum = structured.get("min_years")
+        if type(minimum) in (int, float):
+            base = minimum <= policy.max_required_years
+            if minimum == policy.max_required_years and structured.get("min_inclusive") is False:
+                base = False
+            evidence.append(Evidence(field="attributes.experience.min_years", quote=str(minimum)))
     thresholds = []
     for clause in re.split(r"[\n;!?]|(?<!\d)\.(?!\d)", vacancy["description"]):
         clause = clause.strip().lstrip("-•* ").strip()
@@ -142,6 +181,17 @@ def domain(vacancy, policy):
     raw = vacancy.get("source_payload", {})
     employer = raw.get("employer") if isinstance(raw.get("employer"), dict) else {}
     fields = [("title", vacancy["title"]), ("description", vacancy["description"])]
+    native = raw.get("vacancy") if vacancy.get("source") == "habr" else raw
+    if isinstance(native, dict):
+        prefix = "source_payload.vacancy" if vacancy.get("source") == "habr" else "source_payload"
+        company_key = "company" if native.get("company") else "client"
+        company = native.get(company_key)
+        if isinstance(company, dict):
+            for key in ("name", "title"):
+                if isinstance(company.get(key), str):
+                    fields.append((prefix + "." + company_key + "." + key, company[key]))
+        if isinstance(native.get("firm_name"), str):
+            fields.append((prefix + ".firm_name", native["firm_name"]))
     if isinstance(employer.get("name"), str):
         fields.append(("source_payload.employer.name", employer["name"]))
     industries = []

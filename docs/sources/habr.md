@@ -1,5 +1,8 @@
 # Хабр Карьера
 
+Runtime реализован в adapters.py/source_normalization.py; [общий запуск и точный статус](../multi-source.md).
+
+
 Проверенный транспорт:
 GET https://career.habr.com/api/frontend/vacancies
 HTML detail https://career.habr.com/vacancies/{id}

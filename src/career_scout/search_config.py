@@ -8,9 +8,9 @@ from typing import Literal
 from pydantic import Field, ValidationError, field_validator
 
 from career_scout.common import SourceError, digest
-from career_scout.models import Model
+from career_scout.models import Model, Source
 
-ENGINE_VERSION = "rules-2"
+ENGINE_VERSION = "rules-3"
 
 
 class FilterPolicy(Model):
@@ -68,10 +68,24 @@ class RuntimeSettings(Model):
     retries: int = Field(default=2, ge=0, le=5)
 
 
+class SourceSettings(Model):
+    enabled: bool = True
+    region_code: str | None = Field(default=None, pattern=r"^[0-9]+$")
+    town_id: int | None = Field(default=None, gt=0)
+    city_id: int | None = Field(default=None, gt=0)
+    storage_allowed: bool = False
+    interval: float | None = Field(default=None, ge=0, le=60, allow_inf_nan=False)
+
+
 class SearchConfig(Model):
     schema_version: Literal[2]
     search: SearchSettings
     runtime: RuntimeSettings
+    sources: dict[Source, SourceSettings] = Field(
+        default_factory=lambda: {
+            name: SourceSettings() for name in ("hh", "habr", "trudvsem", "superjob")
+        }
+    )
     families: dict[
         Literal["product", "business_analyst", "business_assistant", "automation"], list[str]
     ]
@@ -96,8 +110,17 @@ def load_config(path: Path) -> SearchConfig:
 
 
 def plan(
-    config: SearchConfig, *, queries=None, days=None, per_page=None, refresh_hours=None, now=None
+    config: SearchConfig,
+    *,
+    queries=None,
+    days=None,
+    per_page=None,
+    refresh_hours=None,
+    now=None,
+    source: Source = "hh",
 ):
+    if source not in config.sources or not config.sources[source].enabled:
+        raise SourceError("source_disabled")
     queries = list(dict.fromkeys(queries)) if queries is not None else None
     origins = {}
     if queries is None:
@@ -108,7 +131,7 @@ def plan(
             if family not in origins[query]:
                 origins[query].append(family)
 
-        if config.search.focused_queries:
+        if config.search.focused_queries and source == "hh":
 
             def quote(term):
                 return '"' + term.replace("\\", "\\\\").replace('"', '\\"') + '"'
@@ -141,15 +164,32 @@ def plan(
     except (ValueError, OverflowError):
         raise SourceError("invalid_search_settings") from None
     return {
-        "source": "hh",
+        "source": source,
         "queries": queries,
         "query_families": origins,
         "start": start.isoformat(),
         "end": end.isoformat(),
         "per_page": settings.per_page,
         "ttl_hours": settings.refresh_hours,
-        "source_options": {"area_ids": settings.area_ids},
-        "runtime": config.runtime.model_dump(mode="json"),
+        "source_options": (
+            {"area_ids": settings.area_ids}
+            if source == "hh"
+            else config.sources[source].model_dump(mode="json", exclude_none=True)
+        ),
+        "window_field": {
+            "hh": "publication_time",
+            "superjob": "date_published",
+            "trudvsem": "date_modify",
+            "habr": "all_visible",
+        }[source],
+        "runtime": {
+            **config.runtime.model_dump(mode="json"),
+            **(
+                {"interval": config.sources[source].interval}
+                if config.sources[source].interval is not None
+                else {}
+            ),
+        },
         "filter_policy": config.filters.model_dump(mode="json"),
         "filter_policy_hash": config.filters.key(),
         "filter_engine": ENGINE_VERSION,

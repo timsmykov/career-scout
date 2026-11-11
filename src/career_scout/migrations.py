@@ -151,7 +151,7 @@ CREATE TABLE filter_decisions (
 """
 
 
-def upgrade_v2(db: sqlite3.Connection):
+def upgrade_v2(db: sqlite3.Connection, *, commit: bool = True):
     try:
         if not db.in_transaction:
             db.execute("BEGIN IMMEDIATE")
@@ -161,6 +161,22 @@ def upgrade_v2(db: sqlite3.Connection):
         if db.execute("PRAGMA foreign_key_check").fetchall():
             raise SourceError("migration_foreign_key_error")
         db.execute("PRAGMA user_version=3")
+        if commit:
+            db.commit()
+    except BaseException:
+        db.rollback()
+        raise
+
+
+def upgrade_v3(db: sqlite3.Connection):
+    try:
+        if not db.in_transaction:
+            db.execute("BEGIN IMMEDIATE")
+        db.execute(
+            "CREATE TABLE query_pagination (query_id INTEGER PRIMARY KEY REFERENCES queries(id), "
+            "page_size INTEGER NOT NULL CHECK(page_size BETWEEN 1 AND 100))"
+        )
+        db.execute("PRAGMA user_version=4")
         db.commit()
     except BaseException:
         db.rollback()

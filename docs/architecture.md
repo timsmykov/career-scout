@@ -3,14 +3,15 @@
 Сначала самостоятельный сервис сбора, систематизации и хранения. LangGraph и
 оценка по резюме отложены: коллектор должен быть полезен и принят без них.
 
-Реализовано сейчас: HH transport/normalizer (`hh.py`), SQLite (`storage.py`),
+Реализовано сейчас: HH transport/normalizer (`hh.py`), три новых адаптера (`adapters.py`),
+общий HTTP (`transport.py`), source mappings (`source_normalization.py`), SQLite (`storage.py`),
 последовательный исполнитель (`collector.py`) и CLI (`cli.py`). Общая vacancy v2
-и source identity — models.py, нормализация условий — normalization.py; SQLite v3
+и source identity — models.py, нормализация условий — normalization.py; SQLite v4
 и lossless migration/backups — storage.py/migrations.py. [Контракт](normalization.md). Для одной БД
 действует процессная блокировка; leases нескольких воркеров пока нет. Полная схема
-ниже — целевая архитектура. В HH-срезе реализованы TOML/planner и фильтры без LLM; нет expiry/retention и стабильного
+ниже — целевая архитектура. Реализованы TOML/planner и фильтры без LLM; нет expiry/retention и стабильного
 cursor экспорта; экспорт — согласованный текущий снимок SQLite. Подробности:
-[development.md](development.md), [storage.md](storage.md).
+[development.md](development.md), [storage.md](storage.md), [multi-source.md](multi-source.md).
 
 ## Компоненты
 

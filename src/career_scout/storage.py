@@ -11,13 +11,14 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import get_args
 
-from career_scout.common import SourceError, digest, utcnow
+from career_scout.common import SourceError, utcnow
 from career_scout.filtering import evaluate
 from career_scout.hh import listing_hash
-from career_scout.migrations import backup_schema, backup_v1, upgrade_v1, upgrade_v2
+from career_scout.migrations import backup_schema, backup_v1, upgrade_v1, upgrade_v2, upgrade_v3
 from career_scout.models import Identity, Source
 from career_scout.normalization import NORMALIZER, project_snapshot
 from career_scout.search_config import ENGINE_VERSION, FilterPolicy
+from career_scout.source_normalization import listing_hash as native_listing_hash
 
 SCHEMA = """
 CREATE TABLE runs (
@@ -67,23 +68,29 @@ class Store:
         self.backup_path = None
         try:
             version = self.db.execute("PRAGMA user_version").fetchone()[0]
-            if version not in (0, 1, 2, 3):
+            if version not in (0, 1, 2, 3, 4):
                 raise SourceError("unsupported_database_version")
             self.db.execute("PRAGMA journal_mode=WAL")
-            if version < 3:
+            if version < 4:
                 with self.lock():
                     version = self.db.execute("PRAGMA user_version").fetchone()[0]
                     if version == 0:
                         self.db.executescript("BEGIN IMMEDIATE;\n" + SCHEMA)
                         upgrade_v1(self.db, commit=False)
-                        upgrade_v2(self.db)
+                        upgrade_v2(self.db, commit=False)
+                        upgrade_v3(self.db)
                     elif version == 1:
                         self.backup_path = backup_v1(self.db, self.path)
                         upgrade_v1(self.db, commit=False)
-                        upgrade_v2(self.db)
+                        upgrade_v2(self.db, commit=False)
+                        upgrade_v3(self.db)
                     elif version == 2:
                         self.backup_path = backup_schema(self.db, self.path, 2)
-                        upgrade_v2(self.db)
+                        upgrade_v2(self.db, commit=False)
+                        upgrade_v3(self.db)
+                    elif version == 3:
+                        self.backup_path = backup_schema(self.db, self.path, 3)
+                        upgrade_v3(self.db)
         except BaseException:
             self.db.close()
             raise
@@ -190,6 +197,14 @@ class Store:
         source = self.run(query["run_id"])["source"]
         cutoff = (datetime.now(UTC) - timedelta(hours=ttl_hours)).isoformat()
         with self.db:
+            pinned = self.db.execute(
+                "SELECT page_size FROM query_pagination WHERE query_id=?", (query["id"],)
+            ).fetchone()
+            if pinned and pinned[0] != page.per_page:
+                raise SourceError("pagination_size_changed")
+            self.db.execute(
+                "INSERT OR IGNORE INTO query_pagination VALUES(?,?)", (query["id"], page.per_page)
+            )
             for item in page.items:
                 vid = item.get("id")
                 try:
@@ -203,7 +218,9 @@ class Store:
                     )
                     self.event(query["run_id"], "row_rejected", "invalid_source_id")
                     continue
-                fingerprint = listing_hash(item) if source == "hh" else digest(item)
+                fingerprint = (
+                    listing_hash(item) if source == "hh" else native_listing_hash(source, item)
+                )
                 old = self.db.execute(
                     "SELECT * FROM vacancies WHERE source=? AND source_id=?", (source, vid)
                 ).fetchone()
@@ -227,12 +244,15 @@ class Store:
                     "INSERT OR IGNORE INTO discoveries VALUES(?,?,?,?)",
                     (query["run_id"], query["id"], source, vid),
                 )
+            cap = page.window_cap
             done = (
-                not page.items
+                not page.has_more
+                if page.has_more is not None
+                else not page.items
                 or page.page + 1 >= page.pages
-                or (page.page + 1) * page.per_page >= 2000
+                or (cap is not None and (page.page + 1) * page.per_page >= cap)
             )
-            truncated = page.found > 2000
+            truncated = page.truncated or (cap is not None and page.found > cap)
             self.db.execute(
                 "UPDATE queries SET next_page=?,status=?,truncated=?,total=?,served=served+1 "
                 "WHERE id=?",
@@ -247,6 +267,12 @@ class Store:
             self.db.execute(
                 "UPDATE runs SET pages_saved=pages_saved+1 WHERE id=?", (query["run_id"],)
             )
+
+    def page_size(self, query_id: int, default: int):
+        row = self.db.execute(
+            "SELECT page_size FROM query_pagination WHERE query_id=?", (query_id,)
+        ).fetchone()
+        return row[0] if row else default
 
     def pending_detail(self, run_id: str):
         return self.db.execute(
@@ -325,7 +351,8 @@ class Store:
     def finish(self, run_id: str, error: SourceError | None = None):
         report = self.report(run_id)
         complete = not (
-            report["pending_queries"]
+            error
+            or report["pending_queries"]
             or report["deferred_details"]
             or report["truncated_queries"]
             or report["rejected_rows"]
@@ -337,6 +364,7 @@ class Store:
             "missing_application_credentials",
             "rate_limited",
             "source_adapter_unavailable",
+            "source_storage_policy_unconfirmed",
         }:
             status = "blocked"
         with self.db:

@@ -35,7 +35,7 @@ if phase=='first':
         old.execute('INSERT INTO snapshots VALUES(?,?,?,?)',
           ('0',original['content_hash'],original['detail_fetched_at'],json.dumps(original)))
 s=Store(Path('/data/ledger.sqlite3'))
-assert s.db.execute('PRAGMA user_version').fetchone()[0]==3
+assert s.db.execute('PRAGMA user_version').fetchone()[0]==4
 assert s.inspect('0')['snapshots'][0]['description']=='Legacy text'
 assert s.inspect('0')['normalized_snapshots'][0]['description']=='Legacy text'
 committed=(set(json.loads(Path('/data/first-full-ids.json').read_text()))

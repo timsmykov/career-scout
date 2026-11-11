@@ -15,6 +15,8 @@
 
 ## Контракты
 
+- [multi-source.md](multi-source.md) — четыре адаптера, общий CLI, native pagination и статус SuperJob.
+
 - [normalization.md](normalization.md) — общий формат v2, source identity, условия и миграция.
 
 - [collector-readiness.md](collector-readiness.md) — live-доступ и остаток реализации.

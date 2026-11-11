@@ -2,15 +2,15 @@
 
 Сервис сбора, систематизации и хранения вакансий для последующего анализа.
 
-**Статус: реализован первый HH-коллектор.** Поиск и полные карточки, SQLite,
-пагинация, окна дат, история изменений и продолжение после сбоя работают через CLI.
-Остальные три адаптера и общий контроль качества ещё предстоит реализовать.
-Реализованы общий формат вакансии v2, source+source_id, typed зарплата/опыт/формат
-и миграция SQLite v1/v2→v3 с backup. Поиск и фильтры настраиваются в
-[configs/search.toml](configs/search.toml): IT/финтех/ИИ/ML, стажёр/junior/middle,
-без опыта/1–3 года; unknown сохраняется, зарплата не ограничивает отбор.
-LangGraph и анализ по резюме отложены.
-Отклики не отправляются. [Контракт и сохранность данных](docs/normalization.md).
+**Статус: реализованы четыре адаптера.** HH, «Работа России» и Habr собирают полные
+карточки в общую SQLite с пагинацией, версиями и продолжением после сбоя.
+SuperJob search/detail работают, но постоянное сохранение выключено до подтверждения
+условий хранения. [Точный статус, запуск и ограничения](docs/multi-source.md).
+
+Общий формат vacancy/export v2; SQLite schema4 мигрирует прежнюю базу с backup.
+Поиск и фильтры — [configs/search.toml](configs/search.toml): IT/финтех/ИИ/ML,
+стажёр/junior/middle, без опыта/1–3 года. Unknown/conflict сохраняются, зарплата
+не ограничивает отбор. LangGraph и анализ по резюме отложены, отклики не отправляются.
 
 ## Что строим
 
@@ -51,9 +51,12 @@ uv run --no-sync pytest -m "not live"
 
 ```sh
 # План без сети и без открытия БД
+uv run --no-sync python -m career_scout plan --source all
 uv run --no-sync python -m career_scout plan --query "бизнес аналитик" --days 7
 # Явный сетевой сбор: конечный бюджет на весь запуск, включая auth и повторы
-uv run --no-sync python -m career_scout collect --query "бизнес аналитик" --days 7 --requests 50
+uv run --no-sync python -m career_scout collect --source all --days 7 --requests 50
+# Без сохранения вакансий, включая SuperJob:
+uv run --no-sync python -m career_scout probe --source all --query аналитик --requests 3
 # RUN_ID берётся из JSON результата collect
 uv run --no-sync python -m career_scout resume RUN_ID --requests 50
 uv run --no-sync python -m career_scout status RUN_ID

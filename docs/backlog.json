@@ -53,7 +53,7 @@
       "id": "CS-004",
       "milestone": "M1",
       "title": "HTTP и source budget",
-      "status": "in_progress",
+      "status": "complete",
       "depends_on": [
         "CS-001",
         "CS-003"
@@ -61,7 +61,7 @@
       "deliverable": "collectors/transport.py, budget.py",
       "acceptance": "Finite retries, Retry-After seconds/date, cooldown общего источника, отказ за пределами бюджета",
       "scope": "collector",
-      "implementation_note": "HH timeout/retries/budget/429 cooldown и фиксированные safe errors; общий transport других источников впереди."
+      "implementation_note": "HH transport и общий ReadClient для Habr/Trudvsem/SJ: finite retries/budget, safe errors, 401/403/429, SJ quota-like503, persisted source cooldown; source-specific auth не смешивается."
     },
     {
       "id": "CS-005",
@@ -102,7 +102,7 @@
       "deliverable": "collectors/planner.py, versioned search config",
       "acceptance": "Union четырёх семейств, title-only/AI-only не обязательны, fair ordering, immutable plan",
       "scope": "collector",
-      "implementation_note": "HH planner: union четырёх семейств, focused+broad запросы, round-robin, exact dedup/provenance, UTC-окно/география/бюджет/policy hash закреплены в run; resume не перечитывает TOML."
+      "implementation_note": "Четыре семейства и source-native параметры; HH16focused+broad, остальные12broad без неподдерживаемого Boolean. Immutable source/window/options/budget/policy; native geography."
     },
     {
       "id": "CS-008",
@@ -130,7 +130,7 @@
       "deliverable": "storage/migrations, connection.py",
       "acceptance": "WAL, foreign keys, schema version, транзакции на временной БД",
       "scope": "collector",
-      "implementation_note": "Schema v3; v1/v2 backup + atomic upgrade, rollback/writer lock/process death проверены. Рабочие317 source snapshots и все прежние строки сохранены; история решений отдельная."
+      "implementation_note": "Schema4 добавляет query_pagination; atomic v1/v2/v3 migrations с backup/flock. Прежние raw/normalized snapshots и filter history сохраняются."
     },
     {
       "id": "CS-010",
@@ -205,40 +205,43 @@
       "id": "CS-015",
       "milestone": "M3",
       "title": "Trudvsem адаптер",
-      "status": "planned",
+      "status": "complete",
       "depends_on": [
         "CS-004",
         "CS-013"
       ],
       "deliverable": "collectors/adapters/trudvsem.py",
       "acceptance": "Offset 0/1/2, companycode+id, qualification/условия, complete/truncated",
-      "scope": "collector"
+      "scope": "collector",
+      "implementation_note": "REST v1 search/detail, offset=page0, составной companycode+id, duty+requirements+qualification и native salary/minimum experience. Курсоры/restart и bounded real сбор проверены."
     },
     {
       "id": "CS-016",
       "milestone": "M3",
       "title": "Habr адаптер",
-      "status": "planned",
+      "status": "complete",
       "depends_on": [
         "CS-004",
         "CS-013"
       ],
       "deliverable": "collectors/adapters/habr.py",
       "acceptance": "Frontend+HTML, SSR/JSON-LD identity, capped passes, partial/stale/blocked",
-      "scope": "collector"
+      "scope": "collector",
+      "implementation_note": "Frontend JSON page1 + SSR/JSON-LD detail с ID/title/company проверками; актуальные detail conditions/qualification. Budget/cap/drift/blocked и restart проверены. Неофициальный frontend контракт, диапазон дат не подтверждён."
     },
     {
       "id": "CS-017",
       "milestone": "M3",
       "title": "SuperJob адаптер",
-      "status": "planned",
+      "status": "in_progress",
       "depends_on": [
         "CS-004",
         "CS-013"
       ],
       "deliverable": "collectors/adapters/superjob.py",
       "acceptance": "Собственный app key, more/page size, rich/fallback text, quota-like503",
-      "scope": "collector"
+      "scope": "collector",
+      "implementation_note": "API search/detail, собственный key, native count<=40/promo rows/more, date cap500/split, rich+fallback и503 реализованы/проверены. Synthetic full store/resume работает; production storage_allowed=false до подтверждения режима хранения, probe без записи работает."
     },
     {
       "id": "CS-018",
@@ -253,7 +256,7 @@
       "deliverable": "collectors/windows.py, scheduling.py",
       "acceptance": "Большой запрос не забирает весь budget; пересечения окон дедуплицируются; остаток виден",
       "scope": "collector",
-      "implementation_note": "HH дата-окна, dedup пересечений и round-robin queries; общая справедливость источников впереди."
+      "implementation_note": "HH/SJ saved date windows и dedup границ; round-robin queries и отдельные budgets/run/cooldown каждого source в batch. Нет watermark reconciliation или параллельных leases."
     },
     {
       "id": "CS-019",
@@ -269,7 +272,7 @@
       "deliverable": "services/reconciliation.py, live acceptance receipts",
       "acceptance": "TTL обновляет прежние listing; сбой источника даёт partial; доступ/retention отдельно",
       "scope": "collector",
-      "implementation_note": "HH refresh при новом discovery по TTL/изменению listing; полная source reconciliation впереди."
+      "implementation_note": "Все4adapter probes и bounded collection/restart Trudvsem/Habr; source failures независимы. Listing hashes игнорируют viewer counters. Полная reconciliation/retention и допуск SJ storage остаются впереди."
     },
     {
       "id": "CS-020",

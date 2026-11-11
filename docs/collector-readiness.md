@@ -1,5 +1,10 @@
 # Доступ к площадкам и готовность коллектора
 
+Обновление: реализованы четыре адаптера, общий source-aware CLI и SQLite schema4.
+HH/Trudvsem/Habr сохраняют карточки; SuperJob probe работает, сохранение
+выключено до подтверждения условий. [Текущая реализация и proof](multi-source.md).
+Первые таблицы ниже сохраняют прежние bounded probes как исторические результаты.
+
 Проверено 11 ноября 2026 (Europe/Moscow).
 Доказательства: [обезличенный HTTP-отчёт](references/live-checks-20261111.json).
 Значения ключей и тексты вакансий в отчёт не записаны.
@@ -72,36 +77,27 @@ source snapshots,634 discoveries и query/run состояния сохране�
 
 ## Остаток по площадкам
 
-| Площадка | Что нужно реализовать/проверить |
+| Площадка | Реализация и остаток |
 |---|---|
-| HH | Первый runtime реализован; config/query planner и фильтры реализованы; остаются mappings других source, watermark reconciliation, retention и длительная эксплуатационная приёмка |
-| SuperJob | App key injection, фактический page size, more/cap, окна дат, quota-like 503, сбор всех текстовых разделов; прояснить хранение/LLM-передачу |
-| Работа России | Offset как page 0/1/2; companycode+id; корректная сборка duty/qualification/условий, даты, dedup при обновлении |
-| Habr | Frontend schema contract, SSR/JSON-LD parser и identity; лимит страниц, deferred/stale; TTL detail даже при неизменном listing; anti-bot как blocked |
-
-SuperJob больше не заблокирован отсутствием ключа. В template enabled остаётся
-false: ещё нет runtime-адаптера и согласованной политики использования данных.
+| HH | Runtime готов; остаются reconciliation/retention и длительная эксплуатация |
+| Работа России | Search/detail, составной ID, текст/условия и resume готовы; сеть может давать timeout, сохранённый хвост продолжается |
+| Habr | Frontend+SSR/JSON-LD и resume готовы; неофициальный контракт требует контроля drift/блокировок, дата-диапазон не подтверждён |
+| SuperJob | Search/detail/страницы/окна/503 и synthetic store/resume готовы; production storage_allowed=false до подтверждения режима хранения |
 
 ## Общие пробелы реализации
 
-1. **Другие источники и общие контракты.** Identity/schema v2/common normalizer реализованы и
-   backfilled без потерь. Рабочий TOML реализован; остальные API adapters и общий transport ещё впереди.
-2. **Систематизация условий.** Typed salary/gross/period/experience/work formats и
-   unknown/conflict/provenance реализованы. Grade/technology/experience фильтры с историей реализованы;
-   зарплата не ограничивает отбор, unknown/conflict сохраняются. [Проверки](filtering.md).
-3. **Очередь и обновления.** HH использует один процесс/flock, не lease workers.
-   TTL проверяется при повторном discovery; нет полного source reconciliation,
-   auto-expiry и retention/purge. Старые run читают текущие версии БД.
-4. **Экспорт.** HH JSON работает из одного согласованного read snapshot, но CSV,
-   неизменяемый version set по run, stable consumer cursor и retention ещё впереди.
-   Source HH snapshot v1 immutable, текущий общий export имеет schema v2; worker/bootstrap v1 отложен.
-5. **Качество охвата.** HH-проверка сотен карточек пройдена; query families реализованы; ручной контроль
-   потерь рынка и длительная multi-source нагрузка ещё впереди. Анализ резюме/LangGraph отложен.
+Четыре адаптера не закрывают collector MVP целиком. Постоянно сохраняют три
+источника; SuperJob пока доступен для probe без записи текстов. Runtime TOML,
+история фильтров и source-aware batch реализованы. Нет полного source reconciliation,
+watermark обхода всех обновлений/удалений, auto-expiry/retention/purge, CSV,
+неизменяемого version set по run и consumer cursor. Один writer/flock на ledger;
+leases параллельных исполнителей не внедрялись. Старый run экспортирует текущие версии.
 
-## Порядок работ
+Новая bounded проверка собирает несколько страниц Trudvsem/Habr и продолжает их
+новыми Docker-контейнерами; на Trudvsem был настоящий timeout с сохранённым хвостом.
+Статусы этих широких запусков остаются partial по бюджету — это не полный обход рынка.
+[Метаданные и результаты](references/multi-source-live-20261111.json),
+[инструкция и контракты](multi-source.md).
 
-HH adapter + offline fixtures + SQLite resume реализованы и проверены.
-Далее — Trudvsem, Habr и SuperJob с source-specific fixtures и общий слой качества. Параллельную
-обработку сотен вакансий включать после проверки общей квоты и восстановления.
-Приёмка — по [acceptance.md](acceptance.md); последовательность — [roadmap.md](roadmap.md).
-Реализованный HH-срез и оставшийся общий MVP перечислены отдельно выше.
+Следующий этап: допустимый режим SuperJob, source reconciliation, проверка потерь
+поиска и дальнейшая передача данных. LangGraph/резюме/агенты остаются отложенными.

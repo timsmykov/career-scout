@@ -4,13 +4,17 @@
 
 Это новый самостоятельный сервис, а не изменение существующего OpenBot Scout.
 Перед изменением читать README.md и docs/README.md, затем нужный предметный контракт.
-Реализован первый HH-срез: hh.py, storage.py, collector.py, cli.py.
-Общие контракты остальных площадок остаются целевыми, не готовым runtime.
+Реализованы HH и adapters.py (Trudvsem/Habr/SuperJob), общий transport.py,
+source_normalization.py, source_types.py, storage/collector/CLI.
+Точный статус: docs/multi-source.md. SuperJob storage_allowed=false до подтверждения
+условий хранения; probe читает в памяти. Не объявлять его постоянный сбор включённым.
 Docker/Compose: batch CLI, external volume career-scout-data; .env — read-only secret,
 HH token cache — в volume. Не удалять этот volume и не добавлять scheduler без запроса.
-SQLite schema v3 (vacancy/export v2): source+source_id, immutable snapshots и отдельные common-1
-normalized_snapshots. V1/v2 авто-мигрируются с backup под flock. Не переписывать
+SQLite schema v4 (vacancy/export v2): source+source_id, immutable snapshots и отдельные common-1
+normalized_snapshots. V1/v2/v3 авто-мигрируются с backup под flock. Не переписывать
 старый payload/content_hash при изменении нормализатора. Контракт: docs/normalization.md.
+Нативный page size сохраняется в query_pagination; HH cap2000, SJ500,
+Trudvsem offset=page0, Habr page1. Не переносить HH geography/Boolean syntax в другие API.
 Рабочий config: configs/search.toml; frozen plan/resume, offline refilter и история
 решений в docs/filtering.md. Unknown/conflict сохранять; зарплата не фильтрует.
 Текущий scope: только collect/normalize/store/quality/export. Анализ по резюме и

@@ -5,13 +5,13 @@
 LangGraph, LLM-оценка, импорт резюме и настройка моделей отложены. Их существующие
 контракты сохранены как будущий проект, не являются условиями готовности коллектора.
 
-## Реализованный срез HH — 11.11.2026
+## Реализованные источники — 11.11.2026
 
-Работают `plan/collect/resume/status/inspect/export/refilter`, полный HH detail, курсор
-страницы в одной транзакции с discoveries, SQLite WAL/schema v3, дедупликация,
+Работают `plan/collect/resume/status/inspect/export/refilter/probe`, полный HH/Trudvsem/Habr detail и SuperJob probe, курсор
+страницы в одной транзакции с discoveries, SQLite WAL/schema v4, дедупликация,
 история содержательных версий, разбиение выдачи свыше 2000 по времени, finite
 retries, request budget и сохранённый cooldown 429. Один процесс на БД через flock;
-общих leases и других адаптеров пока нет. Запуск/перезапуск проверены offline и
+общих leases пока нет; SuperJob storage ожидает подтверждения режима. Запуск/перезапуск проверены offline и
 ограниченным live-сбором. [Доказательства и ограничения](collector-readiness.md).
 Ни один полный M1/M2 этап не объявлен завершённым только на основании HH-среза.
 
@@ -26,11 +26,11 @@ volume recreation проверены; 300 synthetic карточек прохо�
 | Часть | Фактическая готовность | Остаток |
 |---|---|---|
 | HH auth/search/detail | Реализовано, CS-005/006 complete | Длительная эксплуатационная проверка |
-| Страницы/версии/дочитывание | Работают для HH | Общие source contracts и reconciliation |
+| Страницы/версии/дочитывание | Работают для HH/Trudvsem/Habr; SJ код проверен synthetic | Source reconciliation, SJ допуск хранения |
 | Размещение | Docker CLI + external SQLite volume | Backup policy/расписание — отдельная будущая потребность |
 | Поиск/конфигурация | Валидируемый TOML, четыре семейства, география, frozen plan/resume | Doctor, измерение охвата |
 | Условия/фильтры | Domain/grade/experience, unknown/conflict, зарплата нейтральна, история/refilter/export | Mappings других source, дальнейший контроль потерь |
-| Другие источники | Только прежние bounded API probes | Три runtime адаптера ещё не реализованы |
+| Другие источники | Trudvsem/Habr runtime и все4search/detail probes | SJ production storage пока выключен |
 | Готовый набор | Текущий JSON export | CSV, закреплённые версии, manifest/cursor, expiry/retention |
 
 Ближайший рекомендуемый порядок без моделей:
@@ -43,16 +43,17 @@ volume recreation проверены; 300 synthetic карточек прохо�
    CS-008 partial (нет doctor). Четыре семейства, TOML, unknown/conflict, история
    решений и offline refilter; зарплата не фильтрует. [Контракт и проверки](filtering.md).
    Численность и лексические сигналы не считаются мерой соответствия резюме.
-3. **Остальные источники (CS-015/016/017/018/019):** Trudvsem → Habr → SuperJob,
-   с контрактами каждой площадки и отдельной приёмкой; прежние вопросы доступа/
-   допустимого хранения не выдавать за решённые. Один недоступный источник не
-   должен останавливать остальные.
+3. **Подключены Trudvsem/Habr; SuperJob ожидает режима хранения.** CS-015/016
+   complete, CS-017/018/019 in_progress. Все четыре адаптера читают search/detail;
+   пагинация, source budgets и restart общие. [Точный статус и proof](multi-source.md).
+   Постоянный сбор SuperJob пока не принят; он явно blocked, остальные продолжают.
 4. **Завершить передачу данных и эксплуатацию (CS-033/034/035/036/037):**
    фиксированные версии/экспорт, freshness/expiry/retention и контроль потерь.
    Многопроцессные leases нужны при введении параллельных исполнителей, а не
    только из-за появления Docker; сейчас действует один writer на ledger.
 
-Пункты 1–2 реализованы в указанном объёме; следующий этап — другие источники (пункт 3). Остальные пункты не выполнены этим изменением.
+Пункты1–2 и Trudvsem/Habr из пункта3 реализованы. Остаток: условия сохранения
+SuperJob, reconciliation, качество охвата и передача данных из пункта4.
 LangGraph/оценщики/резюме остаются deferred. Статусы ниже синхронизированы с
 backlog.json; in_progress означает частичную реализацию, не закрытый acceptance.
 
@@ -154,7 +155,7 @@ HTTP API или брокер без отдельной потребности н
 - Предшественники: CS-001, CS-003.
 - Результат: collectors/transport.py, budget.py.
 - Готово, когда: Finite retries, Retry-After seconds/date, cooldown общего источника, отказ за пределами бюджета.
-- Статус: in_progress.
+- Статус: complete.
 
 ### CS-005 · HH application auth (M1)
 
@@ -231,21 +232,21 @@ HTTP API или брокер без отдельной потребности н
 - Предшественники: CS-004, CS-013.
 - Результат: collectors/adapters/trudvsem.py.
 - Готово, когда: Offset 0/1/2, companycode+id, qualification/условия, complete/truncated.
-- Статус: planned.
+- Статус: complete.
 
 ### CS-016 · Habr адаптер (M3)
 
 - Предшественники: CS-004, CS-013.
 - Результат: collectors/adapters/habr.py.
 - Готово, когда: Frontend+HTML, SSR/JSON-LD identity, capped passes, partial/stale/blocked.
-- Статус: planned.
+- Статус: complete.
 
 ### CS-017 · SuperJob адаптер (M3)
 
 - Предшественники: CS-004, CS-013.
 - Результат: collectors/adapters/superjob.py.
 - Готово, когда: Собственный app key, more/page size, rich/fallback text, quota-like503.
-- Статус: planned.
+- Статус: in_progress.
 
 ### CS-018 · Окна и общая справедливость (M3)
 

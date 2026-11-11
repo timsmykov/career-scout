@@ -33,3 +33,21 @@ domain_terms = ["IT", "ИТ", "финтех", "fintech", "ИИ", "AI", "ML", "LL
 # Outside is proven only by BOTH a clearly unrelated role and explicit unrelated industry.
 outside_role_names = ["водитель", "курьер", "грузчик", "повар", "кассир", "уборщик"]
 outside_industry_names = ["Розничная торговля", "Общественное питание", "Сельское хозяйство"]
+
+[sources.hh]
+enabled = true
+
+[sources.trudvsem]
+enabled = true
+# region_code = "7700000000000" # Native Trudvsem code, not an HH area ID.
+
+[sources.habr]
+enabled = true
+interval = 3.0
+# city_id = 678 # Native Habr city ID.
+
+[sources.superjob]
+enabled = true
+# API reading works; persistent archive awaits confirmed usage terms.
+storage_allowed = false
+# town_id = 4 # Native SuperJob town ID.

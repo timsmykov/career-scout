@@ -10,13 +10,14 @@ import re
 import tempfile
 import time
 from email.utils import parsedate_to_datetime
-from html.parser import HTMLParser
 from pathlib import Path
 
 import httpx
-from pydantic import BaseModel, ConfigDict, Field, StrictInt, ValidationError
+from pydantic import ValidationError
 
 from career_scout.common import SourceError, digest, utcnow
+from career_scout.html import description_text
+from career_scout.source_types import Page
 
 
 class Credentials:
@@ -84,46 +85,6 @@ class Credentials:
             if os.path.exists(name):
                 os.unlink(name)
         self.values["HH_ACCESS_TOKEN"] = token
-
-
-class Page(BaseModel):
-    model_config = ConfigDict(extra="allow")
-    items: list[dict]
-    found: StrictInt = Field(ge=0)
-    pages: StrictInt = Field(ge=0)
-    page: StrictInt = Field(ge=0)
-    per_page: StrictInt = Field(ge=1, le=100)
-
-
-class DescriptionParser(HTMLParser):
-    def __init__(self):
-        super().__init__(convert_charrefs=True)
-        self.parts: list[str] = []
-        self.hidden = 0
-
-    def handle_starttag(self, tag, attrs):
-        if tag in {"script", "style"}:
-            self.hidden += 1
-        if not self.hidden and tag in {"p", "div", "br", "li", "ul", "ol", "h1", "h2", "h3"}:
-            self.parts.append("\n" + ("- " if tag == "li" else ""))
-
-    def handle_endtag(self, tag):
-        if tag in {"script", "style"}:
-            self.hidden = max(0, self.hidden - 1)
-        if not self.hidden and tag in {"p", "div", "li", "ul", "ol"}:
-            self.parts.append("\n")
-
-    def handle_data(self, data):
-        if not self.hidden:
-            self.parts.append(data)
-
-
-def description_text(html: str) -> str:
-    parser = DescriptionParser()
-    parser.feed(html)
-    parser.close()
-    lines = [re.sub(r"[^\S\n]+", " ", line).strip() for line in "".join(parser.parts).splitlines()]
-    return "\n".join(line for line in lines if line)
 
 
 def meaningful(payload: dict) -> dict:
@@ -206,6 +167,10 @@ def normalize(payload: dict, expected_id: str) -> dict:
 
 
 class HHClient:
+    source = "hh"
+    window_cap = 2000
+    supports_date_split = True
+
     def __init__(
         self,
         credentials: Credentials,

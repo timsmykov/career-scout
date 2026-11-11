@@ -1,4 +1,4 @@
-"""Explicit read-only HH CLI. Importing this module never calls external services."""
+"""Explicit read-only multi-source CLI. Importing this module never calls external services."""
 
 from __future__ import annotations
 
@@ -18,6 +18,7 @@ from career_scout.hh import Credentials, HHClient, SourceError
 from career_scout.models import Identity, Source
 from career_scout.search_config import RuntimeSettings, load_config
 from career_scout.search_config import plan as build_plan
+from career_scout.sources import create_client
 from career_scout.storage import Store
 
 
@@ -36,21 +37,24 @@ def nonnegative(value):
 
 
 def parser():
-    p = argparse.ArgumentParser(description="HH read-only collector")
+    p = argparse.ArgumentParser(description="Read-only vacancy collector")
     p.add_argument("--config", type=Path, default=Path("configs/search.toml"))
     p.add_argument("--db", type=Path, default=Path("data/ledger.sqlite3"))
     p.add_argument("--env", type=Path, default=Path(".env"))
     p.add_argument("--token-file", type=Path, help="Writable token cache for read-only credentials")
     sub = p.add_subparsers(dest="command", required=True)
     sub.add_parser("migrate", help="Upgrade the local ledger with a backup; no network")
-    for name in ("plan", "collect"):
+    for name in ("plan", "collect", "probe"):
         command = sub.add_parser(name)
         command.add_argument("--query", action="append")
+        command.add_argument("--source", choices=[*get_args(Source), "all"], default="hh")
         command.add_argument("--days", type=positive, default=None)
         command.add_argument("--per-page", type=positive, choices=range(1, 101), default=None)
         command.add_argument("--refresh-hours", type=nonnegative, default=None)
-    for name in ("plan", "collect", "resume"):
-        command = sub.choices[name] if name in {"plan", "collect"} else sub.add_parser(name)
+    for name in ("plan", "collect", "probe", "resume"):
+        command = (
+            sub.choices[name] if name in {"plan", "collect", "probe"} else sub.add_parser(name)
+        )
         if name == "resume":
             command.add_argument("run_id")
         command.add_argument("--requests", type=positive, default=None)
@@ -71,11 +75,95 @@ def parser():
     return p
 
 
+def runtime_options(saved, args):
+    values = {**RuntimeSettings().model_dump(), **saved}
+    values.update(
+        {
+            key: getattr(args, key)
+            for key in ("requests", "details", "interval", "retries")
+            if getattr(args, key) is not None
+        }
+    )
+    return RuntimeSettings.model_validate(values).model_dump()
+
+
+def client_for(plan, args, options):
+    source = plan["source"]
+    credentials = Credentials(args.env, token_path=args.token_file if source == "hh" else None)
+    kwargs = dict(
+        max_requests=options["requests"], retries=options["retries"], interval=options["interval"]
+    )
+    # Retain the public HH factory seam used by existing integrations/tests.
+    if source == "hh":
+        return HHClient(credentials, **kwargs)
+    return create_client(source, credentials, options=plan.get("source_options", {}), **kwargs)
+
+
+def run_source(store, run_id, plan, args, options):
+    client = None
+    try:
+        if plan["source"] == "superjob" and not plan.get("source_options", {}).get(
+            "storage_allowed"
+        ):
+            raise SourceError("source_storage_policy_unconfirmed")
+        client = client_for(plan, args, options)
+        return collect(store, client, run_id, max_details=options["details"])
+    except SourceError as exc:
+        with store.lock():
+            return store.finish(run_id, exc)
+    finally:
+        if client:
+            client.close()
+
+
+def probe(plans, args):
+    results = []
+    for plan in plans:
+        client = None
+        result = {"source": plan["source"], "status": "blocked"}
+        try:
+            client = client_for(plan, args, plan["runtime"])
+            page = client.search(
+                plan["queries"][0],
+                plan["start"],
+                plan["end"],
+                0,
+                min(plan["per_page"], 2),
+                area_ids=plan.get("source_options", {}).get("area_ids", []),
+            )
+            result.update(
+                search_total=page.found,
+                returned_items=len(page.items),
+                actual_page_size=page.per_page,
+                detail_checked=False,
+            )
+            if page.items:
+                card = client.detail(page.items[0]["id"])
+                result.update(
+                    detail_checked=True,
+                    source_id=card["source_id"],
+                    description_chars=len(card["description"]),
+                )
+            result["status"] = "ok"
+        except SourceError as exc:
+            result["error"] = exc.code
+        finally:
+            if client:
+                result["requests"] = client.used
+                client.close()
+        results.append(result)
+    return {
+        "status": "complete" if all(r["status"] == "ok" for r in results) else "partial",
+        "storage": "none",
+        "sources": results,
+    }
+
+
 def main(argv=None):
     p = parser()
     args = p.parse_args(argv)
     if (
-        args.command in {"plan", "collect", "resume"}
+        args.command in {"plan", "collect", "probe", "resume"}
         and args.details is not None
         and args.details < 0
     ):
@@ -83,30 +171,51 @@ def main(argv=None):
     config = None
     plan = None
     options = None
+    plans = []
     try:
-        if args.command in {"plan", "collect", "refilter"}:
+        if (
+            args.command in {"collect", "resume", "probe"}
+            and args.token_file
+            and args.token_file.resolve() == args.env.resolve()
+        ):
+            raise SourceError("token_cache_overlaps_credentials")
+        if args.command in {"plan", "collect", "probe", "refilter"}:
             config = load_config(args.config)
-        if args.command in {"plan", "collect"}:
-            plan = build_plan(
-                config,
-                queries=args.query,
-                days=args.days,
-                per_page=args.per_page,
-                refresh_hours=args.refresh_hours,
+        if args.command in {"plan", "collect", "probe"}:
+            names = (
+                [
+                    s
+                    for s in ("hh", "trudvsem", "habr", "superjob")
+                    if s in config.sources and config.sources[s].enabled
+                ]
+                if args.source == "all"
+                else [args.source]
             )
-            options = dict(plan["runtime"])
-            options.update(
-                {
-                    key: getattr(args, key)
-                    for key in ("requests", "details", "interval", "retries")
-                    if getattr(args, key) is not None
-                }
-            )
-            options = RuntimeSettings.model_validate(options).model_dump()
-            plan["runtime"] = options
+            if not names:
+                raise SourceError("no_enabled_sources")
+            for source in names:
+                plan = build_plan(
+                    config,
+                    source=source,
+                    queries=args.query or (["аналитик"] if args.command == "probe" else None),
+                    days=args.days,
+                    per_page=args.per_page,
+                    refresh_hours=args.refresh_hours,
+                )
+                plan["runtime"] = runtime_options(plan["runtime"], args)
+                plans.append(plan)
             if args.command == "plan":
-                print(json.dumps(plan, ensure_ascii=False, indent=2))
+                output = (
+                    plans[0]
+                    if len(plans) == 1
+                    else {"source": "all", "budget_scope": "per_source", "plans": plans}
+                )
+                print(json.dumps(output, ensure_ascii=False, indent=2))
                 return 0
+            if args.command == "probe":
+                output = probe(plans, args)
+                print(json.dumps(output, ensure_ascii=False, indent=2))
+                return 0 if output["status"] == "complete" else 2
     except SourceError as exc:
         print(json.dumps({"error": exc.code}))
         return 3
@@ -131,7 +240,7 @@ def main(argv=None):
         store = Store(args.db)
         if args.command == "migrate":
             output = {
-                "schema_version": 3,
+                "schema_version": 4,
                 "vacancy_schema_version": 2,
                 "backup_path": str(store.backup_path) if store.backup_path else None,
             }
@@ -162,35 +271,36 @@ def main(argv=None):
         else:
             if args.command == "resume":
                 saved = json.loads(store.run(args.run_id)["plan_json"])
-                options = {**RuntimeSettings().model_dump(), **saved.get("runtime", {})}
-                options.update(
-                    {
-                        key: getattr(args, key)
-                        for key in ("requests", "details", "interval", "retries")
-                        if getattr(args, key) is not None
+                options = runtime_options(saved.get("runtime", {}), args)
+                output = run_source(store, args.run_id, saved, args, options)
+            else:
+                results = []
+                for plan in plans:
+                    with store.lock():
+                        run_id = store.create(
+                            plan["queries"],
+                            plan["start"],
+                            plan["end"],
+                            plan["per_page"],
+                            plan["ttl_hours"],
+                            source=plan["source"],
+                            plan_snapshot=plan,
+                        )
+                    results.append(run_source(store, run_id, plan, args, plan["runtime"]))
+                    if results[-1]["error"] == "interrupted":
+                        break
+                output = (
+                    results[0]
+                    if len(plans) == 1
+                    else {
+                        "status": "complete"
+                        if all(r["status"] == "complete" for r in results)
+                        else "partial",
+                        "budget_scope": "per_source",
+                        "runs": results,
+                        "not_started_sources": [p["source"] for p in plans[len(results) :]],
                     }
                 )
-                options = RuntimeSettings.model_validate(options).model_dump()
-            credentials = Credentials(args.env, token_path=args.token_file)
-            client = HHClient(
-                credentials,
-                max_requests=options["requests"],
-                retries=options["retries"],
-                interval=options["interval"],
-            )
-            if args.command == "collect":
-                with store.lock():
-                    run_id = store.create(
-                        plan["queries"],
-                        plan["start"],
-                        plan["end"],
-                        plan["per_page"],
-                        plan["ttl_hours"],
-                        plan_snapshot=plan,
-                    )
-            else:
-                run_id = args.run_id
-            output = collect(store, client, run_id, max_details=options["details"])
         print(json.dumps(output, ensure_ascii=False, indent=2))
         if args.command in {"collect", "resume"}:
             return 0 if output["status"] == "complete" else 2

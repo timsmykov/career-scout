@@ -1,5 +1,8 @@
 # SuperJob
 
+Runtime реализован в adapters.py/source_normalization.py; [общий запуск и точный статус](../multi-source.md).
+
+
 Официальные страницы:
 https://api.superjob.ru/
 https://api.superjob.ru/rules/
@@ -26,7 +29,8 @@ ID detail совпадает со списком, текст описания п
 
 Правила API ранее прочитаны: постоянное хранение/производный архив не подтверждены,
 кроме временного технологического кэша. До ясного разрешённого режима:
-enabled=false, retention_mode=disabled, llm_transfer_allowed=false.
+Runtime search/probe enabled=true, storage_allowed=false;
+retention/LLM-передача не включены. Project bootstrap policy остаётся disabled.
 Не хранить текст под видом hash/evidence/model result, обходя ограничения.
 Разрешение на код MIT-коллектора не разрешает его способ использования данных.
 
