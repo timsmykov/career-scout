@@ -11,6 +11,7 @@
 
 ## Контракты
 
+- [collector-readiness.md](collector-readiness.md) — live-доступ и остаток реализации.
 - [collector.md](collector.md) — поиск, страницы, окна, бюджет и полнота.
 - [sources/README.md](sources/README.md) — четыре площадки и статус доступа.
 - [filtering.md](filtering.md) — допустимые грейды и работа с неизвестным.

@@ -31,7 +31,7 @@ llm_transfer_allowed = false
 
 [sources.superjob]
 enabled = false
-access_state = "awaiting_registration_and_key"
+access_state = "application_key_search_detail_verified"
 retention_mode = "disabled"
 llm_transfer_allowed = false
 

@@ -1,0 +1,102 @@
+{
+  "checked_at": "2026-11-11T15:37:45.525171+00:00",
+  "transport": "httpx, existing host network, no proxy/account switch",
+  "bounded": true,
+  "results": [
+    {
+      "source": "hh",
+      "steps": [
+        {
+          "stage": "identity",
+          "status": 200,
+          "content_type": "application/json",
+          "is_application": true
+        },
+        {
+          "stage": "search",
+          "status": 200,
+          "content_type": "application/json",
+          "returned": 2,
+          "total": 14784
+        },
+        {
+          "stage": "detail",
+          "status": 200,
+          "content_type": "application/json",
+          "description_chars": 1542,
+          "identity_matches": true
+        }
+      ]
+    },
+    {
+      "source": "superjob",
+      "steps": [
+        {
+          "stage": "search",
+          "status": 200,
+          "content_type": "application/json",
+          "returned": 2,
+          "total": 36,
+          "more": true,
+          "api_error": false
+        },
+        {
+          "stage": "detail",
+          "status": 200,
+          "content_type": "application/json",
+          "description_chars": 3786,
+          "identity_matches": true
+        }
+      ]
+    },
+    {
+      "source": "trudvsem",
+      "steps": [
+        {
+          "stage": "search",
+          "status": 200,
+          "content_type": "application/json",
+          "returned": 2,
+          "total": 1610,
+          "body_status": "200"
+        },
+        {
+          "stage": "detail",
+          "status": 200,
+          "content_type": "application/json",
+          "returned": 1,
+          "description_chars": 251,
+          "identity_matches": true
+        }
+      ]
+    },
+    {
+      "source": "habr",
+      "steps": [
+        {
+          "stage": "search",
+          "status": 200,
+          "content_type": "application/json",
+          "returned": 25,
+          "total": 537
+        },
+        {
+          "stage": "detail",
+          "status": 200,
+          "content_type": "text/html",
+          "job_posting": true,
+          "description_chars": 2796,
+          "ssr_present": true
+        }
+      ]
+    }
+  ],
+  "application_credentials_check": {
+    "source": "hh",
+    "stage": "client_credentials",
+    "status": 200,
+    "identity_status": 200,
+    "is_application": true,
+    "unified_env_token_updated": true
+  }
+}
