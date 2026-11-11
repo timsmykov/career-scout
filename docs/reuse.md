@@ -49,3 +49,6 @@ ClickHouse, dbt, Kafka/Redpanda, Airflow, Kubernetes, fine-tuned extractor,
 
 Готовый форк NextMove рационален при необходимости его UI. Сейчас CLI и отдельный
 LangGraph-сервис проще соответствуют нашей задаче.
+
+Подробный план: [адаптация по компонентам](component-adaptation.md) и
+[roadmap с задачами](roadmap.md). Эта карта уточняет минимальную заготовку выше.

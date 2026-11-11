@@ -1,0 +1,456 @@
+{
+  "schema_version": 1,
+  "updated_on": "2026-11-11",
+  "status": "development_plan_not_runtime",
+  "milestones": {
+    "M0": "complete",
+    "M1": "planned",
+    "M2": "planned",
+    "M3": "planned",
+    "M4": "planned",
+    "M5": "planned",
+    "M6": "planned"
+  },
+  "tasks": [
+    {
+      "id": "CS-001",
+      "milestone": "M1",
+      "title": "Модели источников и ошибок",
+      "status": "planned",
+      "depends_on": [],
+      "deliverable": "domain/source.py, domain/errors.py, JSON Schema",
+      "acceptance": "SourceQuery/Page, typed cursor, capability map; drift отличим от пустой выдачи"
+    },
+    {
+      "id": "CS-002",
+      "milestone": "M1",
+      "title": "Нормализация и версии",
+      "status": "planned",
+      "depends_on": [
+        "CS-001"
+      ],
+      "deliverable": "normalization/{html,hashing,time,salary}.py",
+      "acceptance": "Разделы/даты/gross-net/период/unknown сохранены; хеш устойчив к query provenance"
+    },
+    {
+      "id": "CS-003",
+      "milestone": "M1",
+      "title": "Конфигурация и секреты",
+      "status": "planned",
+      "depends_on": [
+        "CS-001"
+      ],
+      "deliverable": "config.py, env loader, config validation",
+      "acceptance": "Читается единый .env; missing key диагностируется без печати значения"
+    },
+    {
+      "id": "CS-004",
+      "milestone": "M1",
+      "title": "HTTP и source budget",
+      "status": "planned",
+      "depends_on": [
+        "CS-001",
+        "CS-003"
+      ],
+      "deliverable": "collectors/transport.py, budget.py",
+      "acceptance": "Finite retries, Retry-After seconds/date, cooldown общего источника, отказ за пределами бюджета"
+    },
+    {
+      "id": "CS-005",
+      "milestone": "M1",
+      "title": "HH application auth",
+      "status": "planned",
+      "depends_on": [
+        "CS-004"
+      ],
+      "deliverable": "collectors/auth/hh.py",
+      "acceptance": "Рабочий токен переиспользуется; acquire атомарен; 401 не вызывает бесконечный цикл"
+    },
+    {
+      "id": "CS-006",
+      "milestone": "M1",
+      "title": "HH search/detail",
+      "status": "planned",
+      "depends_on": [
+        "CS-002",
+        "CS-005"
+      ],
+      "deliverable": "collectors/adapters/hh.py",
+      "acceptance": "Search pages и full detail с identity; cap отмечен; snippets не проходят за full"
+    },
+    {
+      "id": "CS-007",
+      "milestone": "M1",
+      "title": "Планирование запросов",
+      "status": "planned",
+      "depends_on": [
+        "CS-001",
+        "CS-003"
+      ],
+      "deliverable": "collectors/planner.py, versioned search config",
+      "acceptance": "Union четырёх семейств, title-only/AI-only не обязательны, fair ordering, immutable plan"
+    },
+    {
+      "id": "CS-008",
+      "milestone": "M1",
+      "title": "CLI plan и проверка конфигурации",
+      "status": "planned",
+      "depends_on": [
+        "CS-003",
+        "CS-007"
+      ],
+      "deliverable": "cli.py: plan, doctor",
+      "acceptance": "Plan без сети; doctor различает отсутствие credentials, неподтверждённый order и disabled sources"
+    },
+    {
+      "id": "CS-009",
+      "milestone": "M2",
+      "title": "SQLite и миграции",
+      "status": "planned",
+      "depends_on": [
+        "CS-001",
+        "CS-002"
+      ],
+      "deliverable": "storage/migrations, connection.py",
+      "acceptance": "WAL, foreign keys, schema version, транзакции на временной БД"
+    },
+    {
+      "id": "CS-010",
+      "milestone": "M2",
+      "title": "Snapshots и discoveries",
+      "status": "planned",
+      "depends_on": [
+        "CS-009"
+      ],
+      "deliverable": "storage/vacancies.py, discoveries.py",
+      "acceptance": "Один source ID в нескольких запросах не дублируется; изменённый текст создаёт версию"
+    },
+    {
+      "id": "CS-011",
+      "milestone": "M2",
+      "title": "Прогресс query/window",
+      "status": "planned",
+      "depends_on": [
+        "CS-009",
+        "CS-007"
+      ],
+      "deliverable": "storage/progress.py",
+      "acceptance": "Cursor меняется вместе с записью страницы; partial не продвигает чужой watermark"
+    },
+    {
+      "id": "CS-012",
+      "milestone": "M2",
+      "title": "Очередь и leases",
+      "status": "planned",
+      "depends_on": [
+        "CS-009"
+      ],
+      "deliverable": "storage/queue.py",
+      "acceptance": "Atomic claim, конечный lease, retry_due; два исполнителя не владеют одной задачей"
+    },
+    {
+      "id": "CS-013",
+      "milestone": "M2",
+      "title": "Исполнитель сбора и detail",
+      "status": "planned",
+      "depends_on": [
+        "CS-006",
+        "CS-010",
+        "CS-011",
+        "CS-012"
+      ],
+      "deliverable": "services/collection.py, detail.py, cli collect",
+      "acceptance": "Kill/restart не теряет данные; stale/deferred не уходит в evaluation"
+    },
+    {
+      "id": "CS-014",
+      "milestone": "M2",
+      "title": "Фильтры с основаниями",
+      "status": "planned",
+      "depends_on": [
+        "CS-002",
+        "CS-010"
+      ],
+      "deliverable": "domain/filtering.py, storage/filter_decisions.py",
+      "acceptance": "Unknown/conflict сохранены; senior-коллега не означает senior-вакансию; версия фильтра"
+    },
+    {
+      "id": "CS-015",
+      "milestone": "M3",
+      "title": "Trudvsem адаптер",
+      "status": "planned",
+      "depends_on": [
+        "CS-004",
+        "CS-013"
+      ],
+      "deliverable": "collectors/adapters/trudvsem.py",
+      "acceptance": "Offset 0/1/2, companycode+id, qualification/условия, complete/truncated"
+    },
+    {
+      "id": "CS-016",
+      "milestone": "M3",
+      "title": "Habr адаптер",
+      "status": "planned",
+      "depends_on": [
+        "CS-004",
+        "CS-013"
+      ],
+      "deliverable": "collectors/adapters/habr.py",
+      "acceptance": "Frontend+HTML, SSR/JSON-LD identity, capped passes, partial/stale/blocked"
+    },
+    {
+      "id": "CS-017",
+      "milestone": "M3",
+      "title": "SuperJob адаптер",
+      "status": "planned",
+      "depends_on": [
+        "CS-004",
+        "CS-013"
+      ],
+      "deliverable": "collectors/adapters/superjob.py",
+      "acceptance": "Собственный app key, more/page size, rich/fallback text, quota-like503"
+    },
+    {
+      "id": "CS-018",
+      "milestone": "M3",
+      "title": "Окна и общая справедливость",
+      "status": "planned",
+      "depends_on": [
+        "CS-006",
+        "CS-007",
+        "CS-013"
+      ],
+      "deliverable": "collectors/windows.py, scheduling.py",
+      "acceptance": "Большой запрос не забирает весь budget; пересечения окон дедуплицируются; остаток виден"
+    },
+    {
+      "id": "CS-019",
+      "milestone": "M3",
+      "title": "Сверка обновлений и source acceptance",
+      "status": "planned",
+      "depends_on": [
+        "CS-015",
+        "CS-016",
+        "CS-017",
+        "CS-018"
+      ],
+      "deliverable": "services/reconciliation.py, live acceptance receipts",
+      "acceptance": "TTL обновляет прежние listing; сбой источника даёт partial; доступ/retention отдельно"
+    },
+    {
+      "id": "CS-020",
+      "milestone": "M4",
+      "title": "Импорт резюме и профилей",
+      "status": "planned",
+      "depends_on": [
+        "CS-003",
+        "CS-009"
+      ],
+      "deliverable": "profiles/importer.py, registry.py",
+      "acceptance": "Ровно четыре актуальных текста, hash/версия, universal/research исключены"
+    },
+    {
+      "id": "CS-021",
+      "milestone": "M4",
+      "title": "Рубрики и версия маршрута",
+      "status": "planned",
+      "depends_on": [
+        "CS-014",
+        "CS-020"
+      ],
+      "deliverable": "evaluation/policy.py, validated rubric config",
+      "acceptance": "Вердикты однозначны; order подтверждён до evaluate; без скрытого обогащения биографии"
+    },
+    {
+      "id": "CS-022",
+      "milestone": "M4",
+      "title": "Модельный адаптер и бюджет",
+      "status": "planned",
+      "depends_on": [
+        "CS-003",
+        "CS-004"
+      ],
+      "deliverable": "evaluation/model.py, usage.py",
+      "acceptance": "API model ID проверен, finite retries, timeout/context, tokens/cost_unknown, расходы ограничены"
+    },
+    {
+      "id": "CS-023",
+      "milestone": "M4",
+      "title": "Проверка результата",
+      "status": "planned",
+      "depends_on": [
+        "CS-020",
+        "CS-021"
+      ],
+      "deliverable": "evaluation/validation.py",
+      "acceptance": "Schema, profile/version identity, цитаты в нужном тексте, без silent truncation"
+    },
+    {
+      "id": "CS-024",
+      "milestone": "M4",
+      "title": "Последовательный LangGraph",
+      "status": "planned",
+      "depends_on": [
+        "CS-012",
+        "CS-021",
+        "CS-022",
+        "CS-023"
+      ],
+      "deliverable": "evaluation/graph.py, routing.py",
+      "acceptance": "First PASS прекращает вызовы; 256 сочетаний исходов и реальные call counts; persistent checkpoint"
+    },
+    {
+      "id": "CS-025",
+      "milestone": "M4",
+      "title": "Кэш и согласование checkpoint",
+      "status": "planned",
+      "depends_on": [
+        "CS-010",
+        "CS-024"
+      ],
+      "deliverable": "evaluation/cache.py, recovery.py",
+      "acceptance": "Все входные версии в ключах; checkpoint сверяется с ledger; error не кешируется как reject"
+    },
+    {
+      "id": "CS-026",
+      "milestone": "M4",
+      "title": "Очередь уточнений",
+      "status": "planned",
+      "depends_on": [
+        "CS-024",
+        "CS-025"
+      ],
+      "deliverable": "services/review.py, cli review",
+      "acceptance": "Показать основание/вопрос, ответ владельца версионируется; перепроверка затронутой пары"
+    },
+    {
+      "id": "CS-027",
+      "milestone": "M5",
+      "title": "Контрольная разметка",
+      "status": "planned",
+      "depends_on": [
+        "CS-014",
+        "CS-021"
+      ],
+      "deliverable": "private evaluation dataset + anonymized protocol",
+      "acceptance": "Наборы настройки/контроля раздельны; по четырём профилям есть пограничные/негативные случаи"
+    },
+    {
+      "id": "CS-028",
+      "milestone": "M5",
+      "title": "Охват поискового плана",
+      "status": "planned",
+      "depends_on": [
+        "CS-019",
+        "CS-027"
+      ],
+      "deliverable": "evaluation report: search/filter losses",
+      "acceptance": "Видно, на каком этапе потеряна каждая контрольная подходящая вакансия"
+    },
+    {
+      "id": "CS-029",
+      "milestone": "M5",
+      "title": "Качество оценщиков",
+      "status": "planned",
+      "depends_on": [
+        "CS-025",
+        "CS-027"
+      ],
+      "deliverable": "evaluation report per profile and route",
+      "acceptance": "False rejects/accepts, clarification/error rates; отдельно по профилям; пороги согласованы"
+    },
+    {
+      "id": "CS-030",
+      "milestone": "M5",
+      "title": "Нагрузка и стоимость",
+      "status": "planned",
+      "depends_on": [
+        "CS-019",
+        "CS-025"
+      ],
+      "deliverable": "load report offline + bounded approved live",
+      "acceptance": "Сотни synthetic карточек, fixed model concurrency, memory/backlog/usage; реальные квоты не стрессуются"
+    },
+    {
+      "id": "CS-031",
+      "milestone": "M5",
+      "title": "Сбои и восстановление",
+      "status": "planned",
+      "depends_on": [
+        "CS-013",
+        "CS-025"
+      ],
+      "deliverable": "failure acceptance suite",
+      "acceptance": "Падение на границах HTTP/DB/LLM, duplicate pages, drift, exhausted budget не теряют очередь"
+    },
+    {
+      "id": "CS-032",
+      "milestone": "M6",
+      "title": "Статус и диагностика",
+      "status": "planned",
+      "depends_on": [
+        "CS-013",
+        "CS-024"
+      ],
+      "deliverable": "cli status, explain, source-health",
+      "acceptance": "Отдельно list/detail/filter/eval и причины; blocked source не выглядит пустым рынком"
+    },
+    {
+      "id": "CS-033",
+      "milestone": "M6",
+      "title": "Локальный экспорт",
+      "status": "planned",
+      "depends_on": [
+        "CS-026",
+        "CS-032"
+      ],
+      "deliverable": "cli export JSON/CSV",
+      "acceptance": "Версия/ссылка/профиль/основание и pending; без полного резюме по умолчанию"
+    },
+    {
+      "id": "CS-034",
+      "milestone": "M6",
+      "title": "Сроки хранения",
+      "status": "planned",
+      "depends_on": [
+        "CS-010",
+        "CS-012",
+        "CS-025",
+        "CS-033"
+      ],
+      "deliverable": "retention service + explicit maintenance command",
+      "acceptance": "Удаление/истечение по policy охватывает raw, queue, checkpoint, export/backup; результат expired виден"
+    },
+    {
+      "id": "CS-035",
+      "milestone": "M6",
+      "title": "Логи и итог запуска",
+      "status": "planned",
+      "depends_on": [
+        "CS-004",
+        "CS-013",
+        "CS-024"
+      ],
+      "deliverable": "run summary, redaction, attempt usage",
+      "acceptance": "Нет secrets/raw prompts; видны request counts, retry classes, backlog, cache hits, стоимость"
+    },
+    {
+      "id": "CS-036",
+      "milestone": "M6",
+      "title": "Инструкция запуска и приёмка MVP",
+      "status": "planned",
+      "depends_on": [
+        "CS-028",
+        "CS-029",
+        "CS-030",
+        "CS-031",
+        "CS-032",
+        "CS-033",
+        "CS-034",
+        "CS-035"
+      ],
+      "deliverable": "runbook + release acceptance",
+      "acceptance": "Чистая установка, live receipts, recovery и измеренное качество; формальные неизвестные не скрыты"
+    }
+  ]
+}

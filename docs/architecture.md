@@ -24,8 +24,8 @@ validate → profile 1 → profile 2 → profile 3 → profile 4 → aggregate
               │           │           │           │
               └───────────┴── PASS ────┴───────────┘ → ACCEPTED
 no PASS + four REJECT → REJECTED
-no PASS + any BORDERLINE → NEEDS_CLARIFICATION
 no PASS + error/missing result → PENDING
+no PASS + no errors + any BORDERLINE → NEEDS_CLARIFICATION
 ```
 
 Граф не решает, какие API страницы загрузить. Между вакансиями разрешена параллельная

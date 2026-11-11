@@ -1,0 +1,46 @@
+{
+  "reviewed_on": "2026-11-11",
+  "repo": "alekseevpavel04/ru-it-jobs-radar",
+  "baseline_commit": "035bd435763062543eba884a5cd5298390b20675",
+  "observed_current_head": "ec2feff2b659edad9771b07b15337bdde7889cd5",
+  "method": "Native GitHub reads and selective static dependency/mechanism inspection. No runtime executed or imported into Career Scout.",
+  "license": "MIT",
+  "current_files": [
+    {
+      "path": "src/radar/collect/http.py",
+      "current_blob": "82368f908bf3ea65a419e68bdb7dcc81f98ed714"
+    },
+    {
+      "path": "src/radar/collect/contracts.py",
+      "current_blob": "d2ee3fddc1906c51b06419cd137f27242546d228"
+    },
+    {
+      "path": "src/radar/collect/envelope.py",
+      "current_blob": "3147035d18571a8649d53f993d1ae9a45a693a4b"
+    },
+    {
+      "path": "src/radar/collect/trudvsem.py",
+      "current_blob": "f4cb2f3df7bd69efade3271744f75d863dcf0586"
+    },
+    {
+      "path": "src/radar/collect/superjob.py",
+      "current_blob": "dbbe5dde9d2ad59e80d739a2e65739696a2869aa"
+    },
+    {
+      "path": "src/radar/collect/habr.py",
+      "current_blob": "747df1d84a13fa90083d4a2d0c33f81ff597d3d1"
+    },
+    {
+      "path": "src/radar/collect/writer.py",
+      "current_blob": "269da98fe927022161a187ce1836863ca1f88ed3"
+    },
+    {
+      "path": "src/radar/collect/summary.py",
+      "current_blob": "8040351ff844f3d8d91454a91b14548aecdb1393"
+    },
+    {
+      "path": "src/radar/collect/lock.py",
+      "current_blob": "8de9579fb38becc9367e86f0734dfd517a2bd7c8"
+    }
+  ]
+}

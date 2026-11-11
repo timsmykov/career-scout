@@ -63,3 +63,5 @@ uv run --no-sync ruff format --check .
 фиксируются отдельно в [NOTICE](NOTICE.md).
 
 [Проверка четырёх площадок и остаток реализации](docs/collector-readiness.md).
+
+Разработка: [полный roadmap](docs/roadmap.md) · [что переносим из radar](docs/component-adaptation.md) · [backlog](docs/backlog.json).
