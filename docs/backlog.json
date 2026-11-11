@@ -7,7 +7,7 @@
     "M1": "planned",
     "M2": "planned",
     "M3": "planned",
-    "M4": "planned",
+    "M4": "deferred",
     "M5": "planned",
     "M6": "planned"
   },
@@ -19,7 +19,8 @@
       "status": "planned",
       "depends_on": [],
       "deliverable": "domain/source.py, domain/errors.py, JSON Schema",
-      "acceptance": "SourceQuery/Page, typed cursor, capability map; drift отличим от пустой выдачи"
+      "acceptance": "SourceQuery/Page, typed cursor, capability map; drift отличим от пустой выдачи",
+      "scope": "collector"
     },
     {
       "id": "CS-002",
@@ -30,7 +31,8 @@
         "CS-001"
       ],
       "deliverable": "normalization/{html,hashing,time,salary}.py",
-      "acceptance": "Разделы/даты/gross-net/период/unknown сохранены; хеш устойчив к query provenance"
+      "acceptance": "Разделы/даты/gross-net/период/unknown сохранены; хеш устойчив к query provenance",
+      "scope": "collector"
     },
     {
       "id": "CS-003",
@@ -41,7 +43,8 @@
         "CS-001"
       ],
       "deliverable": "config.py, env loader, config validation",
-      "acceptance": "Читается единый .env; missing key диагностируется без печати значения"
+      "acceptance": "Читается единый .env; missing key диагностируется без печати значения",
+      "scope": "collector"
     },
     {
       "id": "CS-004",
@@ -53,7 +56,8 @@
         "CS-003"
       ],
       "deliverable": "collectors/transport.py, budget.py",
-      "acceptance": "Finite retries, Retry-After seconds/date, cooldown общего источника, отказ за пределами бюджета"
+      "acceptance": "Finite retries, Retry-After seconds/date, cooldown общего источника, отказ за пределами бюджета",
+      "scope": "collector"
     },
     {
       "id": "CS-005",
@@ -64,7 +68,8 @@
         "CS-004"
       ],
       "deliverable": "collectors/auth/hh.py",
-      "acceptance": "Рабочий токен переиспользуется; acquire атомарен; 401 не вызывает бесконечный цикл"
+      "acceptance": "Рабочий токен переиспользуется; acquire атомарен; 401 не вызывает бесконечный цикл",
+      "scope": "collector"
     },
     {
       "id": "CS-006",
@@ -76,7 +81,8 @@
         "CS-005"
       ],
       "deliverable": "collectors/adapters/hh.py",
-      "acceptance": "Search pages и full detail с identity; cap отмечен; snippets не проходят за full"
+      "acceptance": "Search pages и full detail с identity; cap отмечен; snippets не проходят за full",
+      "scope": "collector"
     },
     {
       "id": "CS-007",
@@ -88,7 +94,8 @@
         "CS-003"
       ],
       "deliverable": "collectors/planner.py, versioned search config",
-      "acceptance": "Union четырёх семейств, title-only/AI-only не обязательны, fair ordering, immutable plan"
+      "acceptance": "Union четырёх семейств, title-only/AI-only не обязательны, fair ordering, immutable plan",
+      "scope": "collector"
     },
     {
       "id": "CS-008",
@@ -100,7 +107,8 @@
         "CS-007"
       ],
       "deliverable": "cli.py: plan, doctor",
-      "acceptance": "Plan без сети; doctor различает отсутствие credentials, неподтверждённый order и disabled sources"
+      "acceptance": "Plan без сети; doctor различает отсутствие credentials, неподтверждённый order и disabled sources",
+      "scope": "collector"
     },
     {
       "id": "CS-009",
@@ -112,7 +120,8 @@
         "CS-002"
       ],
       "deliverable": "storage/migrations, connection.py",
-      "acceptance": "WAL, foreign keys, schema version, транзакции на временной БД"
+      "acceptance": "WAL, foreign keys, schema version, транзакции на временной БД",
+      "scope": "collector"
     },
     {
       "id": "CS-010",
@@ -123,7 +132,8 @@
         "CS-009"
       ],
       "deliverable": "storage/vacancies.py, discoveries.py",
-      "acceptance": "Один source ID в нескольких запросах не дублируется; изменённый текст создаёт версию"
+      "acceptance": "Один source ID в нескольких запросах не дублируется; изменённый текст создаёт версию",
+      "scope": "collector"
     },
     {
       "id": "CS-011",
@@ -135,7 +145,8 @@
         "CS-007"
       ],
       "deliverable": "storage/progress.py",
-      "acceptance": "Cursor меняется вместе с записью страницы; partial не продвигает чужой watermark"
+      "acceptance": "Cursor меняется вместе с записью страницы; partial не продвигает чужой watermark",
+      "scope": "collector"
     },
     {
       "id": "CS-012",
@@ -146,7 +157,8 @@
         "CS-009"
       ],
       "deliverable": "storage/queue.py",
-      "acceptance": "Atomic claim, конечный lease, retry_due; два исполнителя не владеют одной задачей"
+      "acceptance": "Atomic claim, конечный lease, retry_due; два исполнителя не владеют одной задачей",
+      "scope": "collector"
     },
     {
       "id": "CS-013",
@@ -160,7 +172,8 @@
         "CS-012"
       ],
       "deliverable": "services/collection.py, detail.py, cli collect",
-      "acceptance": "Kill/restart не теряет данные; stale/deferred не уходит в evaluation"
+      "acceptance": "Kill/restart не теряет данные; stale/deferred не уходит в evaluation",
+      "scope": "collector"
     },
     {
       "id": "CS-014",
@@ -172,7 +185,8 @@
         "CS-010"
       ],
       "deliverable": "domain/filtering.py, storage/filter_decisions.py",
-      "acceptance": "Unknown/conflict сохранены; senior-коллега не означает senior-вакансию; версия фильтра"
+      "acceptance": "Unknown/conflict сохранены; senior-коллега не означает senior-вакансию; версия фильтра",
+      "scope": "collector"
     },
     {
       "id": "CS-015",
@@ -184,7 +198,8 @@
         "CS-013"
       ],
       "deliverable": "collectors/adapters/trudvsem.py",
-      "acceptance": "Offset 0/1/2, companycode+id, qualification/условия, complete/truncated"
+      "acceptance": "Offset 0/1/2, companycode+id, qualification/условия, complete/truncated",
+      "scope": "collector"
     },
     {
       "id": "CS-016",
@@ -196,7 +211,8 @@
         "CS-013"
       ],
       "deliverable": "collectors/adapters/habr.py",
-      "acceptance": "Frontend+HTML, SSR/JSON-LD identity, capped passes, partial/stale/blocked"
+      "acceptance": "Frontend+HTML, SSR/JSON-LD identity, capped passes, partial/stale/blocked",
+      "scope": "collector"
     },
     {
       "id": "CS-017",
@@ -208,7 +224,8 @@
         "CS-013"
       ],
       "deliverable": "collectors/adapters/superjob.py",
-      "acceptance": "Собственный app key, more/page size, rich/fallback text, quota-like503"
+      "acceptance": "Собственный app key, more/page size, rich/fallback text, quota-like503",
+      "scope": "collector"
     },
     {
       "id": "CS-018",
@@ -221,7 +238,8 @@
         "CS-013"
       ],
       "deliverable": "collectors/windows.py, scheduling.py",
-      "acceptance": "Большой запрос не забирает весь budget; пересечения окон дедуплицируются; остаток виден"
+      "acceptance": "Большой запрос не забирает весь budget; пересечения окон дедуплицируются; остаток виден",
+      "scope": "collector"
     },
     {
       "id": "CS-019",
@@ -235,61 +253,66 @@
         "CS-018"
       ],
       "deliverable": "services/reconciliation.py, live acceptance receipts",
-      "acceptance": "TTL обновляет прежние listing; сбой источника даёт partial; доступ/retention отдельно"
+      "acceptance": "TTL обновляет прежние listing; сбой источника даёт partial; доступ/retention отдельно",
+      "scope": "collector"
     },
     {
       "id": "CS-020",
       "milestone": "M4",
       "title": "Импорт резюме и профилей",
-      "status": "planned",
+      "status": "deferred",
       "depends_on": [
         "CS-003",
         "CS-009"
       ],
       "deliverable": "profiles/importer.py, registry.py",
-      "acceptance": "Ровно четыре актуальных текста, hash/версия, universal/research исключены"
+      "acceptance": "Ровно четыре актуальных текста, hash/версия, universal/research исключены",
+      "scope": "future_analysis"
     },
     {
       "id": "CS-021",
       "milestone": "M4",
       "title": "Рубрики и версия маршрута",
-      "status": "planned",
+      "status": "deferred",
       "depends_on": [
         "CS-014",
         "CS-020"
       ],
       "deliverable": "evaluation/policy.py, validated rubric config",
-      "acceptance": "Вердикты однозначны; order подтверждён до evaluate; без скрытого обогащения биографии"
+      "acceptance": "Вердикты однозначны; order подтверждён до evaluate; без скрытого обогащения биографии",
+      "scope": "future_analysis"
     },
     {
       "id": "CS-022",
       "milestone": "M4",
       "title": "Модельный адаптер и бюджет",
-      "status": "planned",
+      "status": "deferred",
       "depends_on": [
         "CS-003",
         "CS-004"
       ],
       "deliverable": "evaluation/model.py, usage.py",
-      "acceptance": "API model ID проверен, finite retries, timeout/context, tokens/cost_unknown, расходы ограничены"
+      "acceptance": "API model ID проверен, finite retries, timeout/context, tokens/cost_unknown, расходы ограничены",
+      "scope": "future_analysis"
     },
     {
       "id": "CS-023",
       "milestone": "M4",
       "title": "Проверка результата",
-      "status": "planned",
+      "status": "deferred",
       "depends_on": [
         "CS-020",
         "CS-021"
       ],
       "deliverable": "evaluation/validation.py",
-      "acceptance": "Schema, profile/version identity, цитаты в нужном тексте, без silent truncation"
+      "acceptance": "Schema, profile/version identity, цитаты в нужном тексте, без silent truncation",
+      "scope": "future_analysis"
     },
     {
       "id": "CS-024",
       "milestone": "M4",
       "title": "Последовательный LangGraph",
-      "status": "planned",
+      "status": "deferred",
       "depends_on": [
         "CS-012",
         "CS-021",
@@ -297,43 +320,47 @@
         "CS-023"
       ],
       "deliverable": "evaluation/graph.py, routing.py",
-      "acceptance": "First PASS прекращает вызовы; 256 сочетаний исходов и реальные call counts; persistent checkpoint"
+      "acceptance": "First PASS прекращает вызовы; 256 сочетаний исходов и реальные call counts; persistent checkpoint",
+      "scope": "future_analysis"
     },
     {
       "id": "CS-025",
       "milestone": "M4",
       "title": "Кэш и согласование checkpoint",
-      "status": "planned",
+      "status": "deferred",
       "depends_on": [
         "CS-010",
         "CS-024"
       ],
       "deliverable": "evaluation/cache.py, recovery.py",
-      "acceptance": "Все входные версии в ключах; checkpoint сверяется с ledger; error не кешируется как reject"
+      "acceptance": "Все входные версии в ключах; checkpoint сверяется с ledger; error не кешируется как reject",
+      "scope": "future_analysis"
     },
     {
       "id": "CS-026",
       "milestone": "M4",
       "title": "Очередь уточнений",
-      "status": "planned",
+      "status": "deferred",
       "depends_on": [
         "CS-024",
         "CS-025"
       ],
       "deliverable": "services/review.py, cli review",
-      "acceptance": "Показать основание/вопрос, ответ владельца версионируется; перепроверка затронутой пары"
+      "acceptance": "Показать основание/вопрос, ответ владельца версионируется; перепроверка затронутой пары",
+      "scope": "future_analysis"
     },
     {
       "id": "CS-027",
       "milestone": "M5",
       "title": "Контрольная разметка",
-      "status": "planned",
+      "status": "deferred",
       "depends_on": [
         "CS-014",
         "CS-021"
       ],
       "deliverable": "private evaluation dataset + anonymized protocol",
-      "acceptance": "Наборы настройки/контроля раздельны; по четырём профилям есть пограничные/негативные случаи"
+      "acceptance": "Наборы настройки/контроля раздельны; по четырём профилям есть пограничные/негативные случаи",
+      "scope": "future_analysis"
     },
     {
       "id": "CS-028",
@@ -342,106 +369,107 @@
       "status": "planned",
       "depends_on": [
         "CS-019",
-        "CS-027"
+        "CS-037"
       ],
-      "deliverable": "evaluation report: search/filter losses",
-      "acceptance": "Видно, на каком этапе потеряна каждая контрольная подходящая вакансия"
+      "deliverable": "Отчёт потерь search/filter",
+      "acceptance": "Контрольные вакансии проверены на обнаружение и сохранение; оценка резюме не нужна",
+      "scope": "collector"
     },
     {
       "id": "CS-029",
       "milestone": "M5",
       "title": "Качество оценщиков",
-      "status": "planned",
+      "status": "deferred",
       "depends_on": [
         "CS-025",
         "CS-027"
       ],
       "deliverable": "evaluation report per profile and route",
-      "acceptance": "False rejects/accepts, clarification/error rates; отдельно по профилям; пороги согласованы"
+      "acceptance": "False rejects/accepts, clarification/error rates; отдельно по профилям; пороги согласованы",
+      "scope": "future_analysis"
     },
     {
       "id": "CS-030",
       "milestone": "M5",
-      "title": "Нагрузка и стоимость",
+      "title": "Нагрузка коллектора",
       "status": "planned",
       "depends_on": [
-        "CS-019",
-        "CS-025"
+        "CS-019"
       ],
-      "deliverable": "load report offline + bounded approved live",
-      "acceptance": "Сотни synthetic карточек, fixed model concurrency, memory/backlog/usage; реальные квоты не стрессуются"
+      "deliverable": "Offline load report и bounded live acceptance",
+      "acceptance": "Сотни synthetic карточек, HTTP budgets, memory/backlog и длительность; без LLM",
+      "scope": "collector"
     },
     {
       "id": "CS-031",
       "milestone": "M5",
-      "title": "Сбои и восстановление",
+      "title": "Сбои и восстановление коллектора",
       "status": "planned",
       "depends_on": [
-        "CS-013",
-        "CS-025"
+        "CS-013"
       ],
-      "deliverable": "failure acceptance suite",
-      "acceptance": "Падение на границах HTTP/DB/LLM, duplicate pages, drift, exhausted budget не теряют очередь"
+      "deliverable": "Collector failure acceptance suite",
+      "acceptance": "Падение HTTP/DB, duplicate pages, drift и exhausted budget не теряют очередь",
+      "scope": "collector"
     },
     {
       "id": "CS-032",
       "milestone": "M6",
-      "title": "Статус и диагностика",
+      "title": "Статус и диагностика сбора",
       "status": "planned",
       "depends_on": [
-        "CS-013",
-        "CS-024"
+        "CS-013"
       ],
-      "deliverable": "cli status, explain, source-health",
-      "acceptance": "Отдельно list/detail/filter/eval и причины; blocked source не выглядит пустым рынком"
+      "deliverable": "CLI status, inspect, source-health",
+      "acceptance": "Видны list/detail/filter/expiry и причины; нет зависимости от графа оценки",
+      "scope": "collector"
     },
     {
       "id": "CS-033",
       "milestone": "M6",
-      "title": "Локальный экспорт",
+      "title": "Экспорт готовых данных",
       "status": "planned",
       "depends_on": [
-        "CS-026",
         "CS-032"
       ],
-      "deliverable": "cli export JSON/CSV",
-      "acceptance": "Версия/ссылка/профиль/основание и pending; без полного резюме по умолчанию"
+      "deliverable": "CLI export JSON/CSV, manifest и курсор",
+      "acceptance": "Полные согласованные версии с ID/hash/датами/provenance; partial/stale вне готового набора",
+      "scope": "collector"
     },
     {
       "id": "CS-034",
       "milestone": "M6",
-      "title": "Сроки хранения",
+      "title": "Сроки хранения коллектора",
       "status": "planned",
       "depends_on": [
         "CS-010",
         "CS-012",
-        "CS-025",
         "CS-033"
       ],
-      "deliverable": "retention service + explicit maintenance command",
-      "acceptance": "Удаление/истечение по policy охватывает raw, queue, checkpoint, export/backup; результат expired виден"
+      "deliverable": "Retention service и maintenance command",
+      "acceptance": "Expiry raw/snapshot/очереди/export/backup согласован; данные не попадают в готовый набор после истечения",
+      "scope": "collector"
     },
     {
       "id": "CS-035",
       "milestone": "M6",
-      "title": "Логи и итог запуска",
+      "title": "Логи и итог сбора",
       "status": "planned",
       "depends_on": [
         "CS-004",
-        "CS-013",
-        "CS-024"
+        "CS-013"
       ],
-      "deliverable": "run summary, redaction, attempt usage",
-      "acceptance": "Нет secrets/raw prompts; видны request counts, retry classes, backlog, cache hits, стоимость"
+      "deliverable": "Run summary и redaction",
+      "acceptance": "Видны requests, retry, full/deferred/stale, backlog и полнота; secrets не логируются",
+      "scope": "collector"
     },
     {
       "id": "CS-036",
       "milestone": "M6",
-      "title": "Инструкция запуска и приёмка MVP",
+      "title": "Приёмка collector MVP",
       "status": "planned",
       "depends_on": [
         "CS-028",
-        "CS-029",
         "CS-030",
         "CS-031",
         "CS-032",
@@ -449,8 +477,23 @@
         "CS-034",
         "CS-035"
       ],
-      "deliverable": "runbook + release acceptance",
-      "acceptance": "Чистая установка, live receipts, recovery и измеренное качество; формальные неизвестные не скрыты"
+      "deliverable": "Runbook и release acceptance",
+      "acceptance": "Повторяемый сбор/перезапуск/экспорт; качество данных и охват проверены без модели",
+      "scope": "collector"
+    },
+    {
+      "id": "CS-037",
+      "milestone": "M5",
+      "title": "Контрольная выборка для сбора",
+      "status": "planned",
+      "scope": "collector",
+      "depends_on": [
+        "CS-007",
+        "CS-014"
+      ],
+      "deliverable": "Набор контрольных вакансий и правила проверки качества данных",
+      "acceptance": "Проверены discovery, целостность текста, условия, дубли, версии и потери фильтра; резюме и LLM не нужны"
     }
-  ]
+  ],
+  "current_scope": "collector_first"
 }

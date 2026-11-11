@@ -1,6 +1,7 @@
 # ADR 0001: Python + LangGraph, отдельный кодовый сборщик
 
-Статус: принято для bootstrap по предпочтению владельца; runtime не реализован.
+Статус: первоначальное решение bootstrap; уточнено ADR 0004.
+Сейчас только Python/HTTPX/Pydantic/SQLite. LangGraph отложен до готовности коллектора.
 Дата: 2026-11-11.
 
 Python 3.12, httpx, Pydantic, LangGraph, SQLite WAL и persistent SQLite checkpointer.

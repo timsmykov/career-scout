@@ -1,64 +1,61 @@
-# Архитектура
+# Архитектура текущего этапа: коллектор
 
-## Разделение
+Сначала самостоятельный сервис сбора, систематизации и хранения. LangGraph и
+оценка по резюме отложены: коллектор должен быть полезен и принят без них.
 
-1. Collector service: план запросов → список → detail → нормализация → версия.
-2. Local filter: только доказуемые исключения, иначе пропуск/unknown.
-3. Durable queue: полные согласованные версии ожидают оценки.
-4. Evaluation service: фиксированный LangGraph, последовательные профили.
-5. Ledger/export: факты обработки, решения и остаток доступны без чтения чата.
+## Компоненты
 
-Коллектор не получает LLM API. Оценщики не получают ключи job API и права внешней записи.
-Разделение обеспечивается зависимостями/передаваемыми объектами, а не только промптом.
-
-## Путь вакансии
+1. Query planner: объединение поисковых семейств, source windows и fair budgets.
+2. Source adapters: HH, Trudvsem, Habr и SuperJob, проверка capabilities/доступа.
+3. Transport: конечные retries, timeout, cooldown, лимиты источника.
+4. Collection/detail service: страницы, дочитывание, обновления и сохранённый cursor.
+5. Normalization: полное содержание, условия, даты, unknown/conflict, source provenance.
+6. SQLite ledger: identity, версии, discoveries, query progress и очередь задач.
+7. Quality/report/export: полнота, ошибки, готовый набор и интерфейс будущему анализу.
 
 ```text
-query plan → source pages → exact dedup → full detail → normalized snapshot
-                                                        ↓
-                                               hard-filter result
-                                                        ↓
-                                             persisted evaluation job
-                                                        ↓
-validate → profile 1 → profile 2 → profile 3 → profile 4 → aggregate
-              │           │           │           │
-              └───────────┴── PASS ────┴───────────┘ → ACCEPTED
-no PASS + four REJECT → REJECTED
-no PASS + error/missing result → PENDING
-no PASS + no errors + any BORDERLINE → NEEDS_CLARIFICATION
+plan → source pages → identity/discovery → detail queue
+                                           ↓
+                         full text → normalize → versioned storage
+                                                    ↓
+                                      quality/completeness/expiry
+                                         ↓                  ↓
+                                   ready dataset       pending/stale
+                                         ↓
+                                  inspect / export
+                                         ↓
+                                  future analysis
 ```
 
-Граф не решает, какие API страницы загрузить. Между вакансиями разрешена параллельная
-работа; внутри одной цепочки порядок строгий. Не запускать следующие профили
-спекулятивно: это нарушает остановку после первого PASS.
+## Хранение и исполнение
 
-## Исполнение
+Один процесс CLI, SQLite WAL на локальном диске. Короткие атомарные транзакции,
+сеть вне транзакции, claim/lease для задач detail/refresh. Cursor сохраняется
+вместе с результатом страницы. Повторная страница не создаёт дубли и не теряет
+происхождение. Source rate budget общий для всех операций этого источника.
 
-MVP — один процесс CLI и SQLite WAL на локальном диске.
-Отдельные файлы ledger.sqlite3 и checkpoints.sqlite3 в игнорируемом data/.
-Короткие транзакции claim/save, без транзакции во время HTTP/LLM.
-Несколько независимых вакансий могут обрабатываться с ограниченной конкурентностью;
-к каждому источнику initially один запрос в полёте и общий бюджет процесса.
+Каждый snapshot имеет content hash и parser/normalizer version. Метаданные
+обнаружения и локальное время запроса не меняют смысловую версию.
+Listing и detail согласованы; старый detail после изменения списка — stale.
+Сохранение списка, полнота карточек и готовность набора — разные состояния.
 
-LangGraph StateGraph: validate_input → evaluate_profile → route → finalize.
-Один параметризованный узел может реализовать четыре логические роли.
-В state — IDs, версии, индекс профиля и служебные исходы. Полные тексты извлекаются
-из ledger и передаются модели целиком, но не копируются в длинную message history.
+Нормализация не превращает неизвестные поля в нули, не обрезает текст,
+не заменяет source даты временем скачивания. Grade/experience/technology filters
+применяются только при достаточном основании, неоднозначность сохраняется.
 
-Persistent checkpointer хранит ход исполнения. Ledger — авторитетный реестр
-результатов. Checkpoint не даёт exactly-once внешнему LLM: при падении после ответа,
-но до фиксации возможен повтор и повторная стоимость. Результат сохраняется
-идемпотентно по evaluation_key, попытки учитываются отдельно.
+## Граница передачи
 
-## Переход к нескольким процессам
+Готовая версия доступна через ledger/read interface и JSON/CSV export.
+Есть schema version, фиксированный cutoff, IDs/hash, provenance и cursor.
+Missing/partial/stale/expired/archived записи не выдаются как готовые.
+Незавершённый остаток и предметные исключения видны отдельно с причинами.
+Коллектор не решает, подходит ли кандидат, и не зависит от наличия резюме.
 
-Не добавлять брокер заранее. Сначала измерить очередь/SQLite contention.
-Если потребуется несколько серверов — ADR о PostgreSQL, общих source budgets,
-leases, checkpointer и миграции данных. Нельзя масштабировать HTTP workers,
-умножив лимиты одного app/IP.
+## Будущий анализ
 
-## Состояния
+Ранее подготовленные [контракты оценки](evaluation.md) сохраняются как отложенные.
+Model calls, import resumes, first-PASS routing и LangGraph не относятся к текущей
+реализации/приёмке. Текущей очереди достаточно задач collect/detail/refresh/export;
+не требуются model checkpoints или постоянно работающие агенты.
 
-collection_status (complete/partial/blocked/failed) отдельно от detail_status
-(full/partial/missing/stale/archived/unavailable), filter_result и matching status.
-Успех сохранения списка не означает полноту карточек или оценки.
+[Полный текущий roadmap](roadmap.md).

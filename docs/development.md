@@ -25,7 +25,8 @@ scripts/check_repository.py проверяет локальные Markdown-сс�
 
 plan — показать source/query windows и бюджеты без сети.
 collect — выполнить явный план, сохранить partial/full и cursor.
-evaluate — только полные версии, свежие резюме и подтверждённый порядок.
+inspect — просмотреть сохранённую карточку, версию и признаки качества.
+evaluate — отложенная команда будущего анализа; в текущий CLI не входит.
 status — состояния, backlog и причины.
 export — локальные результаты по retention policy.
 
@@ -40,3 +41,5 @@ src/career_scout/ пока содержит namespace и версию. Нет fa
 Обновление lock только явным `uv lock` и повторной проверкой.
 Бизнес-тесты offline, respx для HTTP, временная SQLite для хранения, fake model
 для графа. Live/model tests отдельно, без автоматической активации в CI.
+
+Текущая приёмка требует только сборщиков/SQLite/экспорта. LangGraph не реализуется.

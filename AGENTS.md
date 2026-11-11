@@ -5,6 +5,8 @@
 Это новый самостоятельный сервис, а не изменение существующего OpenBot Scout.
 Перед изменением читать README.md и docs/README.md, затем нужный предметный контракт.
 Bootstrap завершён на стадии документации; runtime ещё предстоит реализовать.
+Текущий scope: только collect/normalize/store/quality/export. Анализ по резюме и
+LangGraph отложены владельцем до приёмки коллектора. Не начинать их по старому roadmap.
 
 ## Инварианты
 
@@ -24,7 +26,8 @@ Bootstrap завершён на стадии документации; runtime �
 
 ## Структура и проверки
 
-Python 3.12, uv.lock, src-layout, httpx/Pydantic, LangGraph.
+Python 3.12, uv.lock, src-layout, httpx/Pydantic, SQLite.
+Существующие модельные зависимости bootstrap не требуют использования сейчас.
 До runtime-среза выполняются:
 `uv run --no-sync python scripts/check_repository.py`,
 `uv run --no-sync ruff check .`, `uv run --no-sync ruff format --check .`.

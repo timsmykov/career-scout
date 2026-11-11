@@ -2,6 +2,8 @@
 
 MVP: SQLite WAL на локальном диске; foreign keys включены; версия схемы и миграции.
 Это целевой дизайн, миграций в bootstrap нет.
+Текущий этап реализует только source/run/query/vacancy/discovery/filter/work/event
+сущности. resumes/evaluations/routing и model checkpoints отложены.
 
 | Таблица | Ключ / назначение |
 |---|---|

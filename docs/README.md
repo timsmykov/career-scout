@@ -1,11 +1,14 @@
 # Документация
 
+Текущий этап: коллектор данных. Оценка/LangGraph/профили — отложенные материалы.
+
 ## Задача и решения
 
 - [product.md](product.md) — результат, границы, открытые вопросы.
 - [architecture.md](architecture.md) — компоненты и путь вакансии.
 - [component-adaptation.md](component-adaptation.md) — перенос по файлам, зависимости и замены.
 - [reuse.md](reuse.md) — выбор сборщика и точные донорские исходники.
+- [adr/0004-collector-first.md](adr/0004-collector-first.md) — текущий приоритет: самостоятельный коллектор.
 - [adr/0001-stack.md](adr/0001-stack.md) — Python, LangGraph, SQLite.
 - [adr/0002-routing.md](adr/0002-routing.md) — последовательность и первый PASS.
 - [adr/0003-source-boundaries.md](adr/0003-source-boundaries.md) — транспорт и права источников.
@@ -27,7 +30,7 @@
 - [development.md](development.md) — действующие команды и будущий CLI.
 - [operations.md](operations.md) — запуск, восстановление, лимиты, диагностика.
 - [acceptance.md](acceptance.md) — сценарии и показатели качества.
-- [roadmap.md](roadmap.md) — фичи, релизы, этапы и 36 задач с приёмкой.
+- [roadmap.md](roadmap.md) — фичи коллектора, 28 активных и 9 отложенных задач.
 - [backlog.json](backlog.json) — машиночитаемые зависимости и статусы задач.
 - [references/README.md](references/README.md) — официальная документация и XERJ.
 - [research/README.md](research/README.md) — результат исследования аналогов.
