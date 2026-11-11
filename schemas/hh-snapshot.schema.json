@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://career-scout.local/schemas/hh-snapshot.schema.json",
+  "title": "HH source snapshot v1 (first collector slice)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "source",
+    "source_id",
+    "url",
+    "title",
+    "company",
+    "description",
+    "description_html",
+    "source_payload",
+    "conditions",
+    "published_at",
+    "created_at",
+    "source_updated_at",
+    "detail_fetched_at",
+    "normalizer_version",
+    "content_hash",
+    "detail_status"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "source": {
+      "const": "hh"
+    },
+    "source_id": {
+      "type": "string",
+      "pattern": "^[0-9]+$"
+    },
+    "url": {
+      "type": "string",
+      "format": "uri"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "company": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1
+    },
+    "description_html": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_payload": {
+      "type": "object"
+    },
+    "conditions": {
+      "type": "object"
+    },
+    "published_at": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "created_at": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "source_updated_at": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "detail_fetched_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "normalizer_version": {
+      "const": "hh-1"
+    },
+    "content_hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "detail_status": {
+      "enum": [
+        "full",
+        "archived"
+      ]
+    }
+  }
+}

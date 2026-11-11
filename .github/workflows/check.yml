@@ -1,4 +1,4 @@
-name: Bootstrap checks
+name: Offline checks
 
 on:
   push:
@@ -21,4 +21,5 @@ jobs:
       - run: uv run --no-sync python scripts/check_repository.py
       - run: uv run --no-sync ruff check .
       - run: uv run --no-sync ruff format --check .
+      - run: uv run --no-sync pytest -m "not live"
       - run: uv build

@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "career-scout"
 version = "0.1.0"
-description = "API-first vacancy collection and sequential resume matching; pre-development bootstrap."
+description = "Restartable API-first vacancy collection with local versioned storage."
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 authors = [{ name = "Tim Smykov" }]

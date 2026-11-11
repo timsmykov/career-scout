@@ -29,20 +29,31 @@ Habr использует frontend JSON и HTML, остальные три — �
 
 ## Полноценен ли текущий коллектор
 
-В новом репозитории пока нет исполняемого коллектора. src/career_scout содержит
-namespace и карту будущих модулей. HTTP-клиенты, хранилище, очередь и граф оценки
-описаны как контракты, но ещё не реализованы. Зелёный bootstrap CI проверяет
-документы, схемы и сборку пакета; live-доступ проверен отдельным ограниченным скриптом.
-Существующий OpenBot Scout — другая система; его код этой проверкой не изменён.
+Реализован первый HH-срез: поиск, полные карточки, SQLite WAL, snapshots/discoveries,
+пагинация, сохранённые окна, finite retries, request budget, source cooldown,
+CLI plan/collect/resume/status/inspect/export. Основные модули: hh.py, storage.py,
+collector.py, cli.py. Это первый источник, а не готовый четырёхплощадочный MVP.
 
-Основной референс выбран подходящий: radar даёт три источника и полезные механизмы.
-Полноценность для наших целей появится после реализации и приёмки следующего.
+[Живой HH collector acceptance](references/hh-collector-live-20261111.json):
+первый запуск с budget=1 сохранил страницу/2 ID и оставил 2 detail pending.
+Второй процесс resume с budget=4 дочитал карточки и следующую страницу: суммарно
+2 страницы/4 ID/3 full/1 deferred; статус partial по бюджету, cursor=2.
+Отдельный узкий двухсекундный план завершён: 2 страницы, 3 уникальных full карточки,
+0 deferred/truncated/rejected, complete. Для него понадобилось 4 HTTP-запроса,
+одна карточка использована из свежего локального snapshot; финальный повтор двух страниц новой версией клиента добавил 2 HTTP, всего 11 HTTP.
+Полный текст и HTML сверены с исходным detail, JSON export прочитан из SQLite.
+Реальные тексты и БД находятся только в gitignored data/, отчёт содержит метаданные.
+
+Offline pytest проверяет транзакционный rollback, аварийный выход subprocess,
+продолжение без повторного поиска committed page, версии/TTL, date splitting,
+401/403/429, schema drift и CLI. Эти сценарии не выдаются за live нагрузочный тест.
+[Команды и точные границы](development.md). Существующий OpenBot Scout не менялся.
 
 ## Остаток по площадкам
 
 | Площадка | Что нужно реализовать/проверить |
 |---|---|
-| HH | App token lifecycle, page 0, предел окна 2000, date windows, fair budget, full detail, schema drift |
+| HH | Первый runtime реализован; остаются общий config/query planner, типизированные cross-source условия/фильтры, watermark reconciliation, retention и нагрузочная приёмка |
 | SuperJob | App key injection, фактический page size, more/cap, окна дат, quota-like 503, сбор всех текстовых разделов; прояснить хранение/LLM-передачу |
 | Работа России | Offset как page 0/1/2; companycode+id; корректная сборка duty/qualification/условий, даты, dedup при обновлении |
 | Habr | Frontend schema contract, SSR/JSON-LD parser и identity; лимит страниц, deferred/stale; TTL detail даже при неизменном listing; anti-bot как blocked |
@@ -52,29 +63,23 @@ false: ещё нет runtime-адаптера и согласованной по
 
 ## Общие пробелы реализации
 
-1. **M1/M2: адаптеры и сохранение.** Типы SourceQuery/SourcePage/cursor/errors,
-   общий transport/budget, транзакционная запись страницы, identity/version и leases.
-   Сейчас есть только общая vacancy schema, без исполняемой нормализации.
-2. **Полнота и консистентность.** Количество completed queries не может превышать
-   planned; full/deferred counts должны соответствовать distinct snapshots;
-   complete не разрешён при недопройденном плане/truncated. JSON Schema отчёта
-   пока проверяет типы и не обеспечивает эти межполевые инварианты.
-3. **Дочитывание и обновления.** Отдельная очередь detail, bounded retry,
-   source cooldown, stale версии, TTL и watermark по конкретному query/window.
-   Без этого работающий поиск ещё не является надёжной воронкой сотен карточек.
-4. **Семантика данных.** Не заменять unknown значением 0; нормализовать gross/net,
-   период зарплаты, grade/experience с происхождением, даты с точностью и часовым поясом.
-   Salary в текущей JSON Schema пока произвольный объект — детальную модель предстоит задать.
-5. **M4: четыре профиля.** Исполнимого first-PASS маршрута, cache keys и проверки
-   цитат ещё нет. До оценки нужны актуальные резюме, порядок и рабочий API модели.
-6. **M5: качество охвата.** Проверить широкий план запросов на ручной контрольной
-   выборке и измерить потерянные подходящие вакансии. Найденное число карточек
-   само по себе не отвечает, достаточно ли широка выборка.
+1. **Другие источники и общие контракты.** Остальные адаптеры, multi-source identity,
+   transport/config и версионированный общий normalizer ещё не реализованы.
+2. **Систематизация условий.** HH сохраняет исходные salary/gross/experience/null,
+   но общая типизация периода зарплаты, grade/technology/unknown/conflict впереди.
+3. **Очередь и обновления.** HH использует один процесс/flock, не lease workers.
+   TTL проверяется при повторном discovery; нет полного source reconciliation,
+   auto-expiry и retention/purge. Старые run читают текущие версии БД.
+4. **Экспорт.** HH JSON работает из одного согласованного read snapshot, но CSV,
+   неизменяемый version set по run, stable consumer cursor и retention ещё впереди.
+   HH snapshot v1 отделён от будущего общего VacancySnapshot контракта.
+5. **Качество охвата.** Широкие query families, ручной контроль потерь и нагрузочная
+   проверка сотен карточек ещё не пройдены. Анализ резюме/LangGraph отложен.
 
 ## Порядок работ
 
-Начать с HH adapter + offline pagination/error fixtures, затем SQLite resume/retry.
-После этого Trudvsem, Habr и SuperJob с source-specific fixtures. Параллельную
+HH adapter + offline fixtures + SQLite resume реализованы и проверены.
+Далее — Trudvsem, Habr и SuperJob с source-specific fixtures и общий слой качества. Параллельную
 обработку сотен вакансий включать после проверки общей квоты и восстановления.
 Приёмка — по [acceptance.md](acceptance.md); последовательность — [roadmap.md](roadmap.md).
-Это перечень предстоящей реализации, не сообщение об уже исправленном runtime.
+Реализованный HH-срез и оставшийся общий MVP перечислены отдельно выше.

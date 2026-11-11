@@ -119,7 +119,7 @@ def main() -> None:
     check_config()
     links = check_markdown()
     print(f"Bootstrap OK: {examples} schema examples; {links} local links; offline defaults.")
-    print("Collector, storage and LangGraph runtime acceptance remain unimplemented.")
+    print("Runtime behavior is checked separately by pytest; LangGraph remains deferred.")
 
 
 if __name__ == "__main__":

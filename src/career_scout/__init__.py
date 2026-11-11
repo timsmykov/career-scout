@@ -1,3 +1,3 @@
-"""Career Scout package namespace. Runtime components are not implemented yet."""
+"""Career Scout: restartable HH collection and local storage."""
 
 __version__ = "0.1.0"

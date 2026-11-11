@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
   "updated_on": "2026-11-11",
-  "status": "development_plan_not_runtime",
+  "status": "hh_slice_implemented_collector_mvp_in_progress",
   "milestones": {
     "M0": "complete",
-    "M1": "planned",
-    "M2": "planned",
+    "M1": "in_progress",
+    "M2": "in_progress",
     "M3": "planned",
     "M4": "deferred",
     "M5": "planned",
@@ -16,137 +16,148 @@
       "id": "CS-001",
       "milestone": "M1",
       "title": "Модели источников и ошибок",
-      "status": "planned",
+      "status": "in_progress",
       "depends_on": [],
       "deliverable": "domain/source.py, domain/errors.py, JSON Schema",
       "acceptance": "SourceQuery/Page, typed cursor, capability map; drift отличим от пустой выдачи",
-      "scope": "collector"
+      "scope": "collector",
+      "implementation_note": "Рабочие hh/storage/collector/cli модули и offline pytest в CI; общие multi-source контракты впереди."
     },
     {
       "id": "CS-002",
       "milestone": "M1",
       "title": "Нормализация и версии",
-      "status": "planned",
+      "status": "in_progress",
       "depends_on": [
         "CS-001"
       ],
       "deliverable": "normalization/{html,hashing,time,salary}.py",
       "acceptance": "Разделы/даты/gross-net/период/unknown сохранены; хеш устойчив к query provenance",
-      "scope": "collector"
+      "scope": "collector",
+      "implementation_note": "HH сохраняет полный payload, HTML/text, source dates и условия; общая типизированная salary/grade модель впереди."
     },
     {
       "id": "CS-003",
       "milestone": "M1",
       "title": "Конфигурация и секреты",
-      "status": "planned",
+      "status": "in_progress",
       "depends_on": [
         "CS-001"
       ],
       "deliverable": "config.py, env loader, config validation",
       "acceptance": "Читается единый .env; missing key диагностируется без печати значения",
-      "scope": "collector"
+      "scope": "collector",
+      "implementation_note": "CLI аргументы + локальный env; проектные TOML ещё не подключены к runtime."
     },
     {
       "id": "CS-004",
       "milestone": "M1",
       "title": "HTTP и source budget",
-      "status": "planned",
+      "status": "in_progress",
       "depends_on": [
         "CS-001",
         "CS-003"
       ],
       "deliverable": "collectors/transport.py, budget.py",
       "acceptance": "Finite retries, Retry-After seconds/date, cooldown общего источника, отказ за пределами бюджета",
-      "scope": "collector"
+      "scope": "collector",
+      "implementation_note": "HH timeout/retries/budget/429 cooldown и фиксированные safe errors; общий transport других источников впереди."
     },
     {
       "id": "CS-005",
       "milestone": "M1",
       "title": "HH application auth",
-      "status": "planned",
+      "status": "in_progress",
       "depends_on": [
         "CS-004"
       ],
       "deliverable": "collectors/auth/hh.py",
       "acceptance": "Рабочий токен переиспользуется; acquire атомарен; 401 не вызывает бесконечный цикл",
-      "scope": "collector"
+      "scope": "collector",
+      "implementation_note": "HH application acquire/renew один раз на invocation, атомарный env, offline 401 и live search/detail; applicant OAuth не входит."
     },
     {
       "id": "CS-006",
       "milestone": "M1",
       "title": "HH search/detail",
-      "status": "planned",
+      "status": "in_progress",
       "depends_on": [
         "CS-002",
         "CS-005"
       ],
       "deliverable": "collectors/adapters/hh.py",
       "acceptance": "Search pages и full detail с identity; cap отмечен; snippets не проходят за full",
-      "scope": "collector"
+      "scope": "collector",
+      "implementation_note": "HH search/detail и адаптивные окна реализованы; offline cap/drift/retry и live pagination/resume проверены."
     },
     {
       "id": "CS-007",
       "milestone": "M1",
       "title": "Планирование запросов",
-      "status": "planned",
+      "status": "in_progress",
       "depends_on": [
         "CS-001",
         "CS-003"
       ],
       "deliverable": "collectors/planner.py, versioned search config",
       "acceptance": "Union четырёх семейств, title-only/AI-only не обязательны, fair ordering, immutable plan",
-      "scope": "collector"
+      "scope": "collector",
+      "implementation_note": "Повторяемые явные query и immutable временной план; общий planner четырёх семейств впереди."
     },
     {
       "id": "CS-008",
       "milestone": "M1",
       "title": "CLI plan и проверка конфигурации",
-      "status": "planned",
+      "status": "in_progress",
       "depends_on": [
         "CS-003",
         "CS-007"
       ],
       "deliverable": "cli.py: plan, doctor",
       "acceptance": "Plan без сети; doctor различает отсутствие credentials, неподтверждённый order и disabled sources",
-      "scope": "collector"
+      "scope": "collector",
+      "implementation_note": "plan без БД/сети работает; doctor и TOML config validation впереди."
     },
     {
       "id": "CS-009",
       "milestone": "M2",
       "title": "SQLite и миграции",
-      "status": "planned",
+      "status": "in_progress",
       "depends_on": [
         "CS-001",
         "CS-002"
       ],
       "deliverable": "storage/migrations, connection.py",
       "acceptance": "WAL, foreign keys, schema version, транзакции на временной БД",
-      "scope": "collector"
+      "scope": "collector",
+      "implementation_note": "SQLite WAL, FK, schema version1, отказ неизвестной версии; multi-source миграции впереди."
     },
     {
       "id": "CS-010",
       "milestone": "M2",
       "title": "Snapshots и discoveries",
-      "status": "planned",
+      "status": "in_progress",
       "depends_on": [
         "CS-009"
       ],
       "deliverable": "storage/vacancies.py, discoveries.py",
       "acceptance": "Один source ID в нескольких запросах не дублируется; изменённый текст создаёт версию",
-      "scope": "collector"
+      "scope": "collector",
+      "implementation_note": "HH identity, snapshots/content hash и discoveries реализованы; общий multi-source identity впереди."
     },
     {
       "id": "CS-011",
       "milestone": "M2",
       "title": "Прогресс query/window",
-      "status": "planned",
+      "status": "in_progress",
       "depends_on": [
         "CS-009",
         "CS-007"
       ],
       "deliverable": "storage/progress.py",
       "acceptance": "Cursor меняется вместе с записью страницы; partial не продвигает чужой watermark",
-      "scope": "collector"
+      "scope": "collector",
+      "implementation_note": "HH page cursor + discoveries атомарны, split windows сохраняются; общие source watermarks впереди."
     },
     {
       "id": "CS-012",
@@ -164,7 +175,7 @@
       "id": "CS-013",
       "milestone": "M2",
       "title": "Исполнитель сбора и detail",
-      "status": "planned",
+      "status": "in_progress",
       "depends_on": [
         "CS-006",
         "CS-010",
@@ -173,7 +184,8 @@
       ],
       "deliverable": "services/collection.py, detail.py, cli collect",
       "acceptance": "Kill/restart не теряет данные; stale/deferred не уходит в evaluation",
-      "scope": "collector"
+      "scope": "collector",
+      "implementation_note": "HH collect/resume и pending detail реализованы; один процесс flock, multi-worker leases CS-012 не реализованы."
     },
     {
       "id": "CS-014",
@@ -231,7 +243,7 @@
       "id": "CS-018",
       "milestone": "M3",
       "title": "Окна и общая справедливость",
-      "status": "planned",
+      "status": "in_progress",
       "depends_on": [
         "CS-006",
         "CS-007",
@@ -239,13 +251,14 @@
       ],
       "deliverable": "collectors/windows.py, scheduling.py",
       "acceptance": "Большой запрос не забирает весь budget; пересечения окон дедуплицируются; остаток виден",
-      "scope": "collector"
+      "scope": "collector",
+      "implementation_note": "HH дата-окна, dedup пересечений и round-robin queries; общая справедливость источников впереди."
     },
     {
       "id": "CS-019",
       "milestone": "M3",
       "title": "Сверка обновлений и source acceptance",
-      "status": "planned",
+      "status": "in_progress",
       "depends_on": [
         "CS-015",
         "CS-016",
@@ -254,7 +267,8 @@
       ],
       "deliverable": "services/reconciliation.py, live acceptance receipts",
       "acceptance": "TTL обновляет прежние listing; сбой источника даёт partial; доступ/retention отдельно",
-      "scope": "collector"
+      "scope": "collector",
+      "implementation_note": "HH refresh при новом discovery по TTL/изменению listing; полная source reconciliation впереди."
     },
     {
       "id": "CS-020",
@@ -366,14 +380,15 @@
       "id": "CS-028",
       "milestone": "M5",
       "title": "Охват поискового плана",
-      "status": "planned",
+      "status": "in_progress",
       "depends_on": [
         "CS-019",
         "CS-037"
       ],
       "deliverable": "Отчёт потерь search/filter",
       "acceptance": "Контрольные вакансии проверены на обнаружение и сохранение; оценка резюме не нужна",
-      "scope": "collector"
+      "scope": "collector",
+      "implementation_note": "Offline HH transport/SQLite/CLI, реальный аварийный выход subprocess; остальные источники впереди."
     },
     {
       "id": "CS-029",
@@ -404,25 +419,27 @@
       "id": "CS-031",
       "milestone": "M5",
       "title": "Сбои и восстановление коллектора",
-      "status": "planned",
+      "status": "in_progress",
       "depends_on": [
         "CS-013"
       ],
       "deliverable": "Collector failure acceptance suite",
       "acceptance": "Падение HTTP/DB, duplicate pages, drift и exhausted budget не теряют очередь",
-      "scope": "collector"
+      "scope": "collector",
+      "implementation_note": "HH JSON status/inspect и версии работают; общий read interface впереди."
     },
     {
       "id": "CS-032",
       "milestone": "M6",
       "title": "Статус и диагностика сбора",
-      "status": "planned",
+      "status": "in_progress",
       "depends_on": [
         "CS-013"
       ],
       "deliverable": "CLI status, inspect, source-health",
       "acceptance": "Видны list/detail/filter/expiry и причины; нет зависимости от графа оценки",
-      "scope": "collector"
+      "scope": "collector",
+      "implementation_note": "Атомарный локальный JSON export из одного read snapshot; CSV/cursor/retention впереди."
     },
     {
       "id": "CS-033",
@@ -454,14 +471,15 @@
       "id": "CS-035",
       "milestone": "M6",
       "title": "Логи и итог сбора",
-      "status": "planned",
+      "status": "in_progress",
       "depends_on": [
         "CS-004",
         "CS-013"
       ],
       "deliverable": "Run summary и redaction",
       "acceptance": "Видны requests, retry, full/deferred/stale, backlog и полнота; secrets не логируются",
-      "scope": "collector"
+      "scope": "collector",
+      "implementation_note": "HH safe error codes и counters; общий multi-source отчёт/операционные метрики впереди."
     },
     {
       "id": "CS-036",

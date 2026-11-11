@@ -27,7 +27,7 @@
 
 ## Подготовка и приёмка
 
-- [development.md](development.md) — действующие команды и будущий CLI.
+- [development.md](development.md) — действующие HH-команды и аргументы CLI.
 - [operations.md](operations.md) — запуск, восстановление, лимиты, диагностика.
 - [acceptance.md](acceptance.md) — сценарии и показатели качества.
 - [roadmap.md](roadmap.md) — фичи коллектора, 28 активных и 9 отложенных задач.

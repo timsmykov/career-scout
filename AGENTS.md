@@ -4,7 +4,8 @@
 
 Это новый самостоятельный сервис, а не изменение существующего OpenBot Scout.
 Перед изменением читать README.md и docs/README.md, затем нужный предметный контракт.
-Bootstrap завершён на стадии документации; runtime ещё предстоит реализовать.
+Реализован первый HH-срез: hh.py, storage.py, collector.py, cli.py.
+Общие контракты остальных площадок остаются целевыми, не готовым runtime.
 Текущий scope: только collect/normalize/store/quality/export. Анализ по резюме и
 LangGraph отложены владельцем до приёмки коллектора. Не начинать их по старому roadmap.
 
@@ -28,9 +29,10 @@ LangGraph отложены владельцем до приёмки коллек
 
 Python 3.12, uv.lock, src-layout, httpx/Pydantic, SQLite.
 Существующие модельные зависимости bootstrap не требуют использования сейчас.
-До runtime-среза выполняются:
+Обязательные offline-проверки:
 `uv run --no-sync python scripts/check_repository.py`,
-`uv run --no-sync ruff check .`, `uv run --no-sync ruff format --check .`.
+`uv run --no-sync ruff check .`, `uv run --no-sync ruff format --check .`,
+`uv run --no-sync pytest -m "not live"`.
 
 Для поведения писать тесты по docs/acceptance.md; сетевые проверки явно отделять.
 Не запускать реальный сбор/модели для проверки изменения Markdown.

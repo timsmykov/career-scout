@@ -2,9 +2,10 @@
 
 Сервис сбора, систематизации и хранения вакансий для последующего анализа.
 
-**Статус: подготовка к разработке.** В репозитории есть архитектура, контракты,
-инструкции оценщиков, конфигурация, окружение и проверки документации/примеров.
-Сборщики, БД и исполняемый LangGraph-процесс ещё не реализованы. Отклики не отправляются.
+**Статус: реализован первый HH-коллектор.** Поиск и полные карточки, SQLite,
+пагинация, окна дат, история изменений и продолжение после сбоя работают через CLI.
+Остальные три адаптера и общий контроль качества ещё предстоит реализовать.
+LangGraph и анализ по резюме отложены. Отклики не отправляются.
 
 ## Что строим
 
@@ -36,10 +37,29 @@ uv sync --locked --group dev
 uv run --no-sync python scripts/check_repository.py
 uv run --no-sync ruff check .
 uv run --no-sync ruff format --check .
+uv run --no-sync pytest -m "not live"
 ```
 
-Эти команды готовят среду и проверяют репозиторий без сети к job-площадкам и LLM.
-Исполняемой команды поиска пока нет. Следующий шаг — M1 в [плане](docs/roadmap.md).
+Проверки выполняются без сети к job-площадкам и LLM. Для HH заполните локальный
+`.env` по `.env.example` (application token и контактный User-Agent; client ID/secret
+нужны для получения нового токена). Команды из корня репозитория:
+
+```sh
+# План без сети и без открытия БД
+uv run --no-sync python -m career_scout plan --query "бизнес аналитик" --days 7
+# Явный сетевой сбор: конечный бюджет на весь запуск, включая auth и повторы
+uv run --no-sync python -m career_scout collect --query "бизнес аналитик" --days 7 --requests 50
+# RUN_ID берётся из JSON результата collect
+uv run --no-sync python -m career_scout resume RUN_ID --requests 50
+uv run --no-sync python -m career_scout status RUN_ID
+uv run --no-sync python -m career_scout inspect VACANCY_ID
+uv run --no-sync python -m career_scout export RUN_ID --output data/exports/run.json
+```
+
+`partial` и exit code 2 означают незавершённый сбор; остаток виден в отчёте.
+Полный справочник аргументов и восстановление: [development.md](docs/development.md).
+CLI пока читает `.env` и аргументы, а не проектные TOML-шаблоны.
+[Проверенный HH-срез и ограничения](docs/collector-readiness.md).
 
 ## Читать по порядку
 
