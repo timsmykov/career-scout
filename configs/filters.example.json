@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "filter_version": "draft-2026-11-11",
+  "allowed_grades": [
+    "intern",
+    "junior",
+    "middle"
+  ],
+  "allowed_experience_buckets": [
+    "no_experience",
+    "one_to_three"
+  ],
+  "reject_explicit_min_years_above": 3,
+  "technology_scope": "technology_function_or_technology_employer",
+  "unknown_policy": "keep_for_evaluation",
+  "geography": null,
+  "work_format": null,
+  "employment_type": null,
+  "salary_floor": null
+}

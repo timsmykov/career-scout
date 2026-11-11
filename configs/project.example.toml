@@ -1,0 +1,48 @@
+schema_version = 1
+external_calls_enabled = false
+
+[runtime]
+database = "data/ledger.sqlite3"
+checkpoints = "data/checkpoints.sqlite3"
+max_concurrent_vacancies = 2
+max_requests_per_source_run = 50
+max_details_per_source_run = 30
+min_interval_seconds = 1.0
+max_in_flight_per_source = 1
+max_transport_retries = 2
+
+[sources.hh]
+enabled = false
+access_state = "previous_project_probe_verified_application_read"
+retention_mode = "review_before_enable"
+llm_transfer_allowed = false
+
+[sources.trudvsem]
+enabled = false
+access_state = "previous_project_probe_verified_public_read"
+retention_mode = "review_before_enable"
+llm_transfer_allowed = false
+
+[sources.habr]
+enabled = false
+access_state = "frontend_contract_unpublished"
+retention_mode = "review_before_enable"
+llm_transfer_allowed = false
+
+[sources.superjob]
+enabled = false
+access_state = "awaiting_registration_and_key"
+retention_mode = "disabled"
+llm_transfer_allowed = false
+
+[evaluation]
+enabled = false
+order = ["product", "business_analyst", "business_assistant", "automation"]
+order_confirmed = false
+max_attempts_per_profile = 2
+max_calls_per_run = 0
+max_spend_usd_per_run = 0.0
+# Не названия из подписки OpenBot; задаются после проверки API выбранного провайдера.
+model_provider = ""
+model_name = ""
+reasoning_effort = ""

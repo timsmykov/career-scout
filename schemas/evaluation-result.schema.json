@@ -1,0 +1,170 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://career-scout.local/schemas/evaluation-result.schema.json",
+  "title": "EvaluationResult",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "evaluation_key",
+    "profile_id",
+    "verdict",
+    "reason",
+    "assessments",
+    "questions"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "evaluation_key": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "profile_id": {
+      "enum": [
+        "product",
+        "business_analyst",
+        "business_assistant",
+        "automation"
+      ]
+    },
+    "verdict": {
+      "enum": [
+        "PASS",
+        "BORDERLINE",
+        "REJECT"
+      ]
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1200
+    },
+    "assessments": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 12,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "requirement",
+          "mandatory",
+          "vacancy_quote",
+          "resume_quote",
+          "status",
+          "explanation"
+        ],
+        "properties": {
+          "requirement": {
+            "type": "string",
+            "minLength": 1
+          },
+          "mandatory": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "vacancy_quote": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000
+          },
+          "resume_quote": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 1000
+          },
+          "status": {
+            "enum": [
+              "confirmed",
+              "unconfirmed",
+              "conflict",
+              "outside_profile"
+            ]
+          },
+          "explanation": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000
+          }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "status": {
+                  "const": "confirmed"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "resume_quote": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "questions": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 500
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "verdict": {
+            "const": "PASS"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "questions": {
+            "maxItems": 0
+          },
+          "assessments": {
+            "items": {
+              "properties": {
+                "status": {
+                  "const": "confirmed"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "verdict": {
+            "const": "BORDERLINE"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "questions": {
+            "minItems": 1
+          }
+        }
+      }
+    }
+  ]
+}

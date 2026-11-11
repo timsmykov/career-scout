@@ -1,0 +1,804 @@
+{
+  "checked_on": "2026-11-11",
+  "scope": "Source snapshots support selective static inspection, not a complete audit. Third-party code and tests not executed.",
+  "redactions": [
+    {
+      "repo": "KarapetGaranyan/job-parser-system",
+      "path": "parsers/superjob_parser.py",
+      "note": "One upstream hardcoded credential masked in local copy; blob SHA describes upstream original, local hash differs."
+    }
+  ],
+  "files": [
+    {
+      "repo": "alekseevpavel04/ru-it-jobs-radar",
+      "path": "docs/models.md",
+      "commit": "035bd435763062543eba884a5cd5298390b20675",
+      "blob": "4e918612436fb77e96b22226edb51ba368229bb7",
+      "bytes": 11356
+    },
+    {
+      "repo": "AgentShekel/hh-bot",
+      "path": "ai/variant_router.py",
+      "commit": "3a12421e7166ec588d589d7ebbfee1189d55b214",
+      "blob": "748727e72f6744df27a6c1807223b8a17bf32e8f",
+      "bytes": 5685
+    },
+    {
+      "repo": "addito-5G/job-scout",
+      "path": "LICENSE",
+      "commit": "fe1f04afbcceec6204b5f2a07f4cdc3eb6d7a753",
+      "blob": "585738a437f19481000651f9074249fa037c88ca",
+      "bytes": 1071
+    },
+    {
+      "repo": "iurii-izman/career-signal-hh",
+      "path": "src/llm_prompts.py",
+      "commit": "f8cfc70b846b5050700556fad84c049959d37b2b",
+      "blob": "a0b3f891fe32307c52afbe17b6481f24c14086d1",
+      "bytes": 11615
+    },
+    {
+      "repo": "AgentShekel/hh-bot",
+      "path": "LICENSE",
+      "commit": "3a12421e7166ec588d589d7ebbfee1189d55b214",
+      "blob": "d4388d7ba4b88054145f0bb12d43f75a3a564440",
+      "bytes": 4606
+    },
+    {
+      "repo": "fikstt2/hh-ai-agent",
+      "path": "LICENSE",
+      "commit": "d54d07b7eec15bc74bd5409e14aeee64c487068b",
+      "blob": "70f2aa70672f5fa7450f4f8126f727b4c989aa5d",
+      "bytes": 1064
+    },
+    {
+      "repo": "iurii-izman/career-signal-hh",
+      "path": "src/matching.py",
+      "commit": "f8cfc70b846b5050700556fad84c049959d37b2b",
+      "blob": "51b122bbafe10070b923e76d8ab31f0f7e4a4467",
+      "bytes": 5033
+    },
+    {
+      "repo": "addito-5G/job-scout",
+      "path": "pyproject.toml",
+      "commit": "fe1f04afbcceec6204b5f2a07f4cdc3eb6d7a753",
+      "blob": "a554a0e42bcd91433e3a728b7787d18565ed6140",
+      "bytes": 903
+    },
+    {
+      "repo": "AgentShekel/hh-bot",
+      "path": "ai/analyzer.py",
+      "commit": "3a12421e7166ec588d589d7ebbfee1189d55b214",
+      "blob": "6d6c2daa9b19850136e2c3d525fd891b0d2141a8",
+      "bytes": 10233
+    },
+    {
+      "repo": "iurii-izman/career-signal-hh",
+      "path": "pyproject.toml",
+      "commit": "f8cfc70b846b5050700556fad84c049959d37b2b",
+      "blob": "e05285310525c1cb81bc25d92431e8f2eb03b3d3",
+      "bytes": 688
+    },
+    {
+      "repo": "iurii-izman/career-signal-hh",
+      "path": "src/hh_client.py",
+      "commit": "f8cfc70b846b5050700556fad84c049959d37b2b",
+      "blob": "eae9e3fe750051a679697a9bb8c3fe70915faaee",
+      "bytes": 14523
+    },
+    {
+      "repo": "addito-5G/job-scout",
+      "path": "README_ru.md",
+      "commit": "fe1f04afbcceec6204b5f2a07f4cdc3eb6d7a753",
+      "blob": "0c694c71d631dda87ce7ec21d62c02f32e9f9cb6",
+      "bytes": 8515
+    },
+    {
+      "repo": "iurii-izman/career-signal-hh",
+      "path": "src/scoring_v2.py",
+      "commit": "f8cfc70b846b5050700556fad84c049959d37b2b",
+      "blob": "e15e32dfe42a9e190df4d86e5a11acfd1258cac2",
+      "bytes": 20583
+    },
+    {
+      "repo": "mms021/langchain-hh",
+      "path": "hh_api.py",
+      "commit": "7f77234a6c47eed3a98a68793b1e67abf61a3c1a",
+      "blob": "6d2f1560727063486b2d05144e4c0ea33614fdc3",
+      "bytes": 15143
+    },
+    {
+      "repo": "alekseevpavel04/ru-it-jobs-radar",
+      "path": "docs/limitations.md",
+      "commit": "035bd435763062543eba884a5cd5298390b20675",
+      "blob": "bcf503d6f4a2048663a743be4bec64c603cc80b4",
+      "bytes": 8367
+    },
+    {
+      "repo": "fikstt2/hh-ai-agent",
+      "path": "ai_analyzer.py",
+      "commit": "d54d07b7eec15bc74bd5409e14aeee64c487068b",
+      "blob": "8bfddadab8e4548c72725d75fc78fc35aa308645",
+      "bytes": 8887
+    },
+    {
+      "repo": "Zamikc/hh-analyzer",
+      "path": "parser.py",
+      "commit": "7632348bfb0b39c8c2b2e71ad2168cb7a3c488fe",
+      "blob": "1a92a152b61d453952796b4fb3a0b1cc46d51bb1",
+      "bytes": 14414
+    },
+    {
+      "repo": "fikstt2/hh-ai-agent",
+      "path": "vacancy_filter.py",
+      "commit": "d54d07b7eec15bc74bd5409e14aeee64c487068b",
+      "blob": "c1ba882bd531f938d6317af09fd5f31da01b5052",
+      "bytes": 1153
+    },
+    {
+      "repo": "mms021/langchain-hh",
+      "path": "config.json.example",
+      "commit": "7f77234a6c47eed3a98a68793b1e67abf61a3c1a",
+      "blob": "c0ed232ff40f46b98b96a9ab40eb70d376471d9c",
+      "bytes": 1506
+    },
+    {
+      "repo": "mms021/langchain-hh",
+      "path": "vacancy_checker.py",
+      "commit": "7f77234a6c47eed3a98a68793b1e67abf61a3c1a",
+      "blob": "1bf1ccffb72a15c5f1e1311a85a641be4cd09f8a",
+      "bytes": 8311
+    },
+    {
+      "repo": "Zamikc/hh-analyzer",
+      "path": "analyzer.py",
+      "commit": "7632348bfb0b39c8c2b2e71ad2168cb7a3c488fe",
+      "blob": "dc871d4815898b61c67ee8a7ba6664e154fac5aa",
+      "bytes": 6400
+    },
+    {
+      "repo": "AgentShekel/hh-bot",
+      "path": "ai/vacancy_analyzer.py",
+      "commit": "3a12421e7166ec588d589d7ebbfee1189d55b214",
+      "blob": "e0b1bc77adb3d0874d4ee59bce60a2eb5fd71ad7",
+      "bytes": 7640
+    },
+    {
+      "repo": "speedyapply/JobSpy",
+      "path": "LICENSE",
+      "commit": "68b88d6909a2342ad75fbb945c4204a3a7ed6665",
+      "blob": "364d8a0fd8a8039966d469eda847e750d4be7267",
+      "bytes": 1070
+    },
+    {
+      "repo": "connwang7/JobAgent-MultiAgent",
+      "path": "agents.py",
+      "commit": "2692f534738ed7ef0ea3272fbe13da813d135471",
+      "blob": "ba7f23ce2bca2ab6269d5dd4295612a3412585ec",
+      "bytes": 11012
+    },
+    {
+      "repo": "fikstt2/hh-ai-agent",
+      "path": "hh_client.py",
+      "commit": "d54d07b7eec15bc74bd5409e14aeee64c487068b",
+      "blob": "9b1f520e78a21e086edf75d4f123fffe81017a03",
+      "bytes": 37117
+    },
+    {
+      "repo": "fikstt2/hh-ai-agent",
+      "path": "database.py",
+      "commit": "d54d07b7eec15bc74bd5409e14aeee64c487068b",
+      "blob": "3872aba904dd7c46177b39eb2cfd8f8a9c8ed802",
+      "bytes": 51512
+    },
+    {
+      "repo": "mcgalleg/grokbot-jev-jobs",
+      "path": "lib/feed.ts",
+      "commit": "58b1bb986069cf40461b3de640a6b0b7320db703",
+      "blob": "120645bb367edc67a2cec392e4951d88057a3d20",
+      "bytes": 2513
+    },
+    {
+      "repo": "KarapetGaranyan/job-parser-system",
+      "path": "parsers/superjob_parser.py",
+      "commit": "11c8795dcd09adcc61f0d26a48ed1dce321e8567",
+      "blob": "bd4c5f5424188c91b6a187f5f89685c240575b04",
+      "bytes": 3549
+    },
+    {
+      "repo": "iurii-izman/career-signal-hh",
+      "path": "src/storage.py",
+      "commit": "f8cfc70b846b5050700556fad84c049959d37b2b",
+      "blob": "e8d754cf79f72c824176c96f714f03b1fd085990",
+      "bytes": 88499
+    },
+    {
+      "repo": "nnavyy/automation-vacancy-finder",
+      "path": "LICENSE",
+      "commit": "7a1bffe84885ab0cd51d9f2ccbf7ca8be279df14",
+      "blob": "8f52499f8f65a962752c8d4880253687dab6445a",
+      "bytes": 1616
+    },
+    {
+      "repo": "alekseevpavel04/ru-it-jobs-radar",
+      "path": "LICENSE",
+      "commit": "035bd435763062543eba884a5cd5298390b20675",
+      "blob": "f6203dbcfed42439803da3a5c73b4f9bcdb62c55",
+      "bytes": 1071
+    },
+    {
+      "repo": "KarapetGaranyan/job-parser-system",
+      "path": "parsers/hh_parser.py",
+      "commit": "11c8795dcd09adcc61f0d26a48ed1dce321e8567",
+      "blob": "ce7b56388119584256154ef7e0ce97d9dddaade3",
+      "bytes": 3339
+    },
+    {
+      "repo": "alekseevpavel04/ru-it-jobs-radar",
+      "path": "docs/sources.md",
+      "commit": "035bd435763062543eba884a5cd5298390b20675",
+      "blob": "bc80ac19cc627daf9a3726aad4c1bdd9f1a6f0a1",
+      "bytes": 168903
+    },
+    {
+      "repo": "veilaris/workhunter",
+      "path": "WorkHunter.json",
+      "commit": "07a882cd1117b3c55350db1618cb8ebda51996c4",
+      "blob": "baad7ec2b9cf9e597926a34baef2667bb85075e4",
+      "bytes": 84727
+    },
+    {
+      "repo": "sergio11/langgraph_jobsearch_assistant",
+      "path": "LICENSE",
+      "commit": "cc7ae1df8e454c9312199f5ac6b246d20adbb16d",
+      "blob": "ec08704630608da67d6166406996a89f9f38bca2",
+      "bytes": 1071
+    },
+    {
+      "repo": "ethany14/Eregion-Job-Finding-Agent",
+      "path": "LICENSE",
+      "commit": "562bdfb212537990b79da7da3382747ae978dacc",
+      "blob": "2dc645315fa20ef3e164eee66e83ceaca112c3bc",
+      "bytes": 1065
+    },
+    {
+      "repo": "connwang7/JobAgent-MultiAgent",
+      "path": "schemas.py",
+      "commit": "2692f534738ed7ef0ea3272fbe13da813d135471",
+      "blob": "37bce3008c44246e606ca75846e11418cb330887",
+      "bytes": 2257
+    },
+    {
+      "repo": "KarapetGaranyan/job-parser-system",
+      "path": "LICENSE",
+      "commit": "11c8795dcd09adcc61f0d26a48ed1dce321e8567",
+      "blob": "765b9b35c09e2ffe30555397010bbecc29a77f67",
+      "bytes": 1072
+    },
+    {
+      "repo": "mcgalleg/grokbot-jev-jobs",
+      "path": "lib/verdicts.ts",
+      "commit": "58b1bb986069cf40461b3de640a6b0b7320db703",
+      "blob": "cf8ddfde3499cac20c6cfbda7b2cfe944bb3bd63",
+      "bytes": 578
+    },
+    {
+      "repo": "speedyapply/JobSpy",
+      "path": "jobspy/__init__.py",
+      "commit": "68b88d6909a2342ad75fbb945c4204a3a7ed6665",
+      "blob": "58703375151ae31190d8161b9543f122e39addb5",
+      "bytes": 4675
+    },
+    {
+      "repo": "career-ops-hq/career-ops",
+      "path": "ARCHITECTURE.md",
+      "commit": "605a1e61ee2b0d269b371ebe4351180993ebbfee",
+      "blob": "5743ad7aa8f16bf81f43d69dddada5e9e9a6872f",
+      "bytes": 11083
+    },
+    {
+      "repo": "axisrow/hhru",
+      "path": "LICENSE",
+      "commit": "3c25df44bb16b704adb215595a507f5c2604f893",
+      "blob": "0ae1e28e2ddf21ae26ac11856a31cb65e48567db",
+      "bytes": 1064
+    },
+    {
+      "repo": "axisrow/hhru",
+      "path": "pyproject.toml",
+      "commit": "3c25df44bb16b704adb215595a507f5c2604f893",
+      "blob": "1353a55b2735c4236bdc952e4360db971a13dfbc",
+      "bytes": 2543
+    },
+    {
+      "repo": "career-ops-hq/career-ops",
+      "path": "LICENSE",
+      "commit": "605a1e61ee2b0d269b371ebe4351180993ebbfee",
+      "blob": "89c4ce0ad6b1db98d827ddd9725da5efdff55997",
+      "bytes": 1089
+    },
+    {
+      "repo": "mms021/langchain-hh",
+      "path": "main.py",
+      "commit": "7f77234a6c47eed3a98a68793b1e67abf61a3c1a",
+      "blob": "104df106e9b2e25e3cb53478564d300e7acc7c97",
+      "bytes": 14512
+    },
+    {
+      "repo": "ethany14/Eregion-Job-Finding-Agent",
+      "path": "README.md",
+      "commit": "562bdfb212537990b79da7da3382747ae978dacc",
+      "blob": "14dc98d6d0b2f5e06bc9a207dee968cb015f6f2f",
+      "bytes": 18516
+    },
+    {
+      "repo": "AgentShekel/hh-bot",
+      "path": "ai/resume_variants.py",
+      "commit": "3a12421e7166ec588d589d7ebbfee1189d55b214",
+      "blob": "a68369f1ab2f4ba71a229d72c87e48704af67c97",
+      "bytes": 8502
+    },
+    {
+      "repo": "sergio11/langgraph_jobsearch_assistant",
+      "path": "README.md",
+      "commit": "cc7ae1df8e454c9312199f5ac6b246d20adbb16d",
+      "blob": "d7f6576fd07d616afbadd39eff3d473ca0408c8a",
+      "bytes": 10531
+    },
+    {
+      "repo": "nnavyy/automation-vacancy-finder",
+      "path": "README.ru.md",
+      "commit": "7a1bffe84885ab0cd51d9f2ccbf7ca8be279df14",
+      "blob": "dff76c27e4e56c1dac1b1873d6d1d08e8d45dccd",
+      "bytes": 1199
+    },
+    {
+      "repo": "Riper21/hh-sniper",
+      "path": "README.md",
+      "commit": "2171331690ef43068125d060e300bbfafb69b89a",
+      "blob": "dbfb2193f49fbfa201cd4a3dfaeef5d7d998c3a4",
+      "bytes": 9937
+    },
+    {
+      "repo": "career-ops-hq/career-ops",
+      "path": "fingerprint-core.mjs",
+      "commit": "605a1e61ee2b0d269b371ebe4351180993ebbfee",
+      "blob": "77919b139b787fccf5b3211ff6e2bfeb5177bcb8",
+      "bytes": 11465
+    },
+    {
+      "repo": "axisrow/hhru",
+      "path": "README.md",
+      "commit": "3c25df44bb16b704adb215595a507f5c2604f893",
+      "blob": "4d1cf68d2859e192e9cc27376ee3f297ee184b9d",
+      "bytes": 70323
+    },
+    {
+      "repo": "career-ops-hq/career-ops",
+      "path": "DATA_CONTRACT.md",
+      "commit": "605a1e61ee2b0d269b371ebe4351180993ebbfee",
+      "blob": "54aae83dbe2f3e924b1f3ac08ca0c09814f4930a",
+      "bytes": 28959
+    },
+    {
+      "repo": "mcgalleg/grokbot-jev-jobs",
+      "path": "lib/screen.ts",
+      "commit": "58b1bb986069cf40461b3de640a6b0b7320db703",
+      "blob": "2991b810b5eccef989b958a81dfb836284d150e6",
+      "bytes": 3336
+    },
+    {
+      "repo": "career-ops-hq/career-ops",
+      "path": "filter-audit.mjs",
+      "commit": "605a1e61ee2b0d269b371ebe4351180993ebbfee",
+      "blob": "31a1fb838cbc8178eb78b3c9fb633ba48a281311",
+      "bytes": 10554
+    },
+    {
+      "repo": "career-ops-hq/career-ops",
+      "path": "evaluation-cache.mjs",
+      "commit": "605a1e61ee2b0d269b371ebe4351180993ebbfee",
+      "blob": "bad317bda8bb423643f0152b3370b5666e1a4422",
+      "bytes": 13383
+    },
+    {
+      "repo": "connwang7/JobAgent-MultiAgent",
+      "path": "prompts.py",
+      "commit": "2692f534738ed7ef0ea3272fbe13da813d135471",
+      "blob": "bc032b265e6126a1d8e550e61dedcdd368a26197",
+      "bytes": 2264
+    },
+    {
+      "repo": "alekseevpavel04/ru-it-jobs-radar",
+      "path": "src/radar/collect/habr.py",
+      "commit": "035bd435763062543eba884a5cd5298390b20675",
+      "blob": "747df1d84a13fa90083d4a2d0c33f81ff597d3d1",
+      "bytes": 17623
+    },
+    {
+      "repo": "alekseevpavel04/ru-it-jobs-radar",
+      "path": "src/radar/collect/trudvsem.py",
+      "commit": "035bd435763062543eba884a5cd5298390b20675",
+      "blob": "f4cb2f3df7bd69efade3271744f75d863dcf0586",
+      "bytes": 11984
+    },
+    {
+      "repo": "alekseevpavel04/ru-it-jobs-radar",
+      "path": "src/radar/collect/envelope.py",
+      "commit": "035bd435763062543eba884a5cd5298390b20675",
+      "blob": "3147035d18571a8649d53f993d1ae9a45a693a4b",
+      "bytes": 2932
+    },
+    {
+      "repo": "alekseevpavel04/ru-it-jobs-radar",
+      "path": "src/radar/collect/superjob.py",
+      "commit": "035bd435763062543eba884a5cd5298390b20675",
+      "blob": "dbbe5dde9d2ad59e80d739a2e65739696a2869aa",
+      "bytes": 14088
+    },
+    {
+      "repo": "alekseevpavel04/ru-it-jobs-radar",
+      "path": "src/radar/collect/http.py",
+      "commit": "035bd435763062543eba884a5cd5298390b20675",
+      "blob": "82368f908bf3ea65a419e68bdb7dcc81f98ed714",
+      "bytes": 3251
+    },
+    {
+      "repo": "alekseevpavel04/ru-it-jobs-radar",
+      "path": "docs/DECISIONS.md",
+      "commit": "035bd435763062543eba884a5cd5298390b20675",
+      "blob": "512b9f594a8b00b2ae450cb2329b3baf1b248ed3",
+      "bytes": 6700
+    },
+    {
+      "repo": "axisrow/hhru",
+      "path": "src/hhru_bot/vacancy_refresh.py",
+      "commit": "3c25df44bb16b704adb215595a507f5c2604f893",
+      "blob": "f965a0e76d8b6a21d8e3f7bd8bfc6f31ca001cf0",
+      "bytes": 3405
+    },
+    {
+      "repo": "addito-5G/job-scout",
+      "path": "src/services/scan_service.py",
+      "commit": "fe1f04afbcceec6204b5f2a07f4cdc3eb6d7a753",
+      "blob": "27e16269a950f647ce4f906988b9c842f2146013",
+      "bytes": 7241
+    },
+    {
+      "repo": "addito-5G/job-scout",
+      "path": "src/services/match_service.py",
+      "commit": "fe1f04afbcceec6204b5f2a07f4cdc3eb6d7a753",
+      "blob": "b84d078a508f595b249e004c0e77eb0d8c8f100e",
+      "bytes": 2766
+    },
+    {
+      "repo": "alekseevpavel04/ru-it-jobs-radar",
+      "path": "src/radar/agent/graph.py",
+      "commit": "035bd435763062543eba884a5cd5298390b20675",
+      "blob": "fbc676354e79c76ed8289fdc2802bbcb43e439e0",
+      "bytes": 6947
+    },
+    {
+      "repo": "alekseevpavel04/ru-it-jobs-radar",
+      "path": "src/radar/models/matching.py",
+      "commit": "035bd435763062543eba884a5cd5298390b20675",
+      "blob": "a12347152633e3e587b1fcea02e27b87c0e555b3",
+      "bytes": 25608
+    },
+    {
+      "repo": "alekseevpavel04/ru-it-jobs-radar",
+      "path": "docs/data.md",
+      "commit": "035bd435763062543eba884a5cd5298390b20675",
+      "blob": "94bacefbeca9d0288cbd0e1e677590a737d2a78f",
+      "bytes": 9151
+    },
+    {
+      "repo": "axisrow/hhru",
+      "path": "src/hhru_bot/search.py",
+      "commit": "3c25df44bb16b704adb215595a507f5c2604f893",
+      "blob": "5fbec1c8dd6c4928069e68de4d3a2f688a357657",
+      "bytes": 56996
+    },
+    {
+      "repo": "addito-5G/job-scout",
+      "path": "src/domain/fit_score.py",
+      "commit": "fe1f04afbcceec6204b5f2a07f4cdc3eb6d7a753",
+      "blob": "6d04068511ec71bd9636edcccc842e10ccdfa380",
+      "bytes": 23359
+    },
+    {
+      "repo": "speedyapply/JobSpy",
+      "path": "jobspy/model.py",
+      "commit": "68b88d6909a2342ad75fbb945c4204a3a7ed6665",
+      "blob": "38b3d032f2be8904cdfdf2d4f2b313809c8fe801",
+      "bytes": 8522
+    },
+    {
+      "repo": "addito-5G/job-scout",
+      "path": "src/adapters/hh_parser.py",
+      "commit": "fe1f04afbcceec6204b5f2a07f4cdc3eb6d7a753",
+      "blob": "a5458bba97831054f0915ae83ed138795076eaed",
+      "bytes": 7597
+    },
+    {
+      "repo": "sergio11/langgraph_jobsearch_assistant",
+      "path": "LangGraph_JobSearch_Assistant.ipynb",
+      "commit": "cc7ae1df8e454c9312199f5ac6b246d20adbb16d",
+      "blob": "812cea4f8aa4cc203f8a5028c4f5376cde277eda",
+      "bytes": 58788
+    },
+    {
+      "repo": "nnavyy/automation-vacancy-finder",
+      "path": "README.md",
+      "commit": "7a1bffe84885ab0cd51d9f2ccbf7ca8be279df14",
+      "blob": "e5cdb9794576ab33768369d28dc899b555129543",
+      "bytes": 1903
+    },
+    {
+      "repo": "TatianaVovk/llm-cv-vacancy-scoring-mvp",
+      "path": "README.md",
+      "commit": "b77c0f8958c431e26a0eb5fe3a50331d5363f2f9",
+      "blob": "a335fa851dfa0825ce0de16ef0fe08e9709db748",
+      "bytes": 3188
+    },
+    {
+      "repo": "BlazeStudio/HH-Auto-Response",
+      "path": "README.md",
+      "commit": "5473f677e06b68d4000b967742733519f3d888b6",
+      "blob": "6eabedfc2cd769eacff4e7d323deac9dab748949",
+      "bytes": 53505
+    },
+    {
+      "repo": "kuldeepshandilya/find-jobs-matching-given-resume-langgraph",
+      "path": "README.md",
+      "commit": "0d1c6fc0cd4ef3dd8a1e5efdfc83f0927b77201f",
+      "blob": "6abadd476321f42e1442f87dd2b1f22850b47a99",
+      "bytes": 7806
+    },
+    {
+      "repo": "zhurik77/jobfitcopilot",
+      "path": "README.md",
+      "commit": "7bf0d86eb4e33141d6c31da88f89af28e10490ea",
+      "blob": "f208033d11bf11edd7cbd5cbeba650a7fa08fb35",
+      "bytes": 10766
+    },
+    {
+      "repo": "job-agent/job-agent-platform",
+      "path": "pyproject.toml",
+      "commit": "51e841eda26a06b63a235b4f8e9e264473520587",
+      "blob": "8699420e1a8d423d3650df02c0c73b54f9b7cb84",
+      "bytes": 906
+    },
+    {
+      "repo": "zhurik77/jobfitcopilot",
+      "path": "LICENSE",
+      "commit": "7bf0d86eb4e33141d6c31da88f89af28e10490ea",
+      "blob": "55ff4f6287333f3e53166a15abd53c101ef5ff91",
+      "bytes": 1070
+    },
+    {
+      "repo": "Gitman404/job-search-assistant",
+      "path": "LICENSE",
+      "commit": "ec2add0f8d818bfa4697dbd421f0af3e796606d7",
+      "blob": "aa30f37026f49441abf31a1efb794bb97d7cd6a4",
+      "bytes": 1066
+    },
+    {
+      "repo": "Gitman404/job-search-assistant",
+      "path": "README.md",
+      "commit": "ec2add0f8d818bfa4697dbd421f0af3e796606d7",
+      "blob": "9837af0be36eebe69dd2fb170e82c06dce5fd6f3",
+      "bytes": 7959
+    },
+    {
+      "repo": "TatianaVovk/llm-cv-vacancy-scoring-mvp",
+      "path": "ai_scoring_mvp.ipynb",
+      "commit": "b77c0f8958c431e26a0eb5fe3a50331d5363f2f9",
+      "blob": "936ae6586810d8ece0b286e48a0ea2eca41969a9",
+      "bytes": 55280
+    },
+    {
+      "repo": "BlazeStudio/HH-Auto-Response",
+      "path": "LICENSE.md",
+      "commit": "5473f677e06b68d4000b967742733519f3d888b6",
+      "blob": "7416d9a3959d659006604d5094bb89fea187f88f",
+      "bytes": 4658
+    },
+    {
+      "repo": "job-agent/job-agent-platform",
+      "path": "README.md",
+      "commit": "51e841eda26a06b63a235b4f8e9e264473520587",
+      "blob": "83bc3e48392e6d0df62831368b4b02616f461947",
+      "bytes": 15930
+    },
+    {
+      "repo": "maarshir/job-radar",
+      "path": "README.md",
+      "commit": "42a4af00190b43d75d6b227757b49fcec559d6e3",
+      "blob": "638c601a51b2b8443ad6c731efee041ff6f04b74",
+      "bytes": 2440
+    },
+    {
+      "repo": "kuldeepshandilya/find-jobs-matching-given-resume-langgraph",
+      "path": "LICENSE",
+      "commit": "0d1c6fc0cd4ef3dd8a1e5efdfc83f0927b77201f",
+      "blob": "cd78f23f75ad20a7b2fddc60f22c6348775ce3be",
+      "bytes": 1071
+    },
+    {
+      "repo": "job-agent/job-agent-platform",
+      "path": "langgraph.json",
+      "commit": "51e841eda26a06b63a235b4f8e9e264473520587",
+      "blob": "73629ab811b5fd8ab4f4fd7ede89230ccffc28bd",
+      "bytes": 343
+    },
+    {
+      "repo": "alekseevpavel04/ru-it-jobs-radar",
+      "path": "tests/collect/test_habr.py",
+      "commit": "035bd435763062543eba884a5cd5298390b20675",
+      "blob": "ce4e9cc85bf456ded09265182bccadcf6689ca0e",
+      "bytes": 8679
+    },
+    {
+      "repo": "iurii-izman/career-signal-hh",
+      "path": "tests/test_network_safety.py",
+      "commit": "f8cfc70b846b5050700556fad84c049959d37b2b",
+      "blob": "388f774735fcb943adb0739d6b315ac71c6584e6",
+      "bytes": 5699
+    },
+    {
+      "repo": "maarshir/job-radar",
+      "path": "src/trudvsem.js",
+      "commit": "42a4af00190b43d75d6b227757b49fcec559d6e3",
+      "blob": "a2b2a781dc774e8705b583188627e6202ccdad2c",
+      "bytes": 3404
+    },
+    {
+      "repo": "zhurik77/jobfitcopilot",
+      "path": "background.js",
+      "commit": "7bf0d86eb4e33141d6c31da88f89af28e10490ea",
+      "blob": "9b5c0350b85cbe86defe6706bd8647d1bbf64c90",
+      "bytes": 8131
+    },
+    {
+      "repo": "job-agent/job-agent-platform",
+      "path": "packages/job-agent-backend/README.md",
+      "commit": "51e841eda26a06b63a235b4f8e9e264473520587",
+      "blob": "d28832fcbcaeb56951fd0f498556d3594528d942",
+      "bytes": 5400
+    },
+    {
+      "repo": "iurii-izman/career-signal-hh",
+      "path": "tests/test_hh_client.py",
+      "commit": "f8cfc70b846b5050700556fad84c049959d37b2b",
+      "blob": "c3f659a83732bdd49ec9c438bbd4d83e286cb470",
+      "bytes": 1768
+    },
+    {
+      "repo": "maarshir/job-radar",
+      "path": "src/fill.js",
+      "commit": "42a4af00190b43d75d6b227757b49fcec559d6e3",
+      "blob": "a2b278761e6913d41cab5a08ced29abd62102553",
+      "bytes": 369
+    },
+    {
+      "repo": "fikstt2/hh-ai-agent",
+      "path": "main.py",
+      "commit": "d54d07b7eec15bc74bd5409e14aeee64c487068b",
+      "blob": "5860822a7367e909540f342bd46bf05ec5c59b95",
+      "bytes": 32647
+    },
+    {
+      "repo": "kuldeepshandilya/find-jobs-matching-given-resume-langgraph",
+      "path": "src/agent/graph.py",
+      "commit": "0d1c6fc0cd4ef3dd8a1e5efdfc83f0927b77201f",
+      "blob": "5e727bf0d88026ae0020b588ce093034028e374e",
+      "bytes": 4870
+    },
+    {
+      "repo": "iurii-izman/career-signal-hh",
+      "path": "src/commands/search.py",
+      "commit": "f8cfc70b846b5050700556fad84c049959d37b2b",
+      "blob": "db1bc8b826700fd608bf8f154e203004fe02981f",
+      "bytes": 16692
+    },
+    {
+      "repo": "maarshir/job-radar",
+      "path": "src/filter.js",
+      "commit": "42a4af00190b43d75d6b227757b49fcec559d6e3",
+      "blob": "e03aefa2663eeff6d7c9c8f0c891e4ddac7ed310",
+      "bytes": 6168
+    },
+    {
+      "repo": "alekseevpavel04/ru-it-jobs-radar",
+      "path": "tests/collect/test_superjob.py",
+      "commit": "035bd435763062543eba884a5cd5298390b20675",
+      "blob": "203bd5766614ac7807a5090c8231d299d0462af7",
+      "bytes": 10834
+    },
+    {
+      "repo": "zhurik77/jobfitcopilot",
+      "path": "shared/constants.js",
+      "commit": "7bf0d86eb4e33141d6c31da88f89af28e10490ea",
+      "blob": "4f85a80af2af9bdd78b751384b5f0d9bd42cba04",
+      "bytes": 17713
+    },
+    {
+      "repo": "s3rgeym/hh-applicant-tool",
+      "path": "pyproject.toml",
+      "commit": "6560354246c81f106a665bf747625a6bf812500c",
+      "blob": "f6fc876ddd496b0456401713aa44b8674fbb6c79",
+      "bytes": 2099
+    },
+    {
+      "repo": "srbhr/Resume-Matcher",
+      "path": "LICENSE",
+      "commit": "950b700b3cc84ba8543e954d4212d7c375b09a27",
+      "blob": "261eeb9e9f8b2b4b0d119366dda99c6fd7d35c64",
+      "bytes": 11357
+    },
+    {
+      "repo": "AndreyTepaykin/hh-mcp",
+      "path": "src/index.ts",
+      "commit": "98f9930a1bbeeed44572986c7d72b197cacc93e2",
+      "blob": "e63fa7721b1501411bde9c4451c3729db2006e13",
+      "bytes": 30025
+    },
+    {
+      "repo": "zhurik77/jobfitcopilot",
+      "path": "sidepanel/panel.js",
+      "commit": "7bf0d86eb4e33141d6c31da88f89af28e10490ea",
+      "blob": "917144d29f03f45649351355b1e29925aa4d6c20",
+      "bytes": 103028
+    },
+    {
+      "repo": "AndreyTepaykin/hh-mcp",
+      "path": "LICENSE",
+      "commit": "98f9930a1bbeeed44572986c7d72b197cacc93e2",
+      "blob": "5db4c56bdc657493168f3c8ccff130d0dcff43f1",
+      "bytes": 1100
+    },
+    {
+      "repo": "srbhr/Resume-Matcher",
+      "path": "README.md",
+      "commit": "950b700b3cc84ba8543e954d4212d7c375b09a27",
+      "blob": "a16f035b8dba31d5d284c55f3e45d7042a7a1fea",
+      "bytes": 23172
+    },
+    {
+      "repo": "job-agent/job-agent-platform",
+      "path": "packages/job-agent-backend/src/job_agent_backend/workflows/job_processing/job_processing.py",
+      "commit": "51e841eda26a06b63a235b4f8e9e264473520587",
+      "blob": "704786edfceda618968f0ea503ef4dc0c309d827",
+      "bytes": 5619
+    },
+    {
+      "repo": "job-agent/job-agent-platform",
+      "path": "packages/job-agent-backend/src/job_agent_backend/filter_service/filter.py",
+      "commit": "51e841eda26a06b63a235b4f8e9e264473520587",
+      "blob": "fbb7d78a0ebea811cafb6edc0a586ef4e16ce0ed",
+      "bytes": 4998
+    },
+    {
+      "repo": "zhurik77/jobfitcopilot",
+      "path": "content-scripts/extractor-hh.js",
+      "commit": "7bf0d86eb4e33141d6c31da88f89af28e10490ea",
+      "blob": "9cbd1a8b8e3a3a97e71563d76407c6d9efb31d33",
+      "bytes": 1700
+    },
+    {
+      "repo": "job-agent/job-agent-platform",
+      "path": "packages/job-agent-backend/src/job_agent_backend/workflows/job_processing/state.py",
+      "commit": "51e841eda26a06b63a235b4f8e9e264473520587",
+      "blob": "50ccf62cf9e1ae0114010cb1db71814ae4218717",
+      "bytes": 1825
+    },
+    {
+      "repo": "s3rgeym/hh-applicant-tool",
+      "path": "src/hh_applicant_tool/tool.py",
+      "commit": "6560354246c81f106a665bf747625a6bf812500c",
+      "blob": "063102234033abc605c8e51b833e3153af7dfddf",
+      "bytes": 43921
+    }
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "checked_on": "2026-11-11",
+  "github_queries": [
+    "hh.ru resume AI vacancy",
+    "headhunter llm",
+    "hh.ru resume matching",
+    "superjob habr parser",
+    "langgraph job matching",
+    "hh-agent",
+    "career-signal-hh",
+    "ru-it-jobs-radar",
+    "hh applicant AI",
+    "superjob parser",
+    "habr career parser",
+    "trudvsem vacancies",
+    "job search langgraph resume",
+    "jobspy",
+    "Resume-Matcher",
+    "career-ops",
+    "grokbot-jev-jobs",
+    "hh ru AI resume",
+    "hh.ru langgraph",
+    "hh.ru llm scoring",
+    "vacancy resume superjob",
+    "вакансий резюме llm",
+    "headhunter resume matching",
+    "hh job n8n"
+  ],
+  "other_search_axes": [
+    "Russian-language personal job assistants with full CV matching",
+    "HH / Habr / SuperJob / Trudvsem multi-source collectors",
+    "LangGraph implementations and notebooks",
+    "n8n published workflow source completeness",
+    "GitFlic and GitVerse repositories",
+    "International modular collectors, scoring and career CLI systems"
+  ],
+  "exclusions": [
+    "Employer ATS/recruiting platforms as primary base",
+    "Resume-only generators as collection base",
+    "No discovered reuse license means not a copyable dependency",
+    "Autoclick-only projects as a complete matching pipeline"
+  ],
+  "unavailable": [
+    {
+      "repo": "milanomality/hh-agent",
+      "native": "404",
+      "web": "404",
+      "note": "Search result cached; implementation inaccessible."
+    }
+  ]
+}

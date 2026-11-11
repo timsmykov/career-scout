@@ -1,0 +1,202 @@
+{
+  "checked_on": "2026-11-11",
+  "scope": "Selective static inspection; no foreign runtime executed",
+  "repositories": [
+    {
+      "repo": "iurii-izman/career-signal-hh",
+      "commit": "f8cfc70b846b5050700556fad84c049959d37b2b",
+      "pushed_at": "2026-07-08T22:13:30Z",
+      "archived": false,
+      "license_detected": null
+    },
+    {
+      "repo": "alekseevpavel04/ru-it-jobs-radar",
+      "commit": "035bd435763062543eba884a5cd5298390b20675",
+      "pushed_at": "2026-11-10T11:45:54Z",
+      "archived": false,
+      "license_detected": "MIT"
+    },
+    {
+      "repo": "AgentShekel/hh-bot",
+      "commit": "3a12421e7166ec588d589d7ebbfee1189d55b214",
+      "pushed_at": "2026-06-24T18:26:01Z",
+      "archived": false,
+      "license_detected": "NOASSERTION"
+    },
+    {
+      "repo": "s3rgeym/hh-applicant-tool",
+      "commit": "6560354246c81f106a665bf747625a6bf812500c",
+      "pushed_at": "2026-11-10T15:28:52Z",
+      "archived": false,
+      "license_detected": null
+    },
+    {
+      "repo": "fikstt2/hh-ai-agent",
+      "commit": "d54d07b7eec15bc74bd5409e14aeee64c487068b",
+      "pushed_at": "2026-09-28T05:01:44Z",
+      "archived": false,
+      "license_detected": "MIT"
+    },
+    {
+      "repo": "mms021/langchain-hh",
+      "commit": "7f77234a6c47eed3a98a68793b1e67abf61a3c1a",
+      "pushed_at": "2025-12-12T10:15:07Z",
+      "archived": false,
+      "license_detected": null
+    },
+    {
+      "repo": "veilaris/workhunter",
+      "commit": "07a882cd1117b3c55350db1618cb8ebda51996c4",
+      "pushed_at": "2026-05-04T08:31:19Z",
+      "archived": false,
+      "license_detected": null
+    },
+    {
+      "repo": "Zamikc/hh-analyzer",
+      "commit": "7632348bfb0b39c8c2b2e71ad2168cb7a3c488fe",
+      "pushed_at": "2026-05-26T09:46:13Z",
+      "archived": false,
+      "license_detected": null
+    },
+    {
+      "repo": "Riper21/hh-sniper",
+      "commit": "2171331690ef43068125d060e300bbfafb69b89a",
+      "pushed_at": "2026-11-06T17:12:37Z",
+      "archived": false,
+      "license_detected": null
+    },
+    {
+      "repo": "addito-5G/job-scout",
+      "commit": "fe1f04afbcceec6204b5f2a07f4cdc3eb6d7a753",
+      "pushed_at": "2026-08-02T15:57:42Z",
+      "archived": false,
+      "license_detected": "MIT"
+    },
+    {
+      "repo": "speedyapply/JobSpy",
+      "commit": "68b88d6909a2342ad75fbb945c4204a3a7ed6665",
+      "pushed_at": "2026-10-27T15:30:44Z",
+      "archived": false,
+      "license_detected": "MIT"
+    },
+    {
+      "repo": "srbhr/Resume-Matcher",
+      "commit": "950b700b3cc84ba8543e954d4212d7c375b09a27",
+      "pushed_at": "2026-11-11T05:57:34Z",
+      "archived": false,
+      "license_detected": "Apache-2.0"
+    },
+    {
+      "repo": "sergio11/langgraph_jobsearch_assistant",
+      "commit": "cc7ae1df8e454c9312199f5ac6b246d20adbb16d",
+      "pushed_at": "2025-05-28T19:45:28Z",
+      "archived": false,
+      "license_detected": "MIT"
+    },
+    {
+      "repo": "connwang7/JobAgent-MultiAgent",
+      "commit": "2692f534738ed7ef0ea3272fbe13da813d135471",
+      "pushed_at": "2026-09-26T03:45:26Z",
+      "archived": false,
+      "license_detected": null
+    },
+    {
+      "repo": "career-ops-hq/career-ops",
+      "commit": "605a1e61ee2b0d269b371ebe4351180993ebbfee",
+      "pushed_at": "2026-11-11T06:01:31Z",
+      "archived": false,
+      "license_detected": "MIT"
+    },
+    {
+      "repo": "mcgalleg/grokbot-jev-jobs",
+      "commit": "58b1bb986069cf40461b3de640a6b0b7320db703",
+      "pushed_at": "2026-11-03T20:56:55Z",
+      "archived": false,
+      "license_detected": null
+    },
+    {
+      "repo": "KarapetGaranyan/job-parser-system",
+      "commit": "11c8795dcd09adcc61f0d26a48ed1dce321e8567",
+      "pushed_at": "2025-07-08T16:54:46Z",
+      "archived": false,
+      "license_detected": "MIT"
+    },
+    {
+      "repo": "AndreyTepaykin/hh-mcp",
+      "commit": "98f9930a1bbeeed44572986c7d72b197cacc93e2",
+      "pushed_at": "2026-10-05T12:17:07Z",
+      "archived": false,
+      "license_detected": "MIT"
+    },
+    {
+      "repo": "axisrow/hhru",
+      "commit": "3c25df44bb16b704adb215595a507f5c2604f893",
+      "pushed_at": "2026-11-10T12:38:48Z",
+      "archived": false,
+      "license_detected": "MIT"
+    },
+    {
+      "repo": "nnavyy/automation-vacancy-finder",
+      "commit": "7a1bffe84885ab0cd51d9f2ccbf7ca8be279df14",
+      "pushed_at": "2026-10-31T18:16:45Z",
+      "archived": false,
+      "license_detected": "NOASSERTION"
+    },
+    {
+      "repo": "ethany14/Eregion-Job-Finding-Agent",
+      "commit": "562bdfb212537990b79da7da3382747ae978dacc",
+      "pushed_at": "2026-11-11T07:12:07Z",
+      "archived": false,
+      "license_detected": "MIT"
+    },
+    {
+      "repo": "TatianaVovk/llm-cv-vacancy-scoring-mvp",
+      "commit": "b77c0f8958c431e26a0eb5fe3a50331d5363f2f9",
+      "pushed_at": "2026-02-09T08:44:19Z",
+      "archived": false,
+      "license_detected": null
+    },
+    {
+      "repo": "BlazeStudio/HH-Auto-Response",
+      "commit": "5473f677e06b68d4000b967742733519f3d888b6",
+      "pushed_at": "2026-11-08T10:06:57Z",
+      "archived": false,
+      "license_detected": "NOASSERTION"
+    },
+    {
+      "repo": "maarshir/job-radar",
+      "commit": "42a4af00190b43d75d6b227757b49fcec559d6e3",
+      "pushed_at": "2026-10-06T09:26:37Z",
+      "archived": false,
+      "license_detected": null
+    },
+    {
+      "repo": "job-agent/job-agent-platform",
+      "commit": "51e841eda26a06b63a235b4f8e9e264473520587",
+      "pushed_at": "2026-06-03T16:04:53Z",
+      "archived": false,
+      "license_detected": null
+    },
+    {
+      "repo": "kuldeepshandilya/find-jobs-matching-given-resume-langgraph",
+      "commit": "0d1c6fc0cd4ef3dd8a1e5efdfc83f0927b77201f",
+      "pushed_at": "2026-04-20T08:12:04Z",
+      "archived": false,
+      "license_detected": "MIT"
+    },
+    {
+      "repo": "Gitman404/job-search-assistant",
+      "commit": "ec2add0f8d818bfa4697dbd421f0af3e796606d7",
+      "pushed_at": "2026-05-25T16:13:57Z",
+      "archived": false,
+      "license_detected": "MIT"
+    },
+    {
+      "repo": "zhurik77/jobfitcopilot",
+      "commit": "7bf0d86eb4e33141d6c31da88f89af28e10490ea",
+      "pushed_at": "2026-08-05T16:19:00Z",
+      "archived": false,
+      "license_detected": "MIT"
+    }
+  ]
+}

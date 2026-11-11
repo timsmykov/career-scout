@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "source": "hh",
+  "source_id": "synthetic-001",
+  "url": "https://example.org/vacancies/synthetic-001",
+  "title": "Бизнес-аналитик цифрового сервиса",
+  "company": "Вымышленная компания",
+  "description": "Нужно собирать требования заказчика и описывать пользовательские сценарии. Опыт 1–3 года. SQL желателен.",
+  "detail_status": "full",
+  "content_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "fetched_at": "2026-11-11T09:00:00Z",
+  "detail_fetched_at": "2026-11-11T09:00:01Z",
+  "published_at": "2026-11-10T09:00:00Z",
+  "source_updated_at": null,
+  "attributes": {
+    "grade": "junior",
+    "experience_bucket": "one_to_three",
+    "salary": null,
+    "location": null,
+    "work_format": null,
+    "technology_scope": "technology_function",
+    "conflicts": []
+  },
+  "provenance": {
+    "query_ids": [
+      "business_analyst:0"
+    ],
+    "parser_version": "synthetic-1",
+    "normalizer_version": "draft-1"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "evaluation_key": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "profile_id": "product",
+  "verdict": "REJECT",
+  "reason": "Основные обязанности этой вакансии относятся к бизнес-анализу, продуктовая ответственность не описана.",
+  "assessments": [
+    {
+      "requirement": "Сбор требований и пользовательские сценарии",
+      "mandatory": true,
+      "vacancy_quote": "Нужно собирать требования заказчика и описывать пользовательские сценарии.",
+      "resume_quote": null,
+      "status": "outside_profile",
+      "explanation": "Набор основных обязанностей вне предметного профиля Product."
+    }
+  ],
+  "questions": []
+}

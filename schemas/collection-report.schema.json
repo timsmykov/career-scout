@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://career-scout.local/schemas/collection-report.schema.json",
+  "title": "CollectionReport",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "run_id",
+    "source",
+    "collection_status",
+    "planned_queries",
+    "completed_queries",
+    "pages_saved",
+    "distinct_vacancies",
+    "full_details",
+    "deferred_details",
+    "truncated",
+    "errors",
+    "requests_made"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source": {
+      "enum": [
+        "hh",
+        "habr",
+        "trudvsem",
+        "superjob"
+      ]
+    },
+    "collection_status": {
+      "enum": [
+        "complete",
+        "partial",
+        "blocked",
+        "failed"
+      ]
+    },
+    "planned_queries": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "completed_queries": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "pages_saved": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "distinct_vacancies": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "full_details": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "deferred_details": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "requests_made": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "truncated": {
+      "type": "boolean"
+    },
+    "errors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "code",
+          "message"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "minLength": 1
+          },
+          "message": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  }
+}

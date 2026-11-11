@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "evaluation_key": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "profile_id": "business_analyst",
+  "verdict": "PASS",
+  "reason": "Основные задачи подтверждены опытом сбора требований и описания сценариев; SQL указан как желательный.",
+  "assessments": [
+    {
+      "requirement": "Сбор требований и пользовательские сценарии",
+      "mandatory": true,
+      "vacancy_quote": "Нужно собирать требования заказчика и описывать пользовательские сценарии.",
+      "resume_quote": "Собирал требования заказчика и описывал пользовательские сценарии цифрового сервиса.",
+      "status": "confirmed",
+      "explanation": "В резюме прямо описаны обе основные задачи."
+    }
+  ],
+  "questions": []
+}

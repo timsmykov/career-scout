@@ -1,0 +1,40 @@
+[build-system]
+requires = ["hatchling>=1.27,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "career-scout"
+version = "0.1.0"
+description = "API-first vacancy collection and sequential resume matching; pre-development bootstrap."
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+authors = [{ name = "Tim Smykov" }]
+dependencies = [
+  "httpx>=0.28,<1",
+  "pydantic>=2.10,<3",
+  "langgraph>=1,<2",
+  "langgraph-checkpoint-sqlite>=3,<4",
+  "langchain-openai>=1,<2",
+]
+
+[dependency-groups]
+dev = [
+  "jsonschema>=4.23,<5",
+  "pytest>=8,<10",
+  "respx>=0.22,<1",
+  "ruff>=0.11,<1",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/career_scout"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["live: explicitly enabled network or paid provider acceptance; excluded from ordinary CI"]

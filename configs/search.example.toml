@@ -1,0 +1,16 @@
+schema_version = 1
+status = "draft_for_coverage_pilot"
+mandatory_ai_keyword = false
+server_experience_filter_enabled = false
+
+[product]
+queries = ["менеджер продукта", "product manager", "цифровые сервисы"]
+
+[business_analyst]
+queries = ["бизнес аналитик", "business analyst", "сбор требований"]
+
+[business_assistant]
+queries = ["бизнес ассистент", "ассистент основателя", "координатор проектов"]
+
+[automation]
+queries = ["автоматизация процессов", "внедрение ИИ", "AI automation", "интеграция сервисов"]

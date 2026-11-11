@@ -1,0 +1,33 @@
+{
+  "checked_on": "2026-11-11",
+  "sources": [
+    {
+      "source": "hh",
+      "url": "https://api.hh.ru/openapi/specification/public",
+      "kind": "official_openapi",
+      "sha256": "7c0ebb85ab45ee7dac1bb9135f340c1de211fe62dd075bd1d9a746f5596de591",
+      "xerj_corpus": "hh-public-api"
+    },
+    {
+      "source": "trudvsem",
+      "url": "https://opendata.trudvsem.ru/api/v1/vacancies/application.wadl",
+      "kind": "official_wadl",
+      "sha256": "5de2b3ce07aab8841b2021448265cec31b0b07a9bd593b0fa322fbf0295fa794",
+      "xerj_corpus": "trudvsem-api-docs"
+    },
+    {
+      "source": "habr",
+      "url": "https://career.habr.com/info/api",
+      "kind": "official_employer_crm_reference_not_frontend_search",
+      "xerj_corpus": "habr-career-api-docs",
+      "limitation": "No published contract established for frontend search"
+    },
+    {
+      "source": "superjob",
+      "url": "https://api.superjob.ru/",
+      "kind": "official_accessible_legacy_applicant_reference",
+      "xerj_corpus": "superjob-api-docs",
+      "limitation": "Current /doc/ inaccessible; registration and retention unresolved"
+    }
+  ]
+}

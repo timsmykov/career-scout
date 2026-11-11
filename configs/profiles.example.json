@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "status": "awaiting_current_resumes",
+  "profiles": [
+    {
+      "id": "product",
+      "label": "Product",
+      "resume_path": "private/resumes/product.md",
+      "resume_hash": null,
+      "rubric_path": "prompts/product.md",
+      "rubric_version": "draft-1"
+    },
+    {
+      "id": "business_analyst",
+      "label": "Business Analyst",
+      "resume_path": "private/resumes/business_analyst.md",
+      "resume_hash": null,
+      "rubric_path": "prompts/business_analyst.md",
+      "rubric_version": "draft-1"
+    },
+    {
+      "id": "business_assistant",
+      "label": "Business Assistant",
+      "resume_path": "private/resumes/business_assistant.md",
+      "resume_hash": null,
+      "rubric_path": "prompts/business_assistant.md",
+      "rubric_version": "draft-1"
+    },
+    {
+      "id": "automation",
+      "label": "Automation / AI Implementation",
+      "resume_path": "private/resumes/automation.md",
+      "resume_hash": null,
+      "rubric_path": "prompts/automation.md",
+      "rubric_version": "draft-1"
+    }
+  ]
+}

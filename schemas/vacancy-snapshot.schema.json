@@ -1,0 +1,233 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://career-scout.local/schemas/vacancy-snapshot.schema.json",
+  "title": "VacancySnapshot",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "source",
+    "source_id",
+    "url",
+    "title",
+    "company",
+    "description",
+    "detail_status",
+    "content_hash",
+    "fetched_at",
+    "detail_fetched_at",
+    "published_at",
+    "source_updated_at",
+    "attributes",
+    "provenance"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "source": {
+      "enum": [
+        "hh",
+        "habr",
+        "trudvsem",
+        "superjob"
+      ]
+    },
+    "source_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "url": {
+      "type": "string",
+      "format": "uri"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "company": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "description": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "detail_status": {
+      "enum": [
+        "full",
+        "partial",
+        "missing",
+        "stale",
+        "archived",
+        "unavailable"
+      ]
+    },
+    "content_hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "fetched_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "detail_fetched_at": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "date-time"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "published_at": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "date-time"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "source_updated_at": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "date-time"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "attributes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "grade",
+        "experience_bucket",
+        "salary",
+        "location",
+        "work_format",
+        "technology_scope",
+        "conflicts"
+      ],
+      "properties": {
+        "grade": {
+          "enum": [
+            "intern",
+            "junior",
+            "middle",
+            "senior",
+            "lead",
+            "head",
+            null
+          ]
+        },
+        "experience_bucket": {
+          "enum": [
+            "no_experience",
+            "one_to_three",
+            "three_to_six",
+            "over_six",
+            null
+          ]
+        },
+        "salary": {
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "location": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "work_format": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "technology_scope": {
+          "enum": [
+            "technology_function",
+            "technology_employer",
+            "both",
+            "outside",
+            null
+          ]
+        },
+        "conflicts": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "query_ids",
+        "parser_version",
+        "normalizer_version"
+      ],
+      "properties": {
+        "query_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "parser_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "normalizer_version": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "detail_status": {
+            "const": "full"
+          }
+        },
+        "required": [
+          "detail_status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "description": {
+            "type": "string",
+            "minLength": 1
+          },
+          "detail_fetched_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    }
+  ]
+}

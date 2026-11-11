@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "evaluation_key": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+  "profile_id": "business_analyst",
+  "vacancy": {
+    "schema_version": 1,
+    "source": "hh",
+    "source_id": "synthetic-001",
+    "url": "https://example.org/vacancies/synthetic-001",
+    "title": "Бизнес-аналитик цифрового сервиса",
+    "company": "Вымышленная компания",
+    "description": "Нужно собирать требования заказчика и описывать пользовательские сценарии. Опыт 1–3 года. SQL желателен. Обязателен продвинутый SQL.",
+    "detail_status": "full",
+    "content_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "fetched_at": "2026-11-11T09:00:00Z",
+    "detail_fetched_at": "2026-11-11T09:00:01Z",
+    "published_at": "2026-11-10T09:00:00Z",
+    "source_updated_at": null,
+    "attributes": {
+      "grade": "junior",
+      "experience_bucket": "one_to_three",
+      "salary": null,
+      "location": null,
+      "work_format": null,
+      "technology_scope": "technology_function",
+      "conflicts": []
+    },
+    "provenance": {
+      "query_ids": [
+        "business_analyst:0"
+      ],
+      "parser_version": "synthetic-1",
+      "normalizer_version": "draft-1"
+    }
+  },
+  "resume": {
+    "resume_id": "synthetic-ba",
+    "version": "synthetic-1",
+    "content_hash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "text": "Собирал требования заказчика и описывал пользовательские сценарии цифрового сервиса. Опыт 2 года."
+  },
+  "filter_version": "draft-2026-11-11",
+  "filters": {
+    "allowed_grades": [
+      "intern",
+      "junior",
+      "middle"
+    ]
+  },
+  "rubric_version": "draft-1",
+  "model_config_hash": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+  "evaluator_version": "draft-1",
+  "evaluation_date": "2026-11-11T09:10:00Z"
+}
