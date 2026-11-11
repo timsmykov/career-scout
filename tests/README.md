@@ -3,6 +3,9 @@
 `test_hh_collector.py` проверяет HH transport, нормализацию, транзакции, версии,
 пагинацию, date split, budgets/429/auth, CLI и аварийный выход отдельного процесса.
 Запуск: `uv run --no-sync pytest -m "not live"`. Сети, реальных токенов и LLM нет.
+test_normalization.py проверяет typed условия, null/conflicts/provenance и identity;
+test_migration.py — v1 backup/rollback/process death/idempotence, пересечение ID и
+продолжение старого run. Docker test дополнительно переносит legacy запись.
 Ограниченная реальная проверка HH фиксируется отдельно в docs/collector-readiness.md.
 Общий оставшийся план: docs/acceptance.md.
 

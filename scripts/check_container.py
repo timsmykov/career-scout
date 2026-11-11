@@ -11,8 +11,8 @@ FIRST = r"""
 import json
 from pathlib import Path
 import httpx
-from career_scout.hh import Credentials, HHClient
-from career_scout.storage import Store
+from career_scout.hh import Credentials, HHClient, normalize
+from career_scout.storage import Store, SCHEMA
 from career_scout.collector import collect
 
 p=Path('/tmp/test.env')
@@ -24,7 +24,19 @@ if phase=='first':
     c.save_token('persisted-test')
 else:
     assert c.values['HH_ACCESS_TOKEN']=='persisted-test'
+if phase=='first':
+    import sqlite3
+    original=normalize({'id':'0','name':'Legacy','description':'<p>Legacy text</p>'},'0')
+    with sqlite3.connect('/data/ledger.sqlite3') as old:
+        old.executescript(SCHEMA+'\nPRAGMA user_version=1;')
+        old.execute('INSERT INTO vacancies VALUES(?,?,?,?,?,?)',
+          ('0','{}','legacy','full',original['content_hash'],original['detail_fetched_at']))
+        old.execute('INSERT INTO snapshots VALUES(?,?,?,?)',
+          ('0',original['content_hash'],original['detail_fetched_at'],json.dumps(original)))
 s=Store(Path('/data/ledger.sqlite3'))
+assert s.db.execute('PRAGMA user_version').fetchone()[0]==2
+assert s.inspect('0')['snapshots'][0]['description']=='Legacy text'
+assert s.inspect('0')['normalized_snapshots'][0]['description']=='Legacy text'
 committed=(set(json.loads(Path('/data/first-full-ids.json').read_text()))
            if phase!='first' else set())
 
@@ -54,6 +66,7 @@ if phase=='first':
 else:
     assert report['requests']==303, report
     exported=s.export(rid)
+    assert exported['schema_version']==2
     assert len(exported['vacancies'])==300
     assert len({x['source_id'] for x in exported['vacancies']})==300
     assert s.db.execute('PRAGMA quick_check').fetchone()[0]=='ok'

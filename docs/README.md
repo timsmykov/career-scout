@@ -15,6 +15,8 @@
 
 ## Контракты
 
+- [normalization.md](normalization.md) — общий формат v2, source identity, условия и миграция.
+
 - [collector-readiness.md](collector-readiness.md) — live-доступ и остаток реализации.
 - [collector.md](collector.md) — поиск, страницы, окна, бюджет и полнота.
 - [sources/README.md](sources/README.md) — четыре площадки и статус доступа.

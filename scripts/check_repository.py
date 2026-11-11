@@ -35,6 +35,7 @@ def check_schemas() -> int:
     }
     pairs = {
         "vacancy.synthetic.json": "vacancy-snapshot.schema.json",
+        "vacancy-v2.synthetic.json": "vacancy-v2.schema.json",
         "worker-input.synthetic.json": "worker-input.schema.json",
         "worker-input-borderline.synthetic.json": "worker-input.schema.json",
         "evaluation-pass.synthetic.json": "evaluation-result.schema.json",

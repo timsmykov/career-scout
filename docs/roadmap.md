@@ -8,7 +8,7 @@ LangGraph, LLM-оценка, импорт резюме и настройка м�
 ## Реализованный срез HH — 11.11.2026
 
 Работают `plan/collect/resume/status/inspect/export`, полный HH detail, курсор
-страницы в одной транзакции с discoveries, SQLite WAL/schema v1, дедупликация,
+страницы в одной транзакции с discoveries, SQLite WAL/schema v2, дедупликация,
 история содержательных версий, разбиение выдачи свыше 2000 по времени, finite
 retries, request budget и сохранённый cooldown 429. Один процесс на БД через flock;
 общих leases и других адаптеров пока нет. Запуск/перезапуск проверены offline и
@@ -29,16 +29,16 @@ volume recreation проверены; 300 synthetic карточек прохо�
 | Страницы/версии/дочитывание | Работают для HH | Общие source contracts и reconciliation |
 | Размещение | Docker CLI + external SQLite volume | Backup policy/расписание — отдельная будущая потребность |
 | Поиск/конфигурация | Явные query/даты/бюджеты CLI | TOML, география/атрибуты, query families, doctor |
-| Условия/фильтры | Исходные HH поля сохранены | Общие typed поля, grade/experience/technology/unknown |
+| Условия/фильтры | Typed зарплата/опыт/work formats, raw/provenance/null/conflicts сохранены | Grade/technology, причины фильтров и mappings других source |
 | Другие источники | Только прежние bounded API probes | Три runtime адаптера ещё не реализованы |
 | Готовый набор | Текущий JSON export | CSV, закреплённые версии, manifest/cursor, expiry/retention |
 
 Ближайший рекомендуемый порядок без моделей:
 
-1. **Общий контракт вакансии и source identity (CS-001/002/009/010).** Привести
-   source+source_id, зарплату/currency/gross/period, опыт, формат и даты к явной
-   модели; raw значения и unknown сохранить. Нынешний ledger keyed только HH ID,
-   поэтому другие адаптеры нельзя просто вставить в эту таблицу без миграции.
+1. **Общий контракт/identity и базовые условия реализованы.** Common vacancy v2,
+   `(source,source_id)`, composite Trudvsem ID, typed salary/experience/work formats,
+   отдельные normalized projections и миграция рабочих317 snapshots без потерь.
+   [Контракт и proof](normalization.md). Другие API mappings ещё не реализованы.
 2. **Рабочий config/query planner и доказуемые фильтры (CS-003/007/008/014).**
    Подключить TOML/атрибуты, географию, поисковые семейства, причины исключений;
    проверить на контрольной выборке, а не объявлять численность мерой релевантности.
@@ -51,7 +51,7 @@ volume recreation проверены; 300 synthetic карточек прохо�
    Многопроцессные leases нужны при введении параллельных исполнителей, а не
    только из-за появления Docker; сейчас действует один writer на ledger.
 
-Все пункты выше — дальнейшая работа, не изменения этого Docker PR.
+Пункт 1 реализован; следующий этап — пункт 2. Остальные пункты не выполнены этим изменением.
 LangGraph/оценщики/резюме остаются deferred. Статусы ниже синхронизированы с
 backlog.json; in_progress означает частичную реализацию, не закрытый acceptance.
 
@@ -188,14 +188,14 @@ HTTP API или брокер без отдельной потребности н
 - Предшественники: CS-001, CS-002.
 - Результат: storage/migrations, connection.py.
 - Готово, когда: WAL, foreign keys, schema version, транзакции на временной БД.
-- Статус: in_progress.
+- Статус: complete.
 
 ### CS-010 · Snapshots и discoveries (M2)
 
 - Предшественники: CS-009.
 - Результат: storage/vacancies.py, discoveries.py.
 - Готово, когда: Один source ID в нескольких запросах не дублируется; изменённый текст создаёт версию.
-- Статус: in_progress.
+- Статус: complete.
 
 ### CS-011 · Прогресс query/window (M2)
 

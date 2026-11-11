@@ -1,0 +1,150 @@
+{
+  "schema_before": 1,
+  "schema_after": 2,
+  "database": "/data/ledger.sqlite3",
+  "before": {
+    "vacancies": {
+      "count": 317,
+      "sha256": "681114dc702e47f9c7d24ead98d5321c203be9d1c05938bb8a8bd36f2b8b24a9"
+    },
+    "snapshots": {
+      "count": 317,
+      "sha256": "22b6fe08e53b087ec5134d892508e32e45c035a61d463cf28a686e98508bc08e"
+    },
+    "discoveries": {
+      "count": 634,
+      "sha256": "cca59f5ae0f365150c4fb844a36d38b818484f6d411d5f6edf39d5b98cafc4fe"
+    },
+    "queries": {
+      "count": 3,
+      "sha256": "abc69312a1a59ecbde29610b6a7ad26462911adc5aa42162b555c75fcbb1b3f9"
+    },
+    "runs": {
+      "count": 2,
+      "sha256": "7897705b3101b26ac682663de3425aeacd9fe7e6b6c055671d07685d6196a674"
+    },
+    "events": {
+      "count": 2,
+      "sha256": "402951c301788f5eff19675307c0ce45d7682c7a5636e4f42f3c51b447c0ea0d"
+    },
+    "source_state": {
+      "count": 1,
+      "sha256": "f028565dbad988e3e7c376295513fcf7d935f3fe48c6844c6de5970c57342a81"
+    }
+  },
+  "after": {
+    "vacancies": {
+      "count": 317,
+      "sha256": "681114dc702e47f9c7d24ead98d5321c203be9d1c05938bb8a8bd36f2b8b24a9"
+    },
+    "snapshots": {
+      "count": 317,
+      "sha256": "22b6fe08e53b087ec5134d892508e32e45c035a61d463cf28a686e98508bc08e"
+    },
+    "discoveries": {
+      "count": 634,
+      "sha256": "cca59f5ae0f365150c4fb844a36d38b818484f6d411d5f6edf39d5b98cafc4fe"
+    },
+    "queries": {
+      "count": 3,
+      "sha256": "abc69312a1a59ecbde29610b6a7ad26462911adc5aa42162b555c75fcbb1b3f9"
+    },
+    "runs": {
+      "count": 2,
+      "sha256": "7897705b3101b26ac682663de3425aeacd9fe7e6b6c055671d07685d6196a674"
+    },
+    "events": {
+      "count": 2,
+      "sha256": "402951c301788f5eff19675307c0ce45d7682c7a5636e4f42f3c51b447c0ea0d"
+    },
+    "source_state": {
+      "count": 1,
+      "sha256": "f028565dbad988e3e7c376295513fcf7d935f3fe48c6844c6de5970c57342a81"
+    }
+  },
+  "original_rows_and_payload_bytes_preserved": true,
+  "quick_check": "ok",
+  "foreign_key_errors": 0,
+  "normalized_count": 317,
+  "backup_path": "/data/backups/ledger.sqlite3.v1-20261111T185552Z-2aaf3665.sqlite3",
+  "exports": [
+    {
+      "run_id": "8736b90e-c8a7-49d8-94f9-056225bc5433",
+      "full": 315,
+      "status": "complete"
+    },
+    {
+      "run_id": "b15f3b0e-983f-4276-8007-15b3e551d77a",
+      "full": 4,
+      "status": "partial"
+    }
+  ],
+  "normalization_summary": {
+    "salary_missing": 160,
+    "salary_periods": {
+      "month": 157
+    },
+    "currencies": {
+      "RUB": 138,
+      "UZS": 3,
+      "KZT": 4,
+      "BYR": 4,
+      "USD": 8
+    },
+    "experience": {
+      "three_to_six": 145,
+      "one_to_three": 114,
+      "no_experience": 6,
+      "over_six": 52
+    },
+    "work_formats": {
+      "on_site": 223,
+      "hybrid": 109,
+      "remote": 81,
+      "field_work": 26
+    },
+    "issues": {},
+    "conflicts": {}
+  },
+  "repeat_open_idempotent": true,
+  "checked_on": "2026-11-11",
+  "rehearsal_passed": true,
+  "unit_tests": 93,
+  "network_calls_for_backfill": 0,
+  "container_synthetic_test": "v1 legacy preserved +20 to300 full across container recreation",
+  "rollback_image": "career-scout:before-schema-v2-20261111",
+  "image_id": "sha256:29b4d21f6d3c6b82bdbaf806a2a039004b3d93738be83215f112be982eee8654",
+  "cli_export": {
+    "output": "/data/exports/common-v2-20261111.json",
+    "exported": 315
+  },
+  "cli_resumed_complete": {
+    "run_id": "8736b90e-c8a7-49d8-94f9-056225bc5433",
+    "status": "complete",
+    "error": null,
+    "cooldown_until": null,
+    "requests": 324,
+    "pages_saved": 8,
+    "distinct_vacancies": 315,
+    "full_details": 315,
+    "deferred_details": 0,
+    "unavailable_details": 0,
+    "archived_details": 0,
+    "pending_queries": 0,
+    "completed_queries": 2,
+    "truncated_queries": 0,
+    "rejected_rows": 0,
+    "plan": {
+      "source": "hh",
+      "queries": [
+        "бизнес аналитик",
+        "бизнес AND аналитик"
+      ],
+      "start": "2026-11-11T14:01:42+00:00",
+      "end": "2026-11-11T18:01:42+00:00",
+      "per_page": 100,
+      "ttl_hours": 24
+    }
+  },
+  "image_runtime_matches_source": true
+}

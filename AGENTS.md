@@ -8,6 +8,9 @@
 Общие контракты остальных площадок остаются целевыми, не готовым runtime.
 Docker/Compose: batch CLI, external volume career-scout-data; .env — read-only secret,
 HH token cache — в volume. Не удалять этот volume и не добавлять scheduler без запроса.
+SQLite schema v2: source+source_id, immutable snapshots и отдельные common-1
+normalized_snapshots. V1 авто-мигрируется с backup под flock. Не переписывать
+старый payload/content_hash при изменении нормализатора. Контракт: docs/normalization.md.
 Текущий scope: только collect/normalize/store/quality/export. Анализ по резюме и
 LangGraph отложены владельцем до приёмки коллектора. Не начинать их по старому roadmap.
 

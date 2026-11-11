@@ -4,7 +4,9 @@
 оценка по резюме отложены: коллектор должен быть полезен и принят без них.
 
 Реализовано сейчас: HH transport/normalizer (`hh.py`), SQLite (`storage.py`),
-последовательный исполнитель (`collector.py`) и CLI (`cli.py`). Для одной БД
+последовательный исполнитель (`collector.py`) и CLI (`cli.py`). Общая vacancy v2
+и source identity — models.py, нормализация условий — normalization.py; SQLite v2
+и lossless migration/backups — storage.py/migrations.py. [Контракт](normalization.md). Для одной БД
 действует процессная блокировка; leases нескольких воркеров пока нет. Полная схема
 ниже — целевая архитектура. В первом срезе нет фильтров, expiry/retention и стабильного
 cursor экспорта; экспорт — согласованный текущий снимок SQLite. Подробности:

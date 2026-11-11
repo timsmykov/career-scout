@@ -10,9 +10,13 @@ import sqlite3
 import tempfile
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from typing import get_args
+
+from pydantic import ValidationError
 
 from career_scout.collector import collect
 from career_scout.hh import Credentials, HHClient, SourceError
+from career_scout.models import Identity, Source
 from career_scout.storage import Store
 
 
@@ -36,6 +40,7 @@ def parser():
     p.add_argument("--env", type=Path, default=Path(".env"))
     p.add_argument("--token-file", type=Path, help="Writable token cache for read-only credentials")
     sub = p.add_subparsers(dest="command", required=True)
+    sub.add_parser("migrate", help="Upgrade the local ledger with a v1 backup; no network")
     for name in ("plan", "collect"):
         command = sub.add_parser(name)
         command.add_argument("--query", action="append", required=True)
@@ -54,6 +59,7 @@ def parser():
     status.add_argument("run_id")
     inspect = sub.add_parser("inspect")
     inspect.add_argument("vacancy_id")
+    inspect.add_argument("--source", choices=get_args(Source), default="hh")
     export = sub.add_parser("export")
     export.add_argument("run_id")
     export.add_argument("--output", type=Path, required=True)
@@ -84,18 +90,28 @@ def main(argv=None):
         if args.command == "plan":
             print(json.dumps(plan, ensure_ascii=False, indent=2))
             return 0
-    if args.command == "inspect" and not re.fullmatch(r"\d+", args.vacancy_id):
-        p.error("vacancy ID must contain digits")
+    if args.command == "inspect":
+        try:
+            Identity(source=args.source, source_id=args.vacancy_id)
+        except ValidationError:
+            p.error("invalid source identity")
+        if args.source == "hh" and not re.fullmatch(r"[0-9]+", args.vacancy_id):
+            p.error("HH vacancy ID must contain digits")
     store = None
     client = None
     try:
         if args.command in {"status", "inspect", "export", "resume"} and not args.db.exists():
             raise SourceError("database_not_found")
         store = Store(args.db)
-        if args.command == "status":
+        if args.command == "migrate":
+            output = {
+                "schema_version": 2,
+                "backup_path": str(store.backup_path) if store.backup_path else None,
+            }
+        elif args.command == "status":
             output = store.report(args.run_id)
         elif args.command == "inspect":
-            output = store.inspect(args.vacancy_id)
+            output = store.inspect(args.vacancy_id, source=args.source)
         elif args.command == "export":
             output = store.export(args.run_id)
             # An explicit output path is required; do not overwrite credentials or an existing file.

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
 import math
 import os
@@ -10,7 +9,6 @@ import random
 import re
 import tempfile
 import time
-from datetime import UTC, datetime
 from email.utils import parsedate_to_datetime
 from html.parser import HTMLParser
 from pathlib import Path
@@ -18,23 +16,7 @@ from pathlib import Path
 import httpx
 from pydantic import BaseModel, ConfigDict, Field, StrictInt, ValidationError
 
-
-def utcnow() -> str:
-    return datetime.now(UTC).isoformat()
-
-
-def digest(value: object) -> str:
-    blob = json.dumps(value, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
-    return hashlib.sha256(blob.encode()).hexdigest()
-
-
-class SourceError(Exception):
-    """Only safe, fixed error codes cross the logging/CLI boundary."""
-
-    def __init__(self, code: str, retry_at: float | None = None):
-        super().__init__(code)
-        self.code = code
-        self.retry_at = retry_at
+from career_scout.common import SourceError, digest, utcnow
 
 
 class Credentials:

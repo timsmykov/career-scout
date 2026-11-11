@@ -21,7 +21,7 @@
       "deliverable": "domain/source.py, domain/errors.py, JSON Schema",
       "acceptance": "SourceQuery/Page, typed cursor, capability map; drift отличим от пустой выдачи",
       "scope": "collector",
-      "implementation_note": "Рабочие hh/storage/collector/cli модули и offline pytest в CI; общие multi-source контракты впереди."
+      "implementation_note": "Common vacancy/identity/attributes v2 и safe errors реализованы; transport/source page capabilities остальных площадок впереди."
     },
     {
       "id": "CS-002",
@@ -34,7 +34,7 @@
       "deliverable": "normalization/{html,hashing,time,salary}.py",
       "acceptance": "Разделы/даты/gross-net/период/unknown сохранены; хеш устойчив к query provenance",
       "scope": "collector",
-      "implementation_note": "HH сохраняет полный payload, HTML/text, source dates и условия; общая типизированная salary/grade модель впереди."
+      "implementation_note": "Common-1 salary/currency/gross/period/frequency, experience и work formats, unknown/conflicts/provenance; HH mapping и backfill317 готовы. Mappings других source и дополнительные признаки впереди."
     },
     {
       "id": "CS-003",
@@ -122,7 +122,7 @@
       "id": "CS-009",
       "milestone": "M2",
       "title": "SQLite и миграции",
-      "status": "in_progress",
+      "status": "complete",
       "depends_on": [
         "CS-001",
         "CS-002"
@@ -130,20 +130,20 @@
       "deliverable": "storage/migrations, connection.py",
       "acceptance": "WAL, foreign keys, schema version, транзакции на временной БД",
       "scope": "collector",
-      "implementation_note": "SQLite WAL/FK/schema v1, atomic backup migration в external Docker volume и сохранность после container recreation; общий multi-source schema upgrade впереди."
+      "implementation_note": "Schema v2, composite keys/FK, WAL, backup + atomic v1 migration; rollback/process death/writer lock/idempotence проверены, рабочие317 snapshots сохранены."
     },
     {
       "id": "CS-010",
       "milestone": "M2",
       "title": "Snapshots и discoveries",
-      "status": "in_progress",
+      "status": "complete",
       "depends_on": [
         "CS-009"
       ],
       "deliverable": "storage/vacancies.py, discoveries.py",
       "acceptance": "Один source ID в нескольких запросах не дублируется; изменённый текст создаёт версию",
       "scope": "collector",
-      "implementation_note": "HH identity, snapshots/content hash и discoveries реализованы; общий multi-source identity впереди."
+      "implementation_note": "Source+ID snapshots/discoveries и content versions реализованы; разные source с одинаковым ID не пересекаются, все raw snapshot bytes/hash сохранены; normalized projections раздельны."
     },
     {
       "id": "CS-011",

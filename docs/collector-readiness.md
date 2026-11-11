@@ -64,6 +64,12 @@ HH CLI упакован в отдельный образ, SQLite хранитс�
 [Размещение, команды и evidence](docker.md). Общий collector MVP остаётся незавершённым;
 [актуальная оценка и следующий шаг](roadmap.md).
 
+## Общий формат и сохранность данных
+
+Schema v2 и common-1 внедрены в рабочий Docker ledger с backup. Все317 карточек,
+source snapshots,634 discoveries и query/run состояния сохранены.
+[Правила, интерфейсы и доказательства](normalization.md).
+
 ## Остаток по площадкам
 
 | Площадка | Что нужно реализовать/проверить |
@@ -78,16 +84,16 @@ false: ещё нет runtime-адаптера и согласованной по
 
 ## Общие пробелы реализации
 
-1. **Другие источники и общие контракты.** Остальные адаптеры, multi-source identity,
-   transport/config и версионированный общий normalizer ещё не реализованы.
-2. **Систематизация условий.** HH сохраняет исходные salary/gross/experience/null,
-   но общая типизация периода зарплаты, grade/technology/unknown/conflict впереди.
+1. **Другие источники и общие контракты.** Identity/schema v2/common normalizer реализованы и
+   backfilled без потерь. Остальные API adapters и transport/config ещё впереди.
+2. **Систематизация условий.** Typed salary/gross/period/experience/work formats и
+   unknown/conflict/provenance реализованы. Grade/technology и фильтры ещё впереди.
 3. **Очередь и обновления.** HH использует один процесс/flock, не lease workers.
    TTL проверяется при повторном discovery; нет полного source reconciliation,
    auto-expiry и retention/purge. Старые run читают текущие версии БД.
 4. **Экспорт.** HH JSON работает из одного согласованного read snapshot, но CSV,
    неизменяемый version set по run, stable consumer cursor и retention ещё впереди.
-   HH snapshot v1 отделён от будущего общего VacancySnapshot контракта.
+   Source HH snapshot v1 immutable, текущий общий export имеет schema v2; worker/bootstrap v1 отложен.
 5. **Качество охвата.** HH-проверка сотен карточек пройдена; широкие query families, ручной контроль
    потерь рынка и длительная multi-source нагрузка ещё впереди. Анализ резюме/LangGraph отложен.
 

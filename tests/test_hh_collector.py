@@ -155,7 +155,7 @@ def test_crash_after_http_before_page_commit_refetches_same_page(store, env, mon
 def test_partial_transaction_rolls_back_rows_and_cursor(store):
     rid = run(store)
     store.db.executescript("""
-        CREATE TRIGGER fail_second BEFORE INSERT ON vacancies WHEN NEW.id='2'
+        CREATE TRIGGER fail_second BEFORE INSERT ON vacancies WHEN NEW.source_id='2'
         BEGIN SELECT RAISE(ABORT, 'simulated disk write error'); END;
     """)
     with pytest.raises(sqlite3.IntegrityError):
@@ -551,7 +551,9 @@ def test_actual_snapshot_matches_published_source_schema(store, env):
     collect(store, client(env, answer), rid)
     path = Path(__file__).resolve().parents[1] / "schemas/hh-snapshot.schema.json"
     validator = Draft202012Validator(json.loads(path.read_text()), format_checker=FormatChecker())
-    validator.validate(store.ready(rid)[0])
+    validator.validate(store.inspect("1")["snapshots"][0])
+    common = Path(__file__).resolve().parents[1] / "schemas/vacancy-v2.schema.json"
+    Draft202012Validator(json.loads(common.read_text())).validate(store.ready(rid)[0])
     store.export(rid)  # one consistent read snapshot; leaves connection usable
     assert store.report(rid)["status"] == "complete"
 

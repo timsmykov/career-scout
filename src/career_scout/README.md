@@ -1,8 +1,10 @@
 # Модули
 
-Работают: hh.py (HTTP/auth/HTML normalizer), storage.py (SQLite v1),
+Работают: hh.py (HTTP/auth/HTML normalizer), storage.py (SQLite v2),
 collector.py (последовательный collect/resume), cli.py и __main__.py.
-Ни один из них не импортирует LangGraph или модели.
+models.py/normalization.py задают общий контракт и HH mapping; migrations.py
+сохраняет v1 backup и переносит базу, common.py — ошибки/хеши/clock.
+Ни один runtime-модуль не импортирует LangGraph или модельный SDK.
 
 Ниже сохранена целевая карта общего коллектора, а не список готовых импортов.
 

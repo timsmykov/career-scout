@@ -15,6 +15,8 @@ SQLite `/data/ledger.sqlite3`, WAL и экспорты лежат в external vo
 `career-scout-data`; удаление контейнера их не удаляет. Проверенная база с 315
 карточками импортирована в volume через backup API, исходный host файл оставлен.
 Ключи — read-only host `.env`, обновляемый token cache — в volume.
+Первое открытие старой БД переносит schema v1→v2 с backup; явная команда —
+`docker compose run --rm collector migrate`. [Контракт/восстановление](normalization.md).
 [Команды и проверка пересоздания](docker.md).
 
 Host CLI `/root/work/career-scout/.venv` также работает; его default

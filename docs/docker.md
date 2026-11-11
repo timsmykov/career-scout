@@ -79,6 +79,13 @@ Default prefix entrypoint:
 commits могут находиться в WAL. Для следующей миграции использовать SQLite backup
 и проверять quick_check/foreign_key_check, количество карточек и snapshots.
 
+## Обновление схемы
+
+Текущая база в volume имеет schema v2 и общий export v2. Первый запуск нового
+образа на v1 делает backup и атомарный перенос; явная команда:
+`docker compose run --rm collector migrate`. Инструкция и доказательства —
+[normalization.md](normalization.md). Исходные v1 payload не переписываются.
+
 ## Проверки
 
 ```sh
@@ -87,8 +94,8 @@ docker build -t career-scout:local .
 python3 scripts/check_container.py
 ```
 
-Тест создаёт собственный уникальный volume с synthetic данными: 300 карточек,
-первый контейнер сохраняет 20 full и partial, удаляется; второй читает ту же БД,
+Тест создаёт собственный уникальный volume с synthetic данными: одна legacy v1 карточка сначала мигрируется с сохранением source payload, затем
+собираются 300 новых synthetic карточек. Первый контейнер сохраняет 20 full и partial, удаляется; второй читает ту же БД,
 cache и run ID, продолжает до 300 full/complete. HTTP полностью MockTransport,
 Docker network=none. Проверены отсутствие повторного detail для сохранённых ID,
 303 попытки на 3 страницы/300 карточек, export и SQLite integrity. После теста

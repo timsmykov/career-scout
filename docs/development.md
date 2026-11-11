@@ -26,11 +26,12 @@ uv build
 
 | Команда | Действие |
 |---|---|
+| `migrate` | SQLite v1→v2 с backup, без сети; первое открытие v1 также мигрирует автоматически |
 | `plan --query TEXT` | Показать план без сети, credentials и открытия БД |
 | `collect --query TEXT` | Создать run с фиксированными запросами/датами и начать HH сбор |
 | `resume RUN_ID` | Продолжить сохранённый план, включая незагруженные карточки |
 | `status RUN_ID` | JSON отчёт без сети |
-| `inspect VACANCY_ID` | Состояние, версии и поисковые происхождения карточки |
+| `inspect VACANCY_ID [--source hh]` | Состояние, source snapshots, общие проекции и происхождение; default HH |
 | `export RUN_ID --output PATH` | Локальный JSON из согласованного read snapshot БД |
 
 `--query` можно повторять; одинаковые строки объединяются. `plan/collect`:
@@ -107,10 +108,11 @@ refresh TTL проверяется при discovery, самостоятельн�
 ## Границы первого среза
 
 Реализовано: `hh.py`, `storage.py`, `collector.py`, `cli.py`; описание таблиц —
-[storage.md](storage.md). HH snapshot v1 описан в
-[hh-snapshot.schema.json](../schemas/hh-snapshot.schema.json). Это контракт первого
-source adapter, а не готовый общий `VacancySnapshot`/worker input из bootstrap.
-Общий типизированный normalizer, предметные фильтры, raw retention, CSV, стабильный
-consumer cursor, leases нескольких воркеров, прочие адаптеры и расписание впереди.
+[storage.md](storage.md). Source HH snapshot v1 остаётся immutable
+([схема](../schemas/hh-snapshot.schema.json)); export теперь использует
+[vacancy-v2.schema.json](../schemas/vacancy-v2.schema.json) с typed salary/experience/
+work_formats. Миграция/backfill и примеры — [normalization.md](normalization.md).
+Предметные фильтры, raw retention, CSV, стабильный consumer cursor, leases,
+прочие адаптеры и расписание впереди. Worker input v1 bootstrap остаётся отложенным.
 Графы/модели не импортируются и не вызываются. Зависимости bootstrap оставлены
 без изменений; обновление lock — только явным `uv lock` с проверкой.

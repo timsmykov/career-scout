@@ -1,37 +1,40 @@
 # Хранение
 
-## Реализовано для HH
+## Реализовано: schema v2
 
-`storage.py`: SQLite WAL, foreign_keys=ON, PRAGMA user_version=1. Пустая БД
-создаётся в транзакции; незнакомая версия отклоняется. Ключи таблиц HH-specific.
+SQLite WAL, foreign_keys=ON, PRAGMA user_version=2. Пустая БД создаётся в одной
+транзакции; v1 переносится с обязательным backup, неизвестная версия отклоняется.
+Ключ `(source,source_id)` поддерживает четыре пространства идентификаторов.
 
-| Таблица v1 | Назначение |
+| Таблица | Ключ / назначение |
 |---|---|
-| runs | Immutable plan, статус, накопленные request reservations, pages/rejected |
-| queries | Query + date window, next_page, pending/complete/split, truncated |
-| vacancies | HH ID, последний listing/hash, current snapshot hash, detail state/время |
-| snapshots | HH ID + content hash, полный исходный detail JSON, HTML, text и условия |
-| discoveries | Run + query/window + HH ID, без дублей внутри этой тройки |
-| events | Фиксированные коды rejected rows и ошибок источника, без HTTP body/headers |
-| source_state | Сохранённый HH cooldown для всех запусков в этой БД |
+| runs | Run ID, source, immutable plan, статус и счётчики |
+| queries | Query/window/run, next_page и полнота |
+| vacancies | source+source_id, listing, source content pointer, lifecycle |
+| snapshots | source+source_id+content_hash, immutable исходный payload/HTML/text |
+| normalized_snapshots | source+source_id+content_hash+normalizer_version, общий v2 payload |
+| discoveries | run+query+source+source_id; FK запрещают смешать source или чужой query |
+| events | Технические события без auth/body |
+| source_state | Независимый cooldown каждого source |
 
-Один collector на БД через flock. Сеть вне транзакций; cursor и discoveries
-коммитятся вместе, snapshot и текущий указатель также атомарны. Версия содержимого
-не меняется от локального времени/счётчиков. Повторная проверка того же содержания
-обновляет время в vacancies; snapshots сохраняют первое наблюдение версии.
-Резервация запроса записывается до HTTP: авария может завысить счётчик на одну
-неотправленную резервацию, но не потеряет уже начатую попытку.
+[Миграция и нормализация](normalization.md): все исходные snapshot строки/хеши,
+run/query/event/cooldown данные сохранены; raw и normalized версии раздельны.
+После успешной миграции старые временные таблицы удаляются в той же транзакции,
+backup v1 остаётся. Ошибка или авария до commit оставляет старую схему целиком.
 
-Read export использует одну SQLite-транзакцию. Это текущие full версии (не stale,
-archived или unavailable), вместе с последним detail_fetched_at. Старый run не
-фиксирует навсегда исторический набор версий. Нет автоматического expiry/purge,
-lease-очереди и multi-source identity; JSON содержит исходный payload и хранится
-локально. [Команды и ограничения](development.md).
+Один writer на ledger через flock, сеть вне транзакции. Cursor/discoveries и
+snapshot/current pointer/projection записываются атомарно. Нормализация сама по себе
+не создаёт новую source content version. Экспорт читает common-1 full проекции;
+старые source snapshots доступны отдельно через inspect.
+
+Read export использует один SQLite snapshot, но старый run по-прежнему читает
+текущие версии. Возраст карточки виден в detail_fetched_at; expiry/purge/retention,
+CSV, неизменяемый version set по run и consumer cursor ещё не реализованы.
 
 ## Целевая модель общего коллектора
 
 MVP: SQLite WAL на локальном диске; foreign keys включены; версия схемы и миграции.
-Таблицы ниже — будущая общая модель, а не текущая HH schema v1.
+Таблицы ниже — будущая общая модель, а не буквальные имена текущей schema v2.
 Текущий этап реализует только source/run/query/vacancy/discovery/filter/work/event
 сущности. resumes/evaluations/routing и model checkpoints отложены.
 
