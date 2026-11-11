@@ -49,11 +49,17 @@ Offline pytest проверяет транзакционный rollback, ава�
 401/403/429, schema drift и CLI. Эти сценарии не выдаются за live нагрузочный тест.
 [Команды и точные границы](development.md). Существующий OpenBot Scout не менялся.
 
+## Проверка на сотнях вакансий
+
+[Полный отчёт](hh-volume-acceptance.md): сотни полных HH карточек, два пересекающихся
+запроса, принудительный SIGKILL, продолжение новым процессом, payload/SQLite/JSON аудит.
+Результат и точные счётчики отделены от проверки широкого охвата рынка.
+
 ## Остаток по площадкам
 
 | Площадка | Что нужно реализовать/проверить |
 |---|---|
-| HH | Первый runtime реализован; остаются общий config/query planner, типизированные cross-source условия/фильтры, watermark reconciliation, retention и нагрузочная приёмка |
+| HH | Первый runtime реализован; остаются общий config/query planner, типизированные cross-source условия/фильтры, watermark reconciliation, retention и длительная эксплуатационная приёмка |
 | SuperJob | App key injection, фактический page size, more/cap, окна дат, quota-like 503, сбор всех текстовых разделов; прояснить хранение/LLM-передачу |
 | Работа России | Offset как page 0/1/2; companycode+id; корректная сборка duty/qualification/условий, даты, dedup при обновлении |
 | Habr | Frontend schema contract, SSR/JSON-LD parser и identity; лимит страниц, deferred/stale; TTL detail даже при неизменном listing; anti-bot как blocked |
@@ -73,8 +79,8 @@ false: ещё нет runtime-адаптера и согласованной по
 4. **Экспорт.** HH JSON работает из одного согласованного read snapshot, но CSV,
    неизменяемый version set по run, stable consumer cursor и retention ещё впереди.
    HH snapshot v1 отделён от будущего общего VacancySnapshot контракта.
-5. **Качество охвата.** Широкие query families, ручной контроль потерь и нагрузочная
-   проверка сотен карточек ещё не пройдены. Анализ резюме/LangGraph отложен.
+5. **Качество охвата.** HH-проверка сотен карточек пройдена; широкие query families, ручной контроль
+   потерь рынка и длительная multi-source нагрузка ещё впереди. Анализ резюме/LangGraph отложен.
 
 ## Порядок работ
 

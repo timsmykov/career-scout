@@ -407,13 +407,14 @@
       "id": "CS-030",
       "milestone": "M5",
       "title": "Нагрузка коллектора",
-      "status": "planned",
+      "status": "in_progress",
       "depends_on": [
         "CS-019"
       ],
       "deliverable": "Offline load report и bounded live acceptance",
       "acceptance": "Сотни synthetic карточек, HTTP budgets, memory/backlog и длительность; без LLM",
-      "scope": "collector"
+      "scope": "collector",
+      "implementation_note": "HH live: 315 full, 8 pages, SIGKILL после 61 full, resume/export/payload/FK аудит; docs/hh-volume-acceptance.md. Multi-source/offline load/long-duration впереди."
     },
     {
       "id": "CS-031",

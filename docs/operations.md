@@ -7,6 +7,16 @@ HH runtime реализован; остальные источники и общ
 запросов не будет. При аварии ОС снимает flock; leases/checkpoints в HH-срезе нет.
 Проверенный пример: [collector-readiness.md](collector-readiness.md).
 
+## Текущее размещение
+
+Приложение запускается явно как серверный Python CLI из `/root/work/career-scout/.venv`,
+без отдельного app Docker-контейнера, DB-сервера, systemd или cron. SQLite WAL —
+локальный файл на диске сервера. Путь выбирается `--db` до имени команды, default
+`data/ledger.sqlite3`; предыдущие проверки использовали отдельные ledger файлы.
+Путь и результат объёмной проверки: [hh-volume-acceptance.md](hh-volume-acceptance.md).
+При остановке Python данные остаются в БД; новое продолжение требует `resume RUN_ID`.
+Это текущее тестовое размещение, а не настроенный production deployment/backup.
+
 ## До первого запроса
 
 Проверить source enabled, app identity/contact, тип токена, разрешённые методы,

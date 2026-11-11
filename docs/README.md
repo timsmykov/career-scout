@@ -29,6 +29,7 @@
 
 - [development.md](development.md) — действующие HH-команды и аргументы CLI.
 - [operations.md](operations.md) — запуск, восстановление, лимиты, диагностика.
+- [hh-volume-acceptance.md](hh-volume-acceptance.md) — фактическая проверка сотен HH карточек и SIGKILL/resume.
 - [acceptance.md](acceptance.md) — сценарии и показатели качества.
 - [roadmap.md](roadmap.md) — фичи коллектора, 28 активных и 9 отложенных задач.
 - [backlog.json](backlog.json) — машиночитаемые зависимости и статусы задач.
