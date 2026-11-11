@@ -34,7 +34,7 @@
       "deliverable": "normalization/{html,hashing,time,salary}.py",
       "acceptance": "Разделы/даты/gross-net/период/unknown сохранены; хеш устойчив к query provenance",
       "scope": "collector",
-      "implementation_note": "Common-1 salary/currency/gross/period/frequency, experience и work formats, unknown/conflicts/provenance; HH mapping и backfill317 готовы. Mappings других source и дополнительные признаки впереди."
+      "implementation_note": "Common-1 salary/currency/gross/period/frequency, experience и work formats, unknown/conflicts/provenance; mappings HH/Trudvsem/Habr/SuperJob готовы. Дополнительные признаки и дальнейший quality контроль впереди."
     },
     {
       "id": "CS-003",
@@ -233,7 +233,7 @@
       "id": "CS-017",
       "milestone": "M3",
       "title": "SuperJob адаптер",
-      "status": "in_progress",
+      "status": "complete",
       "depends_on": [
         "CS-004",
         "CS-013"
@@ -241,7 +241,7 @@
       "deliverable": "collectors/adapters/superjob.py",
       "acceptance": "Собственный app key, more/page size, rich/fallback text, quota-like503",
       "scope": "collector",
-      "implementation_note": "API search/detail, собственный key, native count<=40/promo rows/more, date cap500/split, rich+fallback и503 реализованы/проверены. Synthetic full store/resume работает; production storage_allowed=false до подтверждения режима хранения, probe без записи работает."
+      "implementation_note": "SuperJob API search/detail, key, native count/promo/more, cap500/windows, rich/fallback и503 реализованы. Владелец 11.11.2026 подтвердил все разрешения на хранение; production storage_allowed=true. Реальный постоянный сбор, несколько страниц и resume новым контейнером проверены; proof superjob-storage-live-20261111.json."
     },
     {
       "id": "CS-018",
@@ -272,7 +272,7 @@
       "deliverable": "services/reconciliation.py, live acceptance receipts",
       "acceptance": "TTL обновляет прежние listing; сбой источника даёт partial; доступ/retention отдельно",
       "scope": "collector",
-      "implementation_note": "Все4adapter probes и bounded collection/restart Trudvsem/Habr; source failures независимы. Listing hashes игнорируют viewer counters. Полная reconciliation/retention и допуск SJ storage остаются впереди."
+      "implementation_note": "Все4adapter probes и bounded постоянный collection/restart проверены, включая SuperJob после подтверждения владельца. Source failures независимы, listing hashes игнорируют viewer counters. Полная reconciliation/retention впереди."
     },
     {
       "id": "CS-020",

@@ -11,7 +11,7 @@
 | [hh](hh.md) | официальный API | app token /me, search, full detail HTTP 200 | реализовать свой адаптер |
 | [trudvsem](trudvsem.md) | официальный REST | search/detail HTTP 200 | контракт полей, пагинация, broad plan |
 | [habr](habr.md) | frontend JSON + HTML | список и полный HTML detail прочитаны | нет официального опубликованного search-контракта |
-| [superjob](superjob.md) | официальный API | app 5273; search/detail HTTP 200 | адаптер/окна/условия хранения |
+| [superjob](superjob.md) | официальный API | app 5273; search/detail HTTP 200 | адаптер/окна реализованы, постоянное сохранение включено |
 
 Registry не должен делать auto-enable по факту наличия URL.
 Все источники disabled в шаблоне. Значения лимитов — explicit source config.

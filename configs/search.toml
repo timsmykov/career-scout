@@ -48,6 +48,6 @@ interval = 3.0
 
 [sources.superjob]
 enabled = true
-# API reading works; persistent archive awaits confirmed usage terms.
-storage_allowed = false
+# Owner confirmed permissions for persistent vacancy storage on 2026-11-11.
+storage_allowed = true
 # town_id = 4 # Native SuperJob town ID.

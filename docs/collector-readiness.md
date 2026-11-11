@@ -1,8 +1,8 @@
 # Доступ к площадкам и готовность коллектора
 
 Обновление: реализованы четыре адаптера, общий source-aware CLI и SQLite schema4.
-HH/Trudvsem/Habr сохраняют карточки; SuperJob probe работает, сохранение
-выключено до подтверждения условий. [Текущая реализация и proof](multi-source.md).
+HH/Trudvsem/Habr/SuperJob сохраняют карточки; разрешения на хранение
+подтверждены владельцем 11.11.2026. [Текущая реализация и proof](multi-source.md).
 Первые таблицы ниже сохраняют прежние bounded probes как исторические результаты.
 
 Проверено 11 ноября 2026 (Europe/Moscow).
@@ -82,12 +82,11 @@ source snapshots,634 discoveries и query/run состояния сохране�
 | HH | Runtime готов; остаются reconciliation/retention и длительная эксплуатация |
 | Работа России | Search/detail, составной ID, текст/условия и resume готовы; сеть может давать timeout, сохранённый хвост продолжается |
 | Habr | Frontend+SSR/JSON-LD и resume готовы; неофициальный контракт требует контроля drift/блокировок, дата-диапазон не подтверждён |
-| SuperJob | Search/detail/страницы/окна/503 и synthetic store/resume готовы; production storage_allowed=false до подтверждения режима хранения |
+| SuperJob | Search/detail/страницы/окна/503 и synthetic store/resume готовы; production storage_allowed=true после подтверждения владельца |
 
 ## Общие пробелы реализации
 
-Четыре адаптера не закрывают collector MVP целиком. Постоянно сохраняют три
-источника; SuperJob пока доступен для probe без записи текстов. Runtime TOML,
+Четыре адаптера не закрывают collector MVP целиком. Постоянное сохранение включено у всех четырёх источников. Runtime TOML,
 история фильтров и source-aware batch реализованы. Нет полного source reconciliation,
 watermark обхода всех обновлений/удалений, auto-expiry/retention/purge, CSV,
 неизменяемого version set по run и consumer cursor. Один writer/flock на ledger;
@@ -99,5 +98,5 @@ leases параллельных исполнителей не внедрялис
 [Метаданные и результаты](references/multi-source-live-20261111.json),
 [инструкция и контракты](multi-source.md).
 
-Следующий этап: допустимый режим SuperJob, source reconciliation, проверка потерь
+Следующий этап: source reconciliation, проверка потерь
 поиска и дальнейшая передача данных. LangGraph/резюме/агенты остаются отложенными.

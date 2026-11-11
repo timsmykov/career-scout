@@ -289,6 +289,7 @@ def test_source_access_and_quota_errors_stop_without_retrying_or_leaking_key(
 
 def test_superjob_storage_block_is_explicit_and_no_http_occurs(tmp_path):
     frozen = plan(load_config(CONFIG), source="superjob", queries=["test"])
+    frozen["source_options"]["storage_allowed"] = False
     store = Store(tmp_path / "db.sqlite3")
     rid = store.create(
         frozen["queries"],
@@ -416,7 +417,10 @@ def test_200_error_envelope_never_passes_for_vacancy(tmp_path):
         c.detail("1")
 
 
-def test_batch_continues_other_sources_and_resume_uses_saved_source(tmp_path, monkeypatch, capsys):
+@pytest.mark.parametrize("storage_allowed", [False, True])
+def test_batch_continues_other_sources_and_resume_uses_saved_source(
+    tmp_path, monkeypatch, capsys, storage_allowed
+):
     from career_scout.source_types import Page
 
     seen = []
@@ -450,13 +454,38 @@ def test_batch_continues_other_sources_and_resume_uses_saved_source(tmp_path, mo
         cli, "create_client", lambda source, *a, **kw: Empty(source, source == "habr")
     )
     path = tmp_path / "db.sqlite3"
-    assert cli.main(["--db", str(path), "collect", "--source", "all", "--query", "test"]) == 2
+    config = tmp_path / "search.toml"
+    config.write_text(
+        CONFIG.read_text().replace(
+            "storage_allowed = true", "storage_allowed = " + str(storage_allowed).lower()
+        )
+    )
+    assert (
+        cli.main(
+            [
+                "--db",
+                str(path),
+                "--config",
+                str(config),
+                "collect",
+                "--source",
+                "all",
+                "--query",
+                "test",
+            ]
+        )
+        == 2
+    )
     out = json.loads(capsys.readouterr().out)
     reports = {r["plan"]["source"]: r for r in out["runs"]}
     assert reports["hh"]["status"] == reports["trudvsem"]["status"] == "complete"
     assert reports["habr"]["error"] == "access_denied"
-    assert reports["superjob"]["error"] == "source_storage_policy_unconfirmed"
-    assert set(seen) == {"hh", "trudvsem", "habr"}
+    if storage_allowed:
+        assert reports["superjob"]["status"] == "complete"
+        assert reports["superjob"]["error"] is None
+    else:
+        assert reports["superjob"]["error"] == "source_storage_policy_unconfirmed"
+    assert set(seen) == {"hh", "trudvsem", "habr"} | ({"superjob"} if storage_allowed else set())
     monkeypatch.setattr(cli, "create_client", lambda source, *a, **kw: Empty(source))
     assert (
         cli.main(

@@ -11,7 +11,7 @@ LangGraph, LLM-оценка, импорт резюме и настройка м�
 страницы в одной транзакции с discoveries, SQLite WAL/schema v4, дедупликация,
 история содержательных версий, разбиение выдачи свыше 2000 по времени, finite
 retries, request budget и сохранённый cooldown 429. Один процесс на БД через flock;
-общих leases пока нет; SuperJob storage ожидает подтверждения режима. Запуск/перезапуск проверены offline и
+общих leases пока нет; SuperJob storage включён после подтверждения владельца. Запуск/перезапуск проверены offline и
 ограниченным live-сбором. [Доказательства и ограничения](collector-readiness.md).
 Ни один полный M1/M2 этап не объявлен завершённым только на основании HH-среза.
 
@@ -26,11 +26,11 @@ volume recreation проверены; 300 synthetic карточек прохо�
 | Часть | Фактическая готовность | Остаток |
 |---|---|---|
 | HH auth/search/detail | Реализовано, CS-005/006 complete | Длительная эксплуатационная проверка |
-| Страницы/версии/дочитывание | Работают для HH/Trudvsem/Habr; SJ код проверен synthetic | Source reconciliation, SJ допуск хранения |
+| Страницы/версии/дочитывание | Работают для HH/Trudvsem/Habr; SJ код проверен synthetic | Source reconciliation |
 | Размещение | Docker CLI + external SQLite volume | Backup policy/расписание — отдельная будущая потребность |
 | Поиск/конфигурация | Валидируемый TOML, четыре семейства, география, frozen plan/resume | Doctor, измерение охвата |
 | Условия/фильтры | Domain/grade/experience, unknown/conflict, зарплата нейтральна, история/refilter/export | Mappings других source, дальнейший контроль потерь |
-| Другие источники | Trudvsem/Habr runtime и все4search/detail probes | SJ production storage пока выключен |
+| Другие источники | Trudvsem/Habr/SuperJob runtime, постоянное сохранение всех4 | Reconciliation и дальнейшая нагрузка |
 | Готовый набор | Текущий JSON export | CSV, закреплённые версии, manifest/cursor, expiry/retention |
 
 Ближайший рекомендуемый порядок без моделей:
@@ -38,22 +38,22 @@ volume recreation проверены; 300 synthetic карточек прохо�
 1. **Общий контракт/identity и базовые условия реализованы.** Common vacancy v2,
    `(source,source_id)`, composite Trudvsem ID, typed salary/experience/work formats,
    отдельные normalized projections и миграция рабочих317 snapshots без потерь.
-   [Контракт и proof](normalization.md). Другие API mappings ещё не реализованы.
+   [Контракт и proof](normalization.md). Mappings всех четырёх API реализованы.
 2. **Рабочий config/query planner и фильтры реализованы.** CS-003/007/014 complete,
    CS-008 partial (нет doctor). Четыре семейства, TOML, unknown/conflict, история
    решений и offline refilter; зарплата не фильтрует. [Контракт и проверки](filtering.md).
    Численность и лексические сигналы не считаются мерой соответствия резюме.
-3. **Подключены Trudvsem/Habr; SuperJob ожидает режима хранения.** CS-015/016
-   complete, CS-017/018/019 in_progress. Все четыре адаптера читают search/detail;
+3. **Подключены Trudvsem/Habr/SuperJob.** CS-015/016/017 complete,
+   CS-018/019 in_progress. Все четыре адаптера читают search/detail;
    пагинация, source budgets и restart общие. [Точный статус и proof](multi-source.md).
-   Постоянный сбор SuperJob пока не принят; он явно blocked, остальные продолжают.
+   Владелец подтвердил разрешения на хранение; SuperJob включён в общий постоянный сбор.
 4. **Завершить передачу данных и эксплуатацию (CS-033/034/035/036/037):**
    фиксированные версии/экспорт, freshness/expiry/retention и контроль потерь.
    Многопроцессные leases нужны при введении параллельных исполнителей, а не
    только из-за появления Docker; сейчас действует один writer на ledger.
 
-Пункты1–2 и Trudvsem/Habr из пункта3 реализованы. Остаток: условия сохранения
-SuperJob, reconciliation, качество охвата и передача данных из пункта4.
+Пункты1–2 и все четыре адаптера из пункта3 реализованы. Остаток:
+reconciliation, качество охвата и передача данных из пункта4.
 LangGraph/оценщики/резюме остаются deferred. Статусы ниже синхронизированы с
 backlog.json; in_progress означает частичную реализацию, не закрытый acceptance.
 
@@ -246,7 +246,7 @@ HTTP API или брокер без отдельной потребности н
 - Предшественники: CS-004, CS-013.
 - Результат: collectors/adapters/superjob.py.
 - Готово, когда: Собственный app key, more/page size, rich/fallback text, quota-like503.
-- Статус: in_progress.
+- Статус: complete.
 
 ### CS-018 · Окна и общая справедливость (M3)
 

@@ -6,8 +6,9 @@
 Перед изменением читать README.md и docs/README.md, затем нужный предметный контракт.
 Реализованы HH и adapters.py (Trudvsem/Habr/SuperJob), общий transport.py,
 source_normalization.py, source_types.py, storage/collector/CLI.
-Точный статус: docs/multi-source.md. SuperJob storage_allowed=false до подтверждения
-условий хранения; probe читает в памяти. Не объявлять его постоянный сбор включённым.
+Точный статус: docs/multi-source.md. Владелец 11.11.2026 подтвердил наличие всех
+разрешений на хранение вакансий. SuperJob storage_allowed=true в рабочем TOML;
+постоянный сбор разрешён для всех четырёх источников. Probe остаётся режимом без записи.
 Docker/Compose: batch CLI, external volume career-scout-data; .env — read-only secret,
 HH token cache — в volume. Не удалять этот volume и не добавлять scheduler без запроса.
 SQLite schema v4 (vacancy/export v2): source+source_id, immutable snapshots и отдельные common-1
