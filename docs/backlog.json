@@ -47,7 +47,7 @@
       "deliverable": "config.py, env loader, config validation",
       "acceptance": "Читается единый .env; missing key диагностируется без печати значения",
       "scope": "collector",
-      "implementation_note": "CLI аргументы + локальный env; проектные TOML ещё не подключены к runtime."
+      "implementation_note": "CLI/env плюс Docker read-only credentials и persistent token cache реализованы; TOML config и doctor впереди."
     },
     {
       "id": "CS-004",
@@ -67,20 +67,20 @@
       "id": "CS-005",
       "milestone": "M1",
       "title": "HH application auth",
-      "status": "in_progress",
+      "status": "complete",
       "depends_on": [
         "CS-004"
       ],
       "deliverable": "collectors/auth/hh.py",
       "acceptance": "Рабочий токен переиспользуется; acquire атомарен; 401 не вызывает бесконечный цикл",
       "scope": "collector",
-      "implementation_note": "HH application acquire/renew один раз на invocation, атомарный env, offline 401 и live search/detail; applicant OAuth не входит."
+      "implementation_note": "HH application acquire/однократная 401 renewal и cache атомарны; offline auth/cache тесты, прежний client_credentials live и Docker search/detail проверены."
     },
     {
       "id": "CS-006",
       "milestone": "M1",
       "title": "HH search/detail",
-      "status": "in_progress",
+      "status": "complete",
       "depends_on": [
         "CS-002",
         "CS-005"
@@ -88,7 +88,7 @@
       "deliverable": "collectors/adapters/hh.py",
       "acceptance": "Search pages и full detail с identity; cap отмечен; snippets не проходят за full",
       "scope": "collector",
-      "implementation_note": "HH search/detail и адаптивные окна реализованы; offline cap/drift/retry и live pagination/resume проверены."
+      "implementation_note": "HH search/detail, страницы/дата-окна реализованы; 315 full live и source ID/hash/HTML/text аудит, cap/drift offline проверены."
     },
     {
       "id": "CS-007",
@@ -130,7 +130,7 @@
       "deliverable": "storage/migrations, connection.py",
       "acceptance": "WAL, foreign keys, schema version, транзакции на временной БД",
       "scope": "collector",
-      "implementation_note": "SQLite WAL, FK, schema version1, отказ неизвестной версии; multi-source миграции впереди."
+      "implementation_note": "SQLite WAL/FK/schema v1, atomic backup migration в external Docker volume и сохранность после container recreation; общий multi-source schema upgrade впереди."
     },
     {
       "id": "CS-010",
@@ -388,7 +388,7 @@
       "deliverable": "Отчёт потерь search/filter",
       "acceptance": "Контрольные вакансии проверены на обнаружение и сохранение; оценка резюме не нужна",
       "scope": "collector",
-      "implementation_note": "Offline HH transport/SQLite/CLI, реальный аварийный выход subprocess; остальные источники впереди."
+      "implementation_note": "В ограниченном HH окне source found/discoveries совпали: 315/315 для каждого запроса. Контрольного набора подходящих вакансий/оценки потерь ещё нет."
     },
     {
       "id": "CS-029",
@@ -414,7 +414,7 @@
       "deliverable": "Offline load report и bounded live acceptance",
       "acceptance": "Сотни synthetic карточек, HTTP budgets, memory/backlog и длительность; без LLM",
       "scope": "collector",
-      "implementation_note": "HH live: 315 full, 8 pages, SIGKILL после 61 full, resume/export/payload/FK аудит; docs/hh-volume-acceptance.md. Multi-source/offline load/long-duration впереди."
+      "implementation_note": "315 real HH full + 300 synthetic full в двух пересозданных Docker контейнерах без сети; memory sample/бюджет/время проверены, длительная multi-source нагрузка впереди."
     },
     {
       "id": "CS-031",
@@ -427,7 +427,7 @@
       "deliverable": "Collector failure acceptance suite",
       "acceptance": "Падение HTTP/DB, duplicate pages, drift и exhausted budget не теряют очередь",
       "scope": "collector",
-      "implementation_note": "HH JSON status/inspect и версии работают; общий read interface впереди."
+      "implementation_note": "HH rollback/HTTP errors/budget/drift offline, SIGKILL после 61 full live и Docker recreation/resume проходят; общие multi-source failure сценарии впереди."
     },
     {
       "id": "CS-032",
@@ -440,19 +440,20 @@
       "deliverable": "CLI status, inspect, source-health",
       "acceptance": "Видны list/detail/filter/expiry и причины; нет зависимости от графа оценки",
       "scope": "collector",
-      "implementation_note": "Атомарный локальный JSON export из одного read snapshot; CSV/cursor/retention впереди."
+      "implementation_note": "HH status/inspect работают, source error/backlog видны; общая диагностика filtering/expiry/source-health впереди."
     },
     {
       "id": "CS-033",
       "milestone": "M6",
       "title": "Экспорт готовых данных",
-      "status": "planned",
+      "status": "in_progress",
       "depends_on": [
         "CS-032"
       ],
       "deliverable": "CLI export JSON/CSV, manifest и курсор",
       "acceptance": "Полные согласованные версии с ID/hash/датами/provenance; partial/stale вне готового набора",
-      "scope": "collector"
+      "scope": "collector",
+      "implementation_note": "HH JSON export из согласованного read snapshot работает; CSV, неизменяемый набор content versions, manifest/cursor/retention впереди."
     },
     {
       "id": "CS-034",

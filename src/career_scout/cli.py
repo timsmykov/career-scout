@@ -34,6 +34,7 @@ def parser():
     p = argparse.ArgumentParser(description="HH read-only collector")
     p.add_argument("--db", type=Path, default=Path("data/ledger.sqlite3"))
     p.add_argument("--env", type=Path, default=Path(".env"))
+    p.add_argument("--token-file", type=Path, help="Writable token cache for read-only credentials")
     sub = p.add_subparsers(dest="command", required=True)
     for name in ("plan", "collect"):
         command = sub.add_parser(name)
@@ -112,7 +113,7 @@ def main(argv=None):
                 os.unlink(temporary)
             output = {"output": str(args.output), "exported": len(output["vacancies"])}
         else:
-            credentials = Credentials(args.env)
+            credentials = Credentials(args.env, token_path=args.token_file)
             client = HHClient(
                 credentials,
                 max_requests=args.requests,

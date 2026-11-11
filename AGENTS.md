@@ -6,6 +6,8 @@
 Перед изменением читать README.md и docs/README.md, затем нужный предметный контракт.
 Реализован первый HH-срез: hh.py, storage.py, collector.py, cli.py.
 Общие контракты остальных площадок остаются целевыми, не готовым runtime.
+Docker/Compose: batch CLI, external volume career-scout-data; .env — read-only secret,
+HH token cache — в volume. Не удалять этот volume и не добавлять scheduler без запроса.
 Текущий scope: только collect/normalize/store/quality/export. Анализ по резюме и
 LangGraph отложены владельцем до приёмки коллектора. Не начинать их по старому roadmap.
 
@@ -34,6 +36,7 @@ Python 3.12, uv.lock, src-layout, httpx/Pydantic, SQLite.
 `uv run --no-sync ruff check .`, `uv run --no-sync ruff format --check .`,
 `uv run --no-sync pytest -m "not live"`.
 
+Docker: `docker compose build`, `python3 scripts/check_container.py` (synthetic, без сети).
 Для поведения писать тесты по docs/acceptance.md; сетевые проверки явно отделять.
 Не запускать реальный сбор/модели для проверки изменения Markdown.
 Обычный CI не получает секретов и не ходит к job API/LLM.

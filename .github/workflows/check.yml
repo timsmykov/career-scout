@@ -23,3 +23,11 @@ jobs:
       - run: uv run --no-sync ruff format --check .
       - run: uv run --no-sync pytest -m "not live"
       - run: uv build
+  container:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t career-scout:ci .
+      - run: docker run --rm --network none career-scout:ci plan --query offline
+      - run: python3 scripts/check_container.py --image career-scout:ci

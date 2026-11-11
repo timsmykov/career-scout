@@ -1,0 +1,26 @@
+name: career-scout
+services:
+  collector:
+    image: career-scout:local
+    build: .
+    init: true
+    restart: "no"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    tmpfs:
+      - /tmp:mode=1777,size=32m
+    volumes:
+      - data:/data
+    secrets:
+      - career_env
+    # The host's canonical .env is root-owned 0600. No secrets in image/env vars.
+    user: "0:0"
+    command: ["--help"]
+secrets:
+  career_env:
+    file: .env
+volumes:
+  data:
+    name: career-scout-data
+    external: true

@@ -38,16 +38,50 @@ class SourceError(Exception):
 
 
 class Credentials:
-    def __init__(self, path: Path):
+    def __init__(self, path: Path, token_path: Path | None = None):
         self.path = path
+        self.token_path = token_path
+        if token_path and token_path.resolve() == path.resolve():
+            raise SourceError("token_cache_overlaps_credentials")
         self.values = {}
         if path.exists():
             for line in path.read_text().splitlines():
                 if line.strip() and not line.lstrip().startswith("#") and "=" in line:
                     key, value = line.split("=", 1)
                     self.values[key.strip()] = value.strip().strip("\"'")
+        if token_path and token_path.exists():
+            try:
+                cache = json.loads(token_path.read_text())
+                identity = digest(self.values.get("HH_CLIENT_ID"))
+                if cache["application_hash"] == identity:
+                    token = cache["access_token"]
+                    if not isinstance(token, str) or not re.fullmatch(
+                        r"[A-Za-z0-9._~+/=-]+", token
+                    ):
+                        raise ValueError
+                    self.values["HH_ACCESS_TOKEN"] = token
+            except (ValueError, KeyError, TypeError):
+                raise SourceError("invalid_token_cache") from None
 
     def save_token(self, token: str) -> None:
+        if self.token_path:
+            self.token_path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+            data = {
+                "application_hash": digest(self.values.get("HH_CLIENT_ID")),
+                "access_token": token,
+            }
+            fd, name = tempfile.mkstemp(prefix=".token.", dir=self.token_path.parent)
+            try:
+                with os.fdopen(fd, "w") as stream:
+                    json.dump(data, stream)
+                    stream.flush()
+                    os.fsync(stream.fileno())
+                os.replace(name, self.token_path)
+            finally:
+                if os.path.exists(name):
+                    os.unlink(name)
+            self.values["HH_ACCESS_TOKEN"] = token
+            return
         # Preserve unrelated credentials/comments, including the SuperJob key.
         lines = self.path.read_text().splitlines() if self.path.exists() else []
         indices = [i for i, line in enumerate(lines) if line.startswith("HH_ACCESS_TOKEN=")]

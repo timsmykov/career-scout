@@ -1,0 +1,11 @@
+# Allowlist: no credentials, databases, exports, Git history or local virtualenv.
+**
+!Dockerfile
+!docker/
+!docker/entrypoint.sh
+!pyproject.toml
+!uv.lock
+!README.md
+!src/
+!src/career_scout/
+!src/career_scout/*.py

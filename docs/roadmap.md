@@ -15,6 +15,46 @@ retries, request budget и сохранённый cooldown 429. Один про�
 ограниченным live-сбором. [Доказательства и ограничения](collector-readiness.md).
 Ни один полный M1/M2 этап не объявлен завершённым только на основании HH-среза.
 
+## Текущая оценка и следующий шаг — 11.11.2026
+
+**HH core принят для одного процесса и ограниченного поискового плана.**
+315 real full, 8 страниц, exact-ID dedup, настоящий SIGKILL/resume и Docker
+volume recreation проверены; 300 synthetic карточек проходят container CI.
+Это не приёмка четырёхплощадочного collector MVP и не доказательство охвата рынка.
+[Объёмная приёмка](hh-volume-acceptance.md), [Docker](docker.md).
+
+| Часть | Фактическая готовность | Остаток |
+|---|---|---|
+| HH auth/search/detail | Реализовано, CS-005/006 complete | Длительная эксплуатационная проверка |
+| Страницы/версии/дочитывание | Работают для HH | Общие source contracts и reconciliation |
+| Размещение | Docker CLI + external SQLite volume | Backup policy/расписание — отдельная будущая потребность |
+| Поиск/конфигурация | Явные query/даты/бюджеты CLI | TOML, география/атрибуты, query families, doctor |
+| Условия/фильтры | Исходные HH поля сохранены | Общие typed поля, grade/experience/technology/unknown |
+| Другие источники | Только прежние bounded API probes | Три runtime адаптера ещё не реализованы |
+| Готовый набор | Текущий JSON export | CSV, закреплённые версии, manifest/cursor, expiry/retention |
+
+Ближайший рекомендуемый порядок без моделей:
+
+1. **Общий контракт вакансии и source identity (CS-001/002/009/010).** Привести
+   source+source_id, зарплату/currency/gross/period, опыт, формат и даты к явной
+   модели; raw значения и unknown сохранить. Нынешний ledger keyed только HH ID,
+   поэтому другие адаптеры нельзя просто вставить в эту таблицу без миграции.
+2. **Рабочий config/query planner и доказуемые фильтры (CS-003/007/008/014).**
+   Подключить TOML/атрибуты, географию, поисковые семейства, причины исключений;
+   проверить на контрольной выборке, а не объявлять численность мерой релевантности.
+3. **Остальные источники (CS-015/016/017/018/019):** Trudvsem → Habr → SuperJob,
+   с контрактами каждой площадки и отдельной приёмкой; прежние вопросы доступа/
+   допустимого хранения не выдавать за решённые. Один недоступный источник не
+   должен останавливать остальные.
+4. **Завершить передачу данных и эксплуатацию (CS-033/034/035/036/037):**
+   фиксированные версии/экспорт, freshness/expiry/retention и контроль потерь.
+   Многопроцессные leases нужны при введении параллельных исполнителей, а не
+   только из-за появления Docker; сейчас действует один writer на ledger.
+
+Все пункты выше — дальнейшая работа, не изменения этого Docker PR.
+LangGraph/оценщики/резюме остаются deferred. Статусы ниже синхронизированы с
+backlog.json; in_progress означает частичную реализацию, не закрытый acceptance.
+
 ## Результат текущего этапа
 
 Запуск собирает списки и полные карточки доступных источников, нормализует поля,
@@ -92,77 +132,77 @@ HTTP API или брокер без отдельной потребности н
 - Предшественники: нет.
 - Результат: domain/source.py, domain/errors.py, JSON Schema.
 - Готово, когда: SourceQuery/Page, typed cursor, capability map; drift отличим от пустой выдачи.
-- Статус: planned.
+- Статус: in_progress.
 
 ### CS-002 · Нормализация и версии (M1)
 
 - Предшественники: CS-001.
 - Результат: normalization/{html,hashing,time,salary}.py.
 - Готово, когда: Разделы/даты/gross-net/период/unknown сохранены; хеш устойчив к query provenance.
-- Статус: planned.
+- Статус: in_progress.
 
 ### CS-003 · Конфигурация и секреты (M1)
 
 - Предшественники: CS-001.
 - Результат: config.py, env loader, config validation.
 - Готово, когда: Читается единый .env; missing key диагностируется без печати значения.
-- Статус: planned.
+- Статус: in_progress.
 
 ### CS-004 · HTTP и source budget (M1)
 
 - Предшественники: CS-001, CS-003.
 - Результат: collectors/transport.py, budget.py.
 - Готово, когда: Finite retries, Retry-After seconds/date, cooldown общего источника, отказ за пределами бюджета.
-- Статус: planned.
+- Статус: in_progress.
 
 ### CS-005 · HH application auth (M1)
 
 - Предшественники: CS-004.
 - Результат: collectors/auth/hh.py.
 - Готово, когда: Рабочий токен переиспользуется; acquire атомарен; 401 не вызывает бесконечный цикл.
-- Статус: planned.
+- Статус: complete.
 
 ### CS-006 · HH search/detail (M1)
 
 - Предшественники: CS-002, CS-005.
 - Результат: collectors/adapters/hh.py.
 - Готово, когда: Search pages и full detail с identity; cap отмечен; snippets не проходят за full.
-- Статус: planned.
+- Статус: complete.
 
 ### CS-007 · Планирование запросов (M1)
 
 - Предшественники: CS-001, CS-003.
 - Результат: collectors/planner.py, versioned search config.
 - Готово, когда: Union четырёх семейств, title-only/AI-only не обязательны, fair ordering, immutable plan.
-- Статус: planned.
+- Статус: in_progress.
 
 ### CS-008 · CLI plan и проверка конфигурации (M1)
 
 - Предшественники: CS-003, CS-007.
 - Результат: cli.py: plan, doctor.
 - Готово, когда: Plan без сети; doctor различает отсутствие credentials, неподтверждённый order и disabled sources.
-- Статус: planned.
+- Статус: in_progress.
 
 ### CS-009 · SQLite и миграции (M2)
 
 - Предшественники: CS-001, CS-002.
 - Результат: storage/migrations, connection.py.
 - Готово, когда: WAL, foreign keys, schema version, транзакции на временной БД.
-- Статус: planned.
+- Статус: in_progress.
 
 ### CS-010 · Snapshots и discoveries (M2)
 
 - Предшественники: CS-009.
 - Результат: storage/vacancies.py, discoveries.py.
 - Готово, когда: Один source ID в нескольких запросах не дублируется; изменённый текст создаёт версию.
-- Статус: planned.
+- Статус: in_progress.
 
 ### CS-011 · Прогресс query/window (M2)
 
 - Предшественники: CS-009, CS-007.
 - Результат: storage/progress.py.
 - Готово, когда: Cursor меняется вместе с записью страницы; partial не продвигает чужой watermark.
-- Статус: planned.
+- Статус: in_progress.
 
 ### CS-012 · Очередь и leases (M2)
 
@@ -176,7 +216,7 @@ HTTP API или брокер без отдельной потребности н
 - Предшественники: CS-006, CS-010, CS-011, CS-012.
 - Результат: services/collection.py, detail.py, cli collect.
 - Готово, когда: Kill/restart не теряет данные; stale/deferred не уходит в evaluation.
-- Статус: planned.
+- Статус: in_progress.
 
 ### CS-014 · Фильтры с основаниями (M2)
 
@@ -211,49 +251,49 @@ HTTP API или брокер без отдельной потребности н
 - Предшественники: CS-006, CS-007, CS-013.
 - Результат: collectors/windows.py, scheduling.py.
 - Готово, когда: Большой запрос не забирает весь budget; пересечения окон дедуплицируются; остаток виден.
-- Статус: planned.
+- Статус: in_progress.
 
 ### CS-019 · Сверка обновлений и source acceptance (M3)
 
 - Предшественники: CS-015, CS-016, CS-017, CS-018.
 - Результат: services/reconciliation.py, live acceptance receipts.
 - Готово, когда: TTL обновляет прежние listing; сбой источника даёт partial; доступ/retention отдельно.
-- Статус: planned.
+- Статус: in_progress.
 
 ### CS-028 · Охват поискового плана (M5)
 
 - Предшественники: CS-019, CS-037.
 - Результат: Отчёт потерь search/filter.
 - Готово, когда: Контрольные вакансии проверены на обнаружение и сохранение; оценка резюме не нужна.
-- Статус: planned.
+- Статус: in_progress.
 
 ### CS-030 · Нагрузка коллектора (M5)
 
 - Предшественники: CS-019.
 - Результат: Offline load report и bounded live acceptance.
 - Готово, когда: Сотни synthetic карточек, HTTP budgets, memory/backlog и длительность; без LLM.
-- Статус: planned.
+- Статус: in_progress.
 
 ### CS-031 · Сбои и восстановление коллектора (M5)
 
 - Предшественники: CS-013.
 - Результат: Collector failure acceptance suite.
 - Готово, когда: Падение HTTP/DB, duplicate pages, drift и exhausted budget не теряют очередь.
-- Статус: planned.
+- Статус: in_progress.
 
 ### CS-032 · Статус и диагностика сбора (M6)
 
 - Предшественники: CS-013.
 - Результат: CLI status, inspect, source-health.
 - Готово, когда: Видны list/detail/filter/expiry и причины; нет зависимости от графа оценки.
-- Статус: planned.
+- Статус: in_progress.
 
 ### CS-033 · Экспорт готовых данных (M6)
 
 - Предшественники: CS-032.
 - Результат: CLI export JSON/CSV, manifest и курсор.
 - Готово, когда: Полные согласованные версии с ID/hash/датами/provenance; partial/stale вне готового набора.
-- Статус: planned.
+- Статус: in_progress.
 
 ### CS-034 · Сроки хранения коллектора (M6)
 
@@ -267,7 +307,7 @@ HTTP API или брокер без отдельной потребности н
 - Предшественники: CS-004, CS-013.
 - Результат: Run summary и redaction.
 - Готово, когда: Видны requests, retry, full/deferred/stale, backlog и полнота; secrets не логируются.
-- Статус: planned.
+- Статус: in_progress.
 
 ### CS-036 · Приёмка collector MVP (M6)
 
@@ -300,7 +340,7 @@ HTTP API или брокер без отдельной потребности н
 разрешённое хранение данных каждого источника, допустимые потери и качество полей.
 Если условие владельца не задано, не придумывать фильтр; сохранять null/unknown.
 
-## Приёмка collector MVP
+## Критерии будущей приёмки collector MVP
 
 Выполнены активные задачи; активные зависимости не ведут к deferred задачам.
 Проверены pages/windows, full detail/ID, сохранение/возобновление, versions/dedup,

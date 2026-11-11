@@ -61,6 +61,20 @@ uv run --no-sync python -m career_scout export RUN_ID --output data/exports/run.
 CLI пока читает `.env` и аргументы, а не проектные TOML-шаблоны.
 [Проверенный HH-срез и ограничения](docs/collector-readiness.md).
 
+## Docker
+
+Рабочий контейнер с постоянным volume `career-scout-data`:
+
+```sh
+docker volume create career-scout-data
+docker compose build
+docker compose run --rm collector status RUN_ID
+docker compose run --rm collector resume RUN_ID --requests 50
+```
+
+SQLite сохраняется в `/data/ledger.sqlite3`, `.env` монтируется read-only;
+контейнер можно пересоздать. [Устройство, миграция и проверки](docs/docker.md).
+
 ## Читать по порядку
 
 1. [Задача и границы](docs/product.md).

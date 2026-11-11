@@ -28,6 +28,7 @@
 ## Подготовка и приёмка
 
 - [development.md](development.md) — действующие HH-команды и аргументы CLI.
+- [docker.md](docker.md) — контейнер, persistent volume, credentials и проверка пересоздания.
 - [operations.md](operations.md) — запуск, восстановление, лимиты, диагностика.
 - [hh-volume-acceptance.md](hh-volume-acceptance.md) — фактическая проверка сотен HH карточек и SIGKILL/resume.
 - [acceptance.md](acceptance.md) — сценарии и показатели качества.

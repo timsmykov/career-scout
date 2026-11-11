@@ -563,3 +563,77 @@ def test_inconsistent_page_count_cannot_claim_complete(store, env):
     assert result["error"] == "pagination_inconsistent"
     assert result["status"] == "partial"
     assert store.next_query(rid)["next_page"] == 0
+
+
+def test_token_cache_preserves_base_credentials_and_survives_reopen(env, tmp_path):
+    cache = tmp_path / "auth/hh-token.json"
+    original = env.read_bytes()
+    credentials = Credentials(env, token_path=cache)
+    credentials.save_token("cached-token")
+    assert env.read_bytes() == original
+    assert cache.stat().st_mode & 0o777 == 0o600
+    assert Credentials(env, token_path=cache).values["HH_ACCESS_TOKEN"] == "cached-token"
+    credentials.save_token("new-cached-token")
+    assert Credentials(env, token_path=cache).values["HH_ACCESS_TOKEN"] == "new-cached-token"
+    assert env.read_bytes() == original
+
+
+def test_token_cache_is_scoped_to_application(env, tmp_path):
+    cache = tmp_path / "auth/token.json"
+    Credentials(env, token_path=cache).save_token("other-app-token")
+    env.write_text(env.read_text().replace("fake-client", "different-client"))
+    assert Credentials(env, token_path=cache).values["HH_ACCESS_TOKEN"] == "old-token"
+
+
+@pytest.mark.parametrize("content", ["broken-json", "[]", '{"access_token":"unscoped"}'])
+def test_corrupt_token_cache_fails_safely(env, tmp_path, content):
+    cache = tmp_path / "token.json"
+    cache.write_text(content)
+    with pytest.raises(SourceError, match="invalid_token_cache"):
+        Credentials(env, token_path=cache)
+
+
+def test_401_renewal_uses_cache_without_modifying_readonly_base(store, env, tmp_path):
+    cache = tmp_path / "auth/token.json"
+    original = env.read_bytes()
+
+    def handler(req):
+        if req.url.path == "/token":
+            return httpx.Response(200, json={"access_token": "cached-renewal"})
+        if req.headers["Authorization"] == "Bearer old-token":
+            return httpx.Response(401)
+        return answer(req)
+
+    c = client(env, handler)
+    c.credentials = Credentials(env, token_path=cache)
+    assert collect(store, c, run(store))["status"] == "complete"
+    assert env.read_bytes() == original
+    assert Credentials(env, token_path=cache).values["HH_ACCESS_TOKEN"] == "cached-renewal"
+
+
+def test_token_cache_cannot_replace_credentials(env):
+    with pytest.raises(SourceError, match="token_cache_overlaps_credentials"):
+        Credentials(env, token_path=env)
+
+
+def test_cli_rejects_token_cache_overlapping_secret(env, tmp_path, monkeypatch, capsys):
+    import career_scout.cli as cli
+
+    original = env.read_bytes()
+    monkeypatch.setattr(cli, "HHClient", lambda *a, **kw: pytest.fail("must fail before HTTP"))
+    result = main(
+        [
+            "--db",
+            str(tmp_path / "cli.sqlite3"),
+            "--env",
+            str(env),
+            "--token-file",
+            str(env),
+            "collect",
+            "--query",
+            "analyst",
+        ]
+    )
+    assert result == 3
+    assert json.loads(capsys.readouterr().out)["error"] == "token_cache_overlaps_credentials"
+    assert env.read_bytes() == original

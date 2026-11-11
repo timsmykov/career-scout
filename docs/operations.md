@@ -9,13 +9,17 @@ HH runtime реализован; остальные источники и общ
 
 ## Текущее размещение
 
-Приложение запускается явно как серверный Python CLI из `/root/work/career-scout/.venv`,
-без отдельного app Docker-контейнера, DB-сервера, systemd или cron. SQLite WAL —
-локальный файл на диске сервера. Путь выбирается `--db` до имени команды, default
-`data/ledger.sqlite3`; предыдущие проверки использовали отдельные ledger файлы.
-Путь и результат объёмной проверки: [hh-volume-acceptance.md](hh-volume-acceptance.md).
-При остановке Python данные остаются в БД; новое продолжение требует `resume RUN_ID`.
-Это текущее тестовое размещение, а не настроенный production deployment/backup.
+Текущий runtime упакован в отдельный Docker-образ `career-scout:local`.
+Compose запускает CLI на задачу; постоянно работающего daemon/systemd/cron нет.
+SQLite `/data/ledger.sqlite3`, WAL и экспорты лежат в external volume
+`career-scout-data`; удаление контейнера их не удаляет. Проверенная база с 315
+карточками импортирована в volume через backup API, исходный host файл оставлен.
+Ключи — read-only host `.env`, обновляемый token cache — в volume.
+[Команды и проверка пересоздания](docker.md).
+
+Host CLI `/root/work/career-scout/.venv` также работает; его default
+`data/ledger.sqlite3` не является контейнерной БД. Не смешивать эти пути и не
+считать старый host файл текущим состоянием Docker ledger.
 
 ## До первого запроса
 
@@ -63,4 +67,4 @@ accepted/rejected/clarification/pending, skipped profiles, attempts, usage.
 
 Default min interval 1s, max in-flight 1 на источник — наша осторожная политика.
 Это не обещание официального лимита и не доказательство достаточности.
-В bootstrap нет cron, systemd, Docker deployment, внешнего бота или нового OpenBot flow.
+Docker CLI deployment реализован; cron/systemd, внешний бот и новый OpenBot flow не создавались.
