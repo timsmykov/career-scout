@@ -1,0 +1,197 @@
+{
+  "checked_at": "2026-11-12T07:03:17.967663+00:00",
+  "campaign_id": "e7cc5d06-ee09-4766-ad15-b64c18e60f21",
+  "source": "habr",
+  "scope": "Completed traversal of all configured Habr queries and full available discovered cards; not a historical snapshot of a changing frontend",
+  "source_report": {
+    "run_id": "77b896bb-8997-49a8-9af1-e8535f2fd5a7",
+    "source": "habr",
+    "status": "complete",
+    "error": null,
+    "requests": 839,
+    "pages_saved": 92,
+    "pending_queries": 0,
+    "truncated_queries": 0,
+    "rejected_rows": 0,
+    "discovery_complete": true,
+    "pagination_replans": 0,
+    "discovered_ids": 971,
+    "new_ids": 766,
+    "known_ids": 200,
+    "backlog_ids": 5,
+    "saved_descriptions": 943,
+    "unavailable": 1,
+    "pending_details": 0,
+    "outside_publication_window": 531,
+    "unknown_publication_date": 29,
+    "failed_details": 0,
+    "new_descriptions": 743,
+    "filtering": {
+      "FILTERED_OUT": 369,
+      "KEEP": 38,
+      "KEEP_UNKNOWN": 536
+    }
+  },
+  "publication_window": {
+    "from": "2026-10-29T03:08:18+00:00",
+    "to": "2026-11-12T03:08:18+00:00"
+  },
+  "query_count": 12,
+  "queries": [
+    {
+      "id": 91,
+      "status": "complete",
+      "next_page": 11,
+      "served": 11,
+      "total": 543,
+      "page_size": 100,
+      "distinct_ids": 542
+    },
+    {
+      "id": 92,
+      "status": "complete",
+      "next_page": 11,
+      "served": 11,
+      "total": 542,
+      "page_size": 100,
+      "distinct_ids": 538
+    },
+    {
+      "id": 93,
+      "status": "complete",
+      "next_page": 9,
+      "served": 9,
+      "total": 421,
+      "page_size": 100,
+      "distinct_ids": 419
+    },
+    {
+      "id": 94,
+      "status": "complete",
+      "next_page": 5,
+      "served": 5,
+      "total": 239,
+      "page_size": 100,
+      "distinct_ids": 239
+    },
+    {
+      "id": 95,
+      "status": "complete",
+      "next_page": 3,
+      "served": 3,
+      "total": 133,
+      "page_size": 100,
+      "distinct_ids": 133
+    },
+    {
+      "id": 96,
+      "status": "complete",
+      "next_page": 1,
+      "served": 1,
+      "total": 30,
+      "page_size": 100,
+      "distinct_ids": 30
+    },
+    {
+      "id": 97,
+      "status": "complete",
+      "next_page": 1,
+      "served": 1,
+      "total": 19,
+      "page_size": 100,
+      "distinct_ids": 19
+    },
+    {
+      "id": 98,
+      "status": "complete",
+      "next_page": 7,
+      "served": 7,
+      "total": 304,
+      "page_size": 100,
+      "distinct_ids": 304
+    },
+    {
+      "id": 99,
+      "status": "complete",
+      "next_page": 10,
+      "served": 10,
+      "total": 495,
+      "page_size": 100,
+      "distinct_ids": 493
+    },
+    {
+      "id": 100,
+      "status": "complete",
+      "next_page": 11,
+      "served": 11,
+      "total": 531,
+      "page_size": 100,
+      "distinct_ids": 524
+    },
+    {
+      "id": 101,
+      "status": "complete",
+      "next_page": 12,
+      "served": 12,
+      "total": 556,
+      "page_size": 100,
+      "distinct_ids": 549
+    },
+    {
+      "id": 102,
+      "status": "complete",
+      "next_page": 11,
+      "served": 11,
+      "total": 535,
+      "page_size": 100,
+      "distinct_ids": 530
+    }
+  ],
+  "pages_saved": 92,
+  "snapshots_checked": 943,
+  "description_characters_checked": 2099380,
+  "all_full_source_and_normalized_snapshots_match": true,
+  "all_html_plain_text_and_jobposting_identity_verified": true,
+  "current_filter_decisions_present_for_all_saved_descriptions": true,
+  "saved_description_publication_age_counts": {
+    "recent": 410,
+    "outside": 504,
+    "unknown": 29
+  },
+  "fresh_ready_counts": {
+    "including_filtered_out": 410,
+    "selected": 234
+  },
+  "fresh_salary_unspecified": {
+    "including_filtered_out": 342,
+    "selected": 201
+  },
+  "unavailable_ids": [
+    "1000168437"
+  ],
+  "request_accounting": {
+    "total": 839,
+    "saved_list_pages": 92,
+    "first_saved_descriptions": 743,
+    "closed_card_attempts": 4,
+    "unexplained_or_repeated_known_detail_attempts": 0
+  },
+  "foreign_key_violations": 0,
+  "all_source_goal_complete": false,
+  "remaining_sources": [
+    "hh",
+    "trudvsem",
+    "superjob"
+  ],
+  "limitations": [
+    "Native totals and distinct observed IDs vary during traversal; all provider-reported pages were read. This does not assert a frozen historical market snapshot.",
+    "Habr frontend search is unofficial; confirmed-recent export excludes old and unknown publication dates."
+  ],
+  "runtime_commit": "731065abbd3a9a04395a06b82551f299314f3170",
+  "local_evidence": "data/acceptance/habr-initial-complete-audit.json",
+  "no_further_habr_requests_after_source_complete_verified": {
+    "requests": 839,
+    "pages_saved": 92,
+    "error": null
+  }
+}
