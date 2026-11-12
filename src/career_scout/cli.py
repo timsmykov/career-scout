@@ -51,8 +51,7 @@ def parser():
         command.add_argument("--source", choices=[*get_args(Source), "all"], default="all")
         command.add_argument("--query", action="append")
         command.add_argument("--per-page", type=positive, choices=range(1, 101))
-        if name == "initial":
-            command.add_argument("--days", type=positive, default=14)
+        command.add_argument("--days", type=positive, default=14)
     for name in ("initial", "new", "resume"):
         command = sub.choices[name] if name in sub.choices else sub.add_parser(name)
         command.add_argument("--chunk-requests", type=positive, default=200)

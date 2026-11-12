@@ -69,7 +69,7 @@ class Campaigns:
         now = datetime.now(UTC).replace(microsecond=0)
         plans = []
         for source in names:
-            limited = mode == "initial" and lookback_days is not None
+            limited = lookback_days is not None
             frozen = plan(
                 config,
                 source=source,

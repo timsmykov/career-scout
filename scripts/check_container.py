@@ -90,6 +90,7 @@ transport.close()
 CAMPAIGN = r"""
 import json, sys
 from pathlib import Path
+from datetime import UTC, datetime
 import httpx
 from career_scout.campaigns import Campaigns
 from career_scout.hh import HHClient, Credentials
@@ -111,6 +112,7 @@ def handler(req):
     assert int(vid)>300, 'old complete description was fetched twice'
     details.append(vid)
     return httpx.Response(200,json={'id':vid,'name':'Junior IT analyst',
+      'published_at':datetime.now(UTC).isoformat(),
       'description':'<p>Full synthetic description.</p>'})
 def factory(frozen,budget):
     return HHClient(Credentials(Path('/tmp/test.env')),

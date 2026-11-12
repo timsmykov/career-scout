@@ -243,9 +243,10 @@ def test_rate_limit_cooldown_survives_source_chunks(state):
     )
 
 
-def test_no_seven_day_window_or_per_source_query_quota(state):
+@pytest.mark.parametrize("mode", ["initial", "new"])
+def test_two_week_window_without_per_source_query_quota(state, mode):
     store, campaigns, env = state
-    cid = campaigns.create(load_config(CONFIG), "initial")
+    cid = campaigns.create(load_config(CONFIG), mode)
     for run in campaigns.runs(cid):
         frozen = json.loads(run["plan_json"])
         assert datetime.fromisoformat(frozen["end"]) - datetime.fromisoformat(
@@ -515,3 +516,29 @@ def test_previously_saved_old_cards_remain_unchanged_but_not_in_two_week_export(
     assert store.db.execute("SELECT * FROM snapshots").fetchall() == before
     assert campaigns.export(limited, include_excluded=True)["vacancies"] == []
     assert campaigns.report(limited)["totals"]["outside_publication_window"] == 1
+
+
+def test_daily_does_not_backfill_old_ids_skipped_by_the_initial_window(state):
+    store, campaigns, env = state
+    old = (datetime.now(UTC) - timedelta(days=20)).isoformat()
+    calls = []
+
+    def handler(req):
+        calls.append(req.url.path)
+        if req.url.path == "/vacancies":
+            result = page(["1"], size=100)
+            result["items"][0]["published_at"] = old
+            return httpx.Response(200, json=result)
+        pytest.fail("Old publication must not get a detail request on initial or daily")
+
+    factory = hh_factory(env, handler)
+    for mode in ("initial", "new"):
+        cid = campaigns.create(load_config(CONFIG), mode, sources=["hh"], queries=["test"])
+        result = campaigns.drive(cid, factory)
+        assert result["status"] == "complete"
+        assert result["totals"]["outside_publication_window"] == 1
+        assert result["totals"]["pending_details"] == 0
+        assert result["totals"]["new_descriptions"] == 0
+        assert campaigns.export(cid)["vacancies"] == []
+    assert calls == ["/vacancies", "/vacancies"]
+    assert store.db.execute("SELECT COUNT(*) FROM snapshots").fetchone()[0] == 0

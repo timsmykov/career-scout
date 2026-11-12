@@ -256,7 +256,7 @@
       "deliverable": "storage.py windows; campaigns.py drive",
       "acceptance": "Все доступные окна обходятся без лимита на число карточек; дубли границ пропускаются; общий campaign resume; truncated виден",
       "scope": "collector",
-      "implementation_note": "Initial14дней по публикации; new без исключающего watermark; HH/SJ split и frozen parent/child runs. Ограничение запросов относится к chunk; число chunks не ограничено по умолчанию. Нет выравнивания объёмов площадок. Synthetic restart и all-source проверены; полный live проход идёт."
+      "implementation_note": "Initial/new14дней по публикации, frozen start/end; HH/SJ split и frozen parent/child runs. Ограничение запросов относится к chunk; число chunks не ограничено по умолчанию. Нет выравнивания объёмов площадок. Synthetic restart и all-source проверены; полный live проход идёт."
     },
     {
       "id": "CS-019",

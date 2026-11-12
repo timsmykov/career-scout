@@ -80,12 +80,13 @@ docker compose run --rm collector status CAMPAIGN_ID
 docker compose run --rm collector resume CAMPAIGN_ID --progress
 docker compose run --rm collector export CAMPAIGN_ID --output /data/exports/initial.json
 # На следующий день — вручную:
-docker compose run --rm collector new --source all --progress
+docker compose run --rm collector new --source all --days 14 --progress
 docker compose run --rm collector export NEW_CAMPAIGN_ID --output /data/exports/new.json
 ```
 
 У initial/new default source=all. `--query` (повторяемый) заменяет семейства,
 `--per-page` задаёт запрошенный размер (1–100, источник может уменьшить).
+`--days` (по умолчанию14) задаёт окно публикации нового initial или new.
 `--chunk-requests` (200) ограничивает одну порцию HTTP, включая повторы и auth;
 порции повторяются до завершения всех площадок, без общего лимита числа карточек.
 `--max-rounds N` явно ограничивает число порций на источник за вызов (для проверки/
@@ -93,10 +94,10 @@ docker compose run --rm collector export NEW_CAMPAIGN_ID --output /data/exports/
 при создании campaign, каждые30сек запросов и по итогам порций; финальный JSON — отчёт.
 `resume CAMPAIGN_ID` и resume дочернего RUN_ID продолжают **всю** campaign;
 план и курсоры берутся из SQLite без перечитывания TOML. Для legacy run IDs
-сохраняется прежний одиночный collect/resume; `--days/--refresh-hours` относятся к нему.
+сохраняется прежний одиночный collect/resume; `--refresh-hours` относится к нему; --days у initial/new задаёт их новое окно.
 
-Initial использует `--days 14` по умолчанию: publication_start=T0−14дней,
-publication_end=T0. Параметр меняет только новый initial; resume сохраняет прежний
+Initial и new используют `--days 14` по умолчанию: publication_start=T0−14дней,
+publication_end=T0. Параметр меняет только создаваемый проход; resume сохраняет прежний
 диапазон. Старый широкий initial остановлен, его план не переписывается.
 HH/SuperJob получают границы публикации в API. Trudvsem получает окно изменений
 и дополнительно проверяется по creation-date; Habr читает all_visible и
@@ -104,8 +105,9 @@ HH/SuperJob получают границы публикации в API. Trudvse
 датой изменения не проходит. Источник без точной даты сохраняется отдельно
 как unknown_publication_date и не попадает в свежий экспорт, даже с
 --include-excluded. Неполная дата на нижней границе также unknown. Уже сохранённые
-старые карточки остаются в архиве без изменений. Это ограничение initial;
-new сохраняет отдельный прежний режим обхода неизвестных ID.
+старые карточки остаются в архиве без изменений. Следующий ручной new получает
+новое скользящее14дневное окно и пропускает известные ID. Поэтому старые объявления,
+пропущенные первичным проходом по возрасту, не загружаются в ежедневном режиме.
 Trudvsem использует страницы не больше20 объектов.
 На live проверке100 объектов не ответили за45сек;20 объектов с явными датами
 вернулись200 за8,3сек. Это размер страницы, не ограничение общего числа вакансий.

@@ -55,7 +55,7 @@ uv run --no-sync python -m career_scout plan --query "бизнес аналит�
 # Первичный обход вакансий за14дней; сохраняет общий campaign_id
 uv run --no-sync python -m career_scout initial --source all --days 14 --progress
 # Следующий ручной проход: поиск всех ID, описания только новых
-uv run --no-sync python -m career_scout new --source all --progress
+uv run --no-sync python -m career_scout new --source all --days 14 --progress
 # Без сохранения вакансий, включая SuperJob:
 uv run --no-sync python -m career_scout probe --source all --query аналитик --requests 3
 # CAMPAIGN_ID берётся из результата initial/new; resume продолжает все площадки
@@ -65,7 +65,8 @@ uv run --no-sync python -m career_scout inspect VACANCY_ID
 uv run --no-sync python -m career_scout export CAMPAIGN_ID --output data/exports/run.json
 ```
 
-`initial` ограничен последними14днями по дате публикации. Читаются все доступные
+`initial` и ручной `new` используют последние 14 дней по дате публикации.
+Каждый новый проход фиксирует своё окно; resume продолжает прежнее. Читаются все доступные
 страницы настроенных запросов; даты обновления не подменяют публикацию. Записи
 старше окна и с неизвестной датой видны отдельно и не входят в свежую выгрузку. Уже сохранённые описания не обновляются; каждый источник проходит свою
 выдачу целиком без квот на число карточек. `new` экспортирует только новые описания,

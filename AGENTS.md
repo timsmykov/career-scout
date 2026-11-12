@@ -22,7 +22,7 @@ Trudvsem offset=page0, Habr page1. Не переносить HH geography/Boolea
 LangGraph отложены владельцем до приёмки коллектора. Не начинать их по старому roadmap.
 
 Основной путь — campaigns.py: initial/new/resume CAMPAIGN_ID. Append-only: все
-видимые ID, full descriptions только неизвестных, без TTL refresh. Initial —
+видимые ID, full descriptions только неизвестных, без TTL refresh. Initial и manual new —
 14дней по published_at, frozen start/end; modified_at не доказывает свежесть.
 Old/date-unknown хранить отдельно от свежей выгрузки, прежние записи не удалять. Конечный HTTP
 budget ограничивает chunk, не общий объём источника. Daily manual, без расписаний.
