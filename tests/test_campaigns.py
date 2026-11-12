@@ -10,7 +10,7 @@ import pytest
 from test_hh_collector import detail, page
 from test_migration import old_database, table_rows
 from test_sources import client as source_client
-from test_sources import html_card, listing, sj, trud
+from test_sources import html_card, html_tombstone, listing, sj, trud
 
 from career_scout import cli, migrations
 from career_scout.campaigns import Campaigns
@@ -237,6 +237,80 @@ def test_bad_card_is_parked_others_continue_and_manual_retry_is_explicit(state):
     result = campaigns.drive(cid, hh_factory(env, handler_for([], calls)), retry_failed=True)
     assert result["status"] == "complete"
     assert result["totals"]["new_descriptions"] == 2
+
+
+def test_habr_failed_parser_resolves_to_explicit_closed_card_without_fake_full(state, tmp_path):
+    store, campaigns, _ = state
+    cid = campaigns.create(
+        load_config(CONFIG),
+        "initial",
+        sources=["habr"],
+        queries=["test"],
+        per_page=2,
+        lookback_days=None,
+    )
+    closed = False
+    calls = []
+
+    def handler(req):
+        calls.append(req.url.path)
+        if req.url.path == "/api/frontend/vacancies":
+            return httpx.Response(200, json=listing("habr", 0, [1, 2], total=2, per_page=2))
+        if req.url.path == "/vacancies/1":
+            return httpx.Response(200, text=html_tombstone() if closed else "<html>drift</html>")
+        assert req.url.path == "/vacancies/2"
+        return httpx.Response(200, text=html_card(2))
+
+    def factory(frozen, budget):
+        return source_client("habr", tmp_path, handler, max_requests=budget)
+
+    for _ in range(3):
+        with store.db:
+            store.db.execute("UPDATE detail_failures SET retry_at=0")
+        result = campaigns.drive(cid, factory, max_rounds=1)
+    assert result["totals"]["failed_details"] == 1
+    closed = True
+    result = campaigns.drive(cid, factory, retry_failed=True)
+    assert result["status"] == "complete"
+    assert result["totals"]["unavailable"] == 1
+    assert result["totals"]["pending_details"] == result["totals"]["failed_details"] == 0
+    assert store.db.execute("SELECT COUNT(*) FROM detail_failures").fetchone()[0] == 0
+    assert store.db.execute("SELECT COUNT(*) FROM snapshots").fetchone()[0] == 1
+    assert result["totals"]["new_descriptions"] == 1
+    assert [v["source_id"] for v in campaigns.export(cid, include_excluded=True)["vacancies"]] == [
+        "2"
+    ]
+    assert calls.count("/vacancies/2") == 1
+
+
+def test_unavailable_and_retry_queue_resolution_roll_back_together(state):
+    store, campaigns, env = state
+    cid = create(campaigns)
+    calls = []
+    good = handler_for(["1"], calls)
+
+    def handler(req):
+        if req.url.path == "/vacancies/1":
+            return httpx.Response(200, json={"id": "1"})
+        return good(req)
+
+    campaigns.drive(cid, hh_factory(env, handler), max_rounds=1)
+    original = tuple(store.db.execute("SELECT * FROM vacancies").fetchone())
+    failure = tuple(store.db.execute("SELECT * FROM detail_failures").fetchone())
+    with store.db:
+        store.db.execute(
+            "CREATE TRIGGER fail_terminal_cleanup BEFORE DELETE ON detail_failures "
+            "BEGIN SELECT RAISE(ABORT, 'synthetic cleanup failure'); END"
+        )
+    with pytest.raises(sqlite3.IntegrityError, match="synthetic cleanup failure"):
+        store.unavailable("1")
+    assert tuple(store.db.execute("SELECT * FROM vacancies").fetchone()) == original
+    assert tuple(store.db.execute("SELECT * FROM detail_failures").fetchone()) == failure
+    with store.db:
+        store.db.execute("DROP TRIGGER fail_terminal_cleanup")
+    store.unavailable("1")
+    assert store.db.execute("SELECT detail_status FROM vacancies").fetchone()[0] == "unavailable"
+    assert store.db.execute("SELECT COUNT(*) FROM detail_failures").fetchone()[0] == 0
 
 
 def test_access_denied_is_not_success_but_can_be_manually_resumed(state):

@@ -101,7 +101,9 @@ SuperJob503 считается quota-like и сохраняет cooldown без 
 - Habr: полный SSR vacancy.description; JobPosting подтверждает ID/title/company и
   сохраняется отдельно. Зарплата/qualification/remote берутся из текущей detail-карточки,
   не из устаревшего listing. Отсутствие SSR/JobPosting или расхождение identity — error,
-  карточка остаётся недочитанной. JSON-LD не дублирует уже полный SSR-текст.
+  карточка остаётся недочитанной. Исключение: явная закрытая карточка с совпавшими
+  SSR ID/href, title, archived=true и удалёнными текстом/JobPosting — unavailable,
+  без фиктивного snapshot. JSON-LD не дублирует уже полный SSR-текст.
 - SuperJob: vacancyRichText и все work/candidat/compensation разделы, которых нет в rich.
   `agreement=true` и нулевые bounds не превращаются в зарплату0. Опыт `от3лет` хранится
   как minimum3 без выдуманного диапазона3–6. Постоянное сохранение разрешено владельцем и включено в рабочей конфигурации.

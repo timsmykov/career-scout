@@ -396,6 +396,9 @@ class Store:
                 "UPDATE vacancies SET detail_status='unavailable' WHERE source=? AND source_id=?",
                 (source, vid),
             )
+            self.db.execute(
+                "DELETE FROM detail_failures WHERE source=? AND source_id=?", (source, vid)
+            )
 
     def event(self, run_id: str, kind: str, code: str):
         self.db.execute(

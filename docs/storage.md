@@ -35,6 +35,9 @@ backup старой схемы остаётся. V2→v3 только добав
 campaign_runs, campaign_items, acquisitions и detail_failures. Первое сохранение
 описания и acquisition коммитятся вместе; последующие initial/new его не меняют. [Контракт отбора](filtering.md). Ошибка или авария до commit оставляет старую схему целиком.
 
+При успешном сохранении или подтверждённом unavailable карточка атомарно уходит
+из активной detail_failures очереди; unavailable не создаёт snapshot/acquisition.
+
 Один writer на ledger через flock, сеть вне транзакции. Cursor/discoveries и
 snapshot/current pointer/projection записываются атомарно. Replan размера страницы
 также атомарно сохраняет старый query как replanned, новый query/pinned size и

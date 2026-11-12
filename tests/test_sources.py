@@ -89,6 +89,13 @@ def html_card(vid=1, **extra):
     )
 
 
+def html_tombstone(vid=1, **extra):
+    vacancy = habr(
+        vid, **{"href": f"/vacancies/{vid}", "archived": True, "description": None, **extra}
+    )
+    return '<script data-ssr-state="true">' + json.dumps({"vacancy": vacancy}) + "</script>"
+
+
 def client(source, tmp_path, handler, **kwargs):
     options = {
         "max_requests": 30,
@@ -258,6 +265,47 @@ def test_trudvsem_bad_envelope_is_not_empty_success(tmp_path, body):
 def test_habr_drift_and_wrong_identity_never_become_full(body):
     with pytest.raises(SourceError):
         habr_detail(body, "1")
+
+
+@pytest.mark.parametrize("description", [None, ""])
+def test_habr_explicit_archived_tombstone_is_unavailable(description):
+    with pytest.raises(SourceError, match="^unavailable$"):
+        habr_detail(html_tombstone(description=description), "1")
+
+
+def test_habr_archived_tombstone_with_removed_description_field_is_unavailable():
+    raw = {"vacancy": {"id": 1, "title": "Аналитик", "href": "/vacancies/1", "archived": True}}
+    with pytest.raises(SourceError, match="^unavailable$"):
+        habr_detail('<script data-ssr-state="true">' + json.dumps(raw) + "</script>", "1")
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        {"archived": False},
+        {"archived": "true"},
+        {"href": "/vacancies/2"},
+        {"title": ""},
+        {"title": None},
+        {"description": "<p>Full text without JobPosting still requires validation</p>"},
+    ],
+)
+def test_habr_incomplete_tombstone_signature_is_drift(change):
+    with pytest.raises(SourceError, match="^detail_parser_drift$"):
+        habr_detail(html_tombstone(**change), "1")
+
+
+def test_habr_archived_wrong_identity_or_contradictory_job_is_not_unavailable():
+    with pytest.raises(SourceError, match="^detail_identity_mismatch$"):
+        habr_detail(html_tombstone(2), "1")
+    contradictory = html_tombstone() + (
+        '<script type="application/ld+json">'
+        + json.dumps({"@type": "JobPosting", "identifier": {"value": "2"}})
+        + "</script>"
+    )
+    with pytest.raises(SourceError, match="^detail_identity_mismatch$"):
+        habr_detail(contradictory, "1")
+    assert habr_detail(html_card(archived=True), "1")["detail_status"] == "archived"
 
 
 @pytest.mark.parametrize(

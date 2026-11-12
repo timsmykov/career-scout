@@ -233,10 +233,24 @@ def habr_detail(html, expected):
         raise SourceError("detail_parser_drift") from None
     if not isinstance(state, dict) or not isinstance(state.get("vacancy"), dict):
         raise SourceError("detail_parser_drift")
+    vacancy = state["vacancy"]
+    if str(vacancy.get("id")) != expected:
+        raise SourceError("detail_identity_mismatch")
     jobs = [j for j in jobs if isinstance(j, dict) and j.get("@type") == "JobPosting"]
+    # Closed cards can retain matching SSR identity but remove both the body
+    # and JobPosting. An explicit tombstone is terminal, not a broken parser.
+    if (
+        vacancy.get("archived") is True
+        and vacancy.get("href") == "/vacancies/" + expected
+        and isinstance(vacancy.get("title"), str)
+        and vacancy["title"].strip()
+        and vacancy.get("description") in (None, "")
+        and not jobs
+    ):
+        raise SourceError("unavailable")
     if len(jobs) != 1:
         raise SourceError("detail_parser_drift")
-    return habr_record(state["vacancy"], jobs[0], expected)
+    return habr_record(vacancy, jobs[0], expected)
 
 
 class HabrClient(ReadClient):
