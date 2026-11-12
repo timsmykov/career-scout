@@ -25,7 +25,7 @@ CONFIG = Path(__file__).parents[1] / "configs/search.toml"
 @pytest.fixture
 def state(tmp_path):
     store = Store(tmp_path / "ledger.sqlite3")
-    env = tmp_path / "test.env"
+    env = tmp_path / "hh-test.env"
     env.write_text("HH_USER_AGENT=CampaignTests\nHH_ACCESS_TOKEN=fake\n")
     yield store, Campaigns(store), env
     store.close()
@@ -51,6 +51,8 @@ def create(campaigns, mode="initial", **kw):
 
 
 def handler_for(ids, calls, *, changed=False, unavailable=()):
+    publication = (datetime.now(UTC) - timedelta(days=1)).isoformat()
+
     def handler(req):
         calls.append(str(req.url))
         if req.url.path == "/vacancies":
@@ -65,7 +67,7 @@ def handler_for(ids, calls, *, changed=False, unavailable=()):
         vid = req.url.path.rsplit("/", 1)[-1]
         if vid in unavailable:
             return httpx.Response(404)
-        return httpx.Response(200, json=detail(vid, published_at=datetime.now(UTC).isoformat()))
+        return httpx.Response(200, json=detail(vid, published_at=publication))
 
     return handler
 
@@ -128,11 +130,12 @@ def test_all_four_sources_and_trud_full_objects_reused(tmp_path, state):
         load_config(CONFIG), "initial", queries=["test"], per_page=2, lookback_days=None
     )
     calls = []
+    ids = [1]
 
     def factory(frozen, budget):
         source = frozen["source"]
         if source == "hh":
-            return hh_factory(env, handler_for(["1"], calls))(frozen, budget)
+            return hh_factory(env, handler_for([str(i) for i in ids], calls))(frozen, budget)
 
         def handler(req):
             calls.append(source + req.url.path)
@@ -140,11 +143,12 @@ def test_all_four_sources_and_trud_full_objects_reused(tmp_path, state):
                 if source == "trudvsem":
                     assert req.url.params["modifiedFrom"].startswith("1970-01-01")
                 assert "date_published_from" not in req.url.params
-                return httpx.Response(200, json=listing(source, 0, [1], total=1))
+                return httpx.Response(200, json=listing(source, 0, ids, total=len(ids)))
+            vid = int(req.url.path.rstrip("/").rsplit("/", 1)[-1])
             if source == "habr":
-                return httpx.Response(200, text=html_card())
+                return httpx.Response(200, text=html_card(vid))
             if source == "superjob":
-                return httpx.Response(200, json=sj())
+                return httpx.Response(200, json=sj(vid))
             pytest.fail("Full Trudvsem list object must not need a detail GET")
 
         return source_client(source, tmp_path, handler, max_requests=budget)
@@ -156,6 +160,20 @@ def test_all_four_sources_and_trud_full_objects_reused(tmp_path, state):
     assert len(set(v["source"] for v in campaigns.export(cid)["vacancies"])) == 4
     assert result["sources"][1]["requests"] == 1
     assert not any("/vacancy/" in p for p in calls)
+    for add_new in (False, True, False):
+        if add_new:
+            ids.append(2)
+        daily = campaigns.create(
+            load_config(CONFIG), "new", queries=["test"], per_page=2, lookback_days=None
+        )
+        result = campaigns.drive(daily, factory, chunk_requests=2)
+        assert result["status"] == "complete", result
+        assert result["totals"]["new_descriptions"] == (4 if add_new else 0)
+        assert result["totals"]["requests"] == (7 if add_new else 4)
+        delta = campaigns.export(daily)["vacancies"]
+        assert len(delta) == (4 if add_new else 0)
+        if add_new:
+            assert {v["source"] for v in delta} == {"hh", "trudvsem", "habr", "superjob"}
 
 
 def test_imports_unfinished_old_card_even_if_not_found_in_current_search(state):

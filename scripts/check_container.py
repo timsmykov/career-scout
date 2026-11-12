@@ -10,7 +10,7 @@ import uuid
 FIRST = r"""
 import json
 from pathlib import Path
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 import httpx
 from career_scout.hh import Credentials, HHClient, normalize
 from career_scout.storage import Store, SCHEMA
@@ -21,6 +21,7 @@ p=Path('/tmp/test.env')
 p.write_text('HH_USER_AGENT=OfflineContainerTest\nHH_CLIENT_ID=test-app\nHH_ACCESS_TOKEN=initial-test\n')
 c=Credentials(p, token_path=Path('/data/auth/token.json'))
 phase=__import__('sys').argv[1]
+publication=(datetime.now(UTC)-timedelta(days=1)).isoformat()
 if phase=='first':
     assert not Path('/data/ledger.sqlite3').exists()
     c.save_token('persisted-test')
@@ -52,7 +53,7 @@ def handler(req):
     assert vid not in committed, 'committed detail was fetched twice'
     return httpx.Response(200,json={'id':vid,
       'name':('Senior' if int(vid)%3==0 else 'Junior')+' analyst',
-      'published_at':datetime.now(UTC).isoformat(),
+      'published_at':publication,
       'experience':{'id':'between1And3'}, 'salary':None,
       'description':'<p>Complete synthetic IT text '+vid+'</p>'})
 
@@ -90,7 +91,7 @@ transport.close()
 CAMPAIGN = r"""
 import json, sys
 from pathlib import Path
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 import httpx
 from career_scout.campaigns import Campaigns
 from career_scout.hh import HHClient, Credentials
@@ -99,6 +100,7 @@ from career_scout.storage import Store
 s=Store(Path('/data/ledger.sqlite3'))
 c=Campaigns(s)
 phase=sys.argv[1]
+publication=(datetime.now(UTC)-timedelta(days=1)).isoformat()
 ids=list(range(1,301))
 details=[]
 def handler(req):
@@ -112,7 +114,7 @@ def handler(req):
     assert int(vid)>300, 'old complete description was fetched twice'
     details.append(vid)
     return httpx.Response(200,json={'id':vid,'name':'Junior IT analyst',
-      'published_at':datetime.now(UTC).isoformat(),
+      'published_at':publication,
       'description':'<p>Full synthetic description.</p>'})
 def factory(frozen,budget):
     return HHClient(Credentials(Path('/tmp/test.env')),
@@ -158,7 +160,13 @@ def main():
     volume = "career-scout-test-" + uuid.uuid4().hex
 
     def command(*parts):
-        return subprocess.run(parts, check=True, capture_output=True, text=True).stdout.strip()
+        result = subprocess.run(parts, capture_output=True, text=True)
+        if result.returncode:
+            raise RuntimeError(
+                f"Container acceptance exited {result.returncode}:\n"
+                + (result.stderr or result.stdout)
+            )
+        return result.stdout.strip()
 
     command("docker", "volume", "create", volume)
     try:
