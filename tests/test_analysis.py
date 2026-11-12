@@ -1,4 +1,5 @@
 import copy
+import importlib.util
 import json
 import os
 import signal
@@ -37,6 +38,58 @@ from career_scout.evidence import EvidenceDocument, documents, hydrate_response
 from career_scout.hh import normalize
 from career_scout.models import Vacancy
 from career_scout.normalization import project_snapshot
+
+
+def quality_module():
+    spec = importlib.util.spec_from_file_location(
+        "quality_check", "scripts/check_evaluation_quality.py"
+    )
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_quality_labels_are_hidden_and_mismatch_is_not_rewritten(setup):
+    path, config, requests = setup
+    request = requests["product"]
+    output = path / "quality"
+    output.mkdir()
+    store = AnalysisStore(output / "analysis.sqlite3")
+    run_id = store.create_run({}, 1)
+    store.save_input(request)
+    store.close()
+    cases = [
+        {
+            "id": "test",
+            "profile_id": "product",
+            "expected": "REJECT",
+            "rationale": "hidden-label-sentinel",
+            "key": request.evaluation_key,
+        }
+    ]
+    manifest = {
+        "run_id": run_id,
+        "cases": cases,
+        "gold_hash": digest(cases),
+        "model": config.model_dump(mode="json"),
+    }
+    (output / "manifest.json").write_text(json.dumps(manifest))
+    worker = ScriptedWorker({"product": "PASS"})
+
+    def isolated(value):
+        assert value == request
+        assert "hidden-label-sentinel" not in build_prompt(value)
+        return worker(value)
+
+    module = quality_module()
+    rows = module.execute(output, worker_factory=lambda _: isolated)
+    assert rows[0]["actual"] == "PASS" and not rows[0]["label_match"]
+    module.execute(output, worker_factory=lambda _: isolated)
+    assert worker.calls == ["product"]
+    manifest["cases"][0]["expected"] = "PASS"
+    (output / "manifest.json").write_text(json.dumps(manifest))
+    with pytest.raises(ValueError, match="gold_manifest_changed"):
+        module.execute(output, worker_factory=lambda _: isolated)
 
 
 @pytest.fixture
