@@ -6,7 +6,7 @@
 сохраняют полные карточки в общую SQLite с пагинацией, версиями и продолжением после сбоя.
 Владелец подтвердил наличие разрешений на хранение вакансий 11.11.2026. [Точный статус, запуск и ограничения](docs/multi-source.md).
 
-Общий формат vacancy/export v2; SQLite schema4 мигрирует прежнюю базу с backup.
+Общий формат vacancy/export v2; SQLite schema5 мигрирует прежнюю базу с backup.
 Поиск и фильтры — [configs/search.toml](configs/search.toml): IT/финтех/ИИ/ML,
 стажёр/junior/middle, без опыта/1–3 года. Unknown/conflict сохраняются, зарплата
 не ограничивает отбор. LangGraph и анализ по резюме отложены, отклики не отправляются.
@@ -50,18 +50,26 @@ uv run --no-sync pytest -m "not live"
 
 ```sh
 # План без сети и без открытия БД
-uv run --no-sync python -m career_scout plan --source all
+uv run --no-sync python -m career_scout plan --source all --days 14
 uv run --no-sync python -m career_scout plan --query "бизнес аналитик" --days 7
-# Явный сетевой сбор: конечный бюджет на весь запуск, включая auth и повторы
-uv run --no-sync python -m career_scout collect --source all --days 7 --requests 50
+# Первичный обход вакансий за14дней; сохраняет общий campaign_id
+uv run --no-sync python -m career_scout initial --source all --days 14 --progress
+# Следующий ручной проход: поиск всех ID, описания только новых
+uv run --no-sync python -m career_scout new --source all --progress
 # Без сохранения вакансий, включая SuperJob:
 uv run --no-sync python -m career_scout probe --source all --query аналитик --requests 3
-# RUN_ID берётся из JSON результата collect
-uv run --no-sync python -m career_scout resume RUN_ID --requests 50
-uv run --no-sync python -m career_scout status RUN_ID
+# CAMPAIGN_ID берётся из результата initial/new; resume продолжает все площадки
+uv run --no-sync python -m career_scout resume CAMPAIGN_ID --progress
+uv run --no-sync python -m career_scout status CAMPAIGN_ID
 uv run --no-sync python -m career_scout inspect VACANCY_ID
-uv run --no-sync python -m career_scout export RUN_ID --output data/exports/run.json
+uv run --no-sync python -m career_scout export CAMPAIGN_ID --output data/exports/run.json
 ```
+
+`initial` ограничен последними14днями по дате публикации. Читаются все доступные
+страницы настроенных запросов; даты обновления не подменяют публикацию. Записи
+старше окна и с неизвестной датой видны отдельно и не входят в свежую выгрузку. Уже сохранённые описания не обновляются; каждый источник проходит свою
+выдачу целиком без квот на число карточек. `new` экспортирует только новые описания,
+включая отдельно учтённый дочитанный хвост. Запуски ручные, расписания нет.
 
 `partial` и exit code 2 означают незавершённый сбор; остаток виден в отчёте.
 Полный справочник аргументов и восстановление: [development.md](docs/development.md).
@@ -76,8 +84,8 @@ CLI читает `.env`, [рабочий TOML](configs/search.toml) и аргу�
 ```sh
 docker volume create career-scout-data
 docker compose build
-docker compose run --rm collector status RUN_ID
-docker compose run --rm collector resume RUN_ID --requests 50
+docker compose run --rm collector status CAMPAIGN_ID
+docker compose run --rm collector resume CAMPAIGN_ID --progress
 ```
 
 SQLite сохраняется в `/data/ledger.sqlite3`, `.env` монтируется read-only;

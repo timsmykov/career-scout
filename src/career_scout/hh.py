@@ -302,17 +302,28 @@ class HHClient:
                 raise SourceError("invalid_json") from None
 
     def search(
-        self, query: str, start: str, end: str, page: int, per_page: int, *, area_ids=None
+        self,
+        query: str,
+        start: str | None,
+        end: str | None,
+        page: int,
+        per_page: int,
+        *,
+        area_ids=None,
     ) -> Page:
         params = {
             "text": query,
-            "date_from": start,
-            "date_to": end,
             "page": page,
             "per_page": per_page,
             "order_by": "publication_time",
             "no_magic": "true",
         }
+        if start or end:
+            # HH rejects date_to on its own. Epoch is a technical lower bound
+            # preceding the service; the caller still requests all available history.
+            params["date_from"] = start or "1970-01-01T00:00:00+00:00"
+        if end:
+            params["date_to"] = end
         if area_ids:
             params["area"] = area_ids
         body = self.get("/vacancies", params)

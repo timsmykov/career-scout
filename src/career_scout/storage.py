@@ -6,7 +6,7 @@ import json
 import re
 import sqlite3
 import uuid
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import get_args
@@ -14,7 +14,14 @@ from typing import get_args
 from career_scout.common import SourceError, utcnow
 from career_scout.filtering import evaluate
 from career_scout.hh import listing_hash
-from career_scout.migrations import backup_schema, backup_v1, upgrade_v1, upgrade_v2, upgrade_v3
+from career_scout.migrations import (
+    backup_schema,
+    backup_v1,
+    upgrade_v1,
+    upgrade_v2,
+    upgrade_v3,
+    upgrade_v4,
+)
 from career_scout.models import Identity, Source
 from career_scout.normalization import NORMALIZER, project_snapshot
 from career_scout.search_config import ENGINE_VERSION, FilterPolicy
@@ -68,29 +75,26 @@ class Store:
         self.backup_path = None
         try:
             version = self.db.execute("PRAGMA user_version").fetchone()[0]
-            if version not in (0, 1, 2, 3, 4):
+            if version not in (0, 1, 2, 3, 4, 5):
                 raise SourceError("unsupported_database_version")
             self.db.execute("PRAGMA journal_mode=WAL")
-            if version < 4:
+            if version < 5:
                 with self.lock():
                     version = self.db.execute("PRAGMA user_version").fetchone()[0]
                     if version == 0:
                         self.db.executescript("BEGIN IMMEDIATE;\n" + SCHEMA)
-                        upgrade_v1(self.db, commit=False)
-                        upgrade_v2(self.db, commit=False)
-                        upgrade_v3(self.db)
                     elif version == 1:
                         self.backup_path = backup_v1(self.db, self.path)
+                    elif version in (2, 3, 4):
+                        self.backup_path = backup_schema(self.db, self.path, version)
+                    if version < 2:
                         upgrade_v1(self.db, commit=False)
+                    if version < 3:
                         upgrade_v2(self.db, commit=False)
-                        upgrade_v3(self.db)
-                    elif version == 2:
-                        self.backup_path = backup_schema(self.db, self.path, 2)
-                        upgrade_v2(self.db, commit=False)
-                        upgrade_v3(self.db)
-                    elif version == 3:
-                        self.backup_path = backup_schema(self.db, self.path, 3)
-                        upgrade_v3(self.db)
+                    if version < 4:
+                        upgrade_v3(self.db, commit=False)
+                    if version < 5:
+                        upgrade_v4(self.db)
         except BaseException:
             self.db.close()
             raise
@@ -124,6 +128,7 @@ class Store:
         *,
         source: Source = "hh",
         plan_snapshot: dict | None = None,
+        commit: bool = True,
     ) -> str:
         if source not in get_args(Source):
             raise SourceError("unknown_source")
@@ -148,7 +153,7 @@ class Store:
                     or plan.get("filter_engine") != ENGINE_VERSION
                 ):
                     raise SourceError("plan_filter_policy_mismatch")
-        with self.db:
+        with self.db if commit else nullcontext():
             self.db.execute(
                 "INSERT INTO runs(id,created_at,plan_json,source) VALUES(?,?,?,?)",
                 (run_id, utcnow(), json.dumps(plan, ensure_ascii=False), source),
@@ -175,11 +180,14 @@ class Store:
         ).fetchone()
 
     def split(self, query, total: int) -> bool:
-        start = datetime.fromisoformat(query["start"])
         end = datetime.fromisoformat(query["end"])
-        if (end - start).total_seconds() <= 1:
-            return False
-        middle = start + timedelta(seconds=int((end - start).total_seconds() // 2))
+        start = datetime.fromisoformat(query["start"]) if query["start"] else None
+        if start is not None:
+            if (end - start).total_seconds() <= 1:
+                return False
+            middle = start + timedelta(seconds=int((end - start).total_seconds() // 2))
+        else:
+            middle = end - timedelta(days=30)
         with self.db:
             self.db.execute(
                 "UPDATE queries SET status='split',total=? WHERE id=?", (total, query["id"])
@@ -187,13 +195,17 @@ class Store:
             self.db.executemany(
                 "INSERT INTO queries(run_id,query,start,end) VALUES(?,?,?,?)",
                 [
-                    (query["run_id"], query["query"], a.isoformat(), b.isoformat())
-                    for a, b in ((start, middle), (middle, end))
+                    (query["run_id"], query["query"], a.isoformat() if a else "", b.isoformat())
+                    for a, b in (
+                        ((start, middle), (middle, end))
+                        if start
+                        else ((middle, end), (None, middle))
+                    )
                 ],
             )
         return True
 
-    def save_page(self, query, page, ttl_hours: float):
+    def save_page(self, query, page, ttl_hours: float, *, campaign_id: str | None = None):
         source = self.run(query["run_id"])["source"]
         cutoff = (datetime.now(UTC) - timedelta(hours=ttl_hours)).isoformat()
         with self.db:
@@ -225,21 +237,28 @@ class Store:
                     "SELECT * FROM vacancies WHERE source=? AND source_id=?", (source, vid)
                 ).fetchone()
                 state = "missing"
-                if old:
+                if old and campaign_id is None:
                     changed = old["listing_hash"] != fingerprint
                     expired = not old["detail_fetched_at"] or old["detail_fetched_at"] <= cutoff
                     state = old["detail_status"]
                     if changed or expired:
                         state = "stale" if old["content_hash"] else "missing"
-                self.db.execute(
-                    "INSERT INTO vacancies"
-                    "(source,source_id,listing_json,listing_hash,detail_status) "
-                    "VALUES(?,?,?,?,?) "
-                    "ON CONFLICT(source,source_id) DO UPDATE "
-                    "SET listing_json=excluded.listing_json, "
-                    "listing_hash=excluded.listing_hash,detail_status=excluded.detail_status",
-                    (source, vid, json.dumps(item, ensure_ascii=False), fingerprint, state),
-                )
+                if old is None or campaign_id is None:
+                    self.db.execute(
+                        "INSERT INTO vacancies"
+                        "(source,source_id,listing_json,listing_hash,detail_status) "
+                        "VALUES(?,?,?,?,?) "
+                        "ON CONFLICT(source,source_id) DO UPDATE "
+                        "SET listing_json=excluded.listing_json, "
+                        "listing_hash=excluded.listing_hash,detail_status=excluded.detail_status",
+                        (source, vid, json.dumps(item, ensure_ascii=False), fingerprint, state),
+                    )
+                if campaign_id is not None:
+                    origin = "new" if old is None else "known" if old["content_hash"] else "backlog"
+                    self.db.execute(
+                        "INSERT OR IGNORE INTO campaign_items VALUES(?,?,?,?)",
+                        (campaign_id, source, vid, origin),
+                    )
                 self.db.execute(
                     "INSERT OR IGNORE INTO discoveries VALUES(?,?,?,?)",
                     (query["run_id"], query["id"], source, vid),
@@ -283,10 +302,17 @@ class Store:
             (run_id,),
         ).fetchone()
 
-    def save_detail(self, snapshot: dict):
+    def save_detail(self, snapshot: dict, *, campaign_id=None, run_id=None):
         normalized = project_snapshot(snapshot)
         source = normalized["source"]
         with self.db:
+            if campaign_id is not None:
+                old = self.db.execute(
+                    "SELECT content_hash FROM vacancies WHERE source=? AND source_id=?",
+                    (source, snapshot["source_id"]),
+                ).fetchone()
+                if old and old[0] is not None:
+                    return False
             self.db.execute(
                 "INSERT OR IGNORE INTO snapshots VALUES(?,?,?,?,?)",
                 (
@@ -319,6 +345,23 @@ class Store:
                     json.dumps(normalized, ensure_ascii=False),
                 ),
             )
+            if campaign_id is not None:
+                self.db.execute(
+                    "INSERT OR IGNORE INTO acquisitions VALUES(?,?,?,?,?,?)",
+                    (
+                        source,
+                        snapshot["source_id"],
+                        snapshot["content_hash"],
+                        snapshot["detail_fetched_at"],
+                        campaign_id,
+                        run_id,
+                    ),
+                )
+                self.db.execute(
+                    "DELETE FROM detail_failures WHERE source=? AND source_id=?",
+                    (source, snapshot["source_id"]),
+                )
+        return True
 
     def unavailable(self, vid: str, source: Source = "hh"):
         with self.db:

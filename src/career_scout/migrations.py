@@ -168,7 +168,7 @@ def upgrade_v2(db: sqlite3.Connection, *, commit: bool = True):
         raise
 
 
-def upgrade_v3(db: sqlite3.Connection):
+def upgrade_v3(db: sqlite3.Connection, *, commit: bool = True):
     try:
         if not db.in_transaction:
             db.execute("BEGIN IMMEDIATE")
@@ -177,6 +177,58 @@ def upgrade_v3(db: sqlite3.Connection):
             "page_size INTEGER NOT NULL CHECK(page_size BETWEEN 1 AND 100))"
         )
         db.execute("PRAGMA user_version=4")
+        if commit:
+            db.commit()
+    except BaseException:
+        db.rollback()
+        raise
+
+
+CAMPAIGN_DDL = """
+CREATE TABLE campaigns (
+ id TEXT PRIMARY KEY, mode TEXT NOT NULL CHECK(mode IN ('initial','new')),
+ created_at TEXT NOT NULL, plan_json TEXT NOT NULL,
+ status TEXT NOT NULL DEFAULT 'partial'
+);
+CREATE TABLE campaign_runs (
+ campaign_id TEXT NOT NULL REFERENCES campaigns(id), source TEXT NOT NULL,
+ run_id TEXT NOT NULL UNIQUE REFERENCES runs(id), PRIMARY KEY(campaign_id,source),
+ UNIQUE(campaign_id,source,run_id)
+);
+CREATE TABLE campaign_items (
+ campaign_id TEXT NOT NULL, source TEXT NOT NULL, source_id TEXT NOT NULL,
+ origin TEXT NOT NULL CHECK(origin IN ('new','backlog','known')),
+ PRIMARY KEY(campaign_id,source,source_id),
+ FOREIGN KEY(campaign_id,source) REFERENCES campaign_runs(campaign_id,source),
+ FOREIGN KEY(source,source_id) REFERENCES vacancies(source,source_id)
+);
+CREATE INDEX campaign_items_source ON campaign_items(source,source_id,campaign_id);
+CREATE TABLE acquisitions (
+ source TEXT NOT NULL, source_id TEXT NOT NULL, content_hash TEXT NOT NULL,
+ fetched_at TEXT NOT NULL, campaign_id TEXT NOT NULL, run_id TEXT NOT NULL,
+ PRIMARY KEY(source,source_id),
+ FOREIGN KEY(source,source_id,content_hash) REFERENCES snapshots(source,source_id,content_hash),
+ FOREIGN KEY(campaign_id,source,run_id) REFERENCES campaign_runs(campaign_id,source,run_id)
+);
+CREATE TABLE detail_failures (
+ source TEXT NOT NULL, source_id TEXT NOT NULL, attempts INTEGER NOT NULL,
+ retry_at REAL NOT NULL, state TEXT NOT NULL CHECK(state IN ('pending','failed')),
+ error TEXT NOT NULL, PRIMARY KEY(source,source_id),
+ FOREIGN KEY(source,source_id) REFERENCES vacancies(source,source_id)
+);
+"""
+
+
+def upgrade_v4(db: sqlite3.Connection):
+    try:
+        if not db.in_transaction:
+            db.execute("BEGIN IMMEDIATE")
+        for statement in CAMPAIGN_DDL.split(";"):
+            if statement.strip():
+                db.execute(statement)
+        if db.execute("PRAGMA foreign_key_check").fetchall():
+            raise SourceError("migration_foreign_key_error")
+        db.execute("PRAGMA user_version=5")
         db.commit()
     except BaseException:
         db.rollback()

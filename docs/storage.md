@@ -1,13 +1,18 @@
 # Хранение
 
-## Реализовано: schema v4
+## Реализовано: schema v5
 
-SQLite WAL, foreign_keys=ON, PRAGMA user_version=4. Пустая БД создаётся в одной
-транзакции; v1/v2/v3 переносятся с обязательным backup, неизвестная версия отклоняется.
+SQLite WAL, foreign_keys=ON, PRAGMA user_version=5. Пустая БД создаётся в одной
+транзакции; v1/v2/v3/v4 переносятся с обязательным backup, неизвестная версия отклоняется.
 Ключ `(source,source_id)` поддерживает четыре пространства идентификаторов.
 
 | Таблица | Ключ / назначение |
 |---|---|
+| campaigns | Общий initial/new проход и неизменяемый набор source plans |
+| campaign_runs | Связь campaign+source с одним дочерним run |
+| campaign_items | Уникальные ID прохода с origin new/known/backlog |
+| acquisitions | Первое сохранённое описание ID, campaign/run/hash; атомарно со snapshot |
+| detail_failures | Отложенные попытки отдельной карточки и состояние failed |
 | runs | Run ID, source, immutable plan, статус и счётчики |
 | queries | Query/window/run, next_page и полнота |
 | query_pagination | Query ID + фактический native page size, фиксируется атомарно со страницей |
@@ -26,7 +31,9 @@ run/query/event/cooldown данные сохранены; raw и normalized ве
 После успешной миграции старые временные таблицы удаляются в той же транзакции,
 backup старой схемы остаётся. V2→v3 только добавляет три таблицы фильтров;
 существующие строки не переписываются. V3→v4 добавляет query_pagination,
-все прежние таблицы/строки сохраняются. [Контракт отбора](filtering.md). Ошибка или авария до commit оставляет старую схему целиком.
+все прежние таблицы/строки сохраняются. V4→v5 только добавляет таблицы campaigns,
+campaign_runs, campaign_items, acquisitions и detail_failures. Первое сохранение
+описания и acquisition коммитятся вместе; последующие initial/new его не меняют. [Контракт отбора](filtering.md). Ошибка или авария до commit оставляет старую схему целиком.
 
 Один writer на ledger через flock, сеть вне транзакции. Cursor/discoveries и
 snapshot/current pointer/projection записываются атомарно. Нормализация сама по себе
@@ -40,7 +47,7 @@ CSV, неизменяемый version set по run и consumer cursor ещё н�
 ## Целевая модель общего коллектора
 
 MVP: SQLite WAL на локальном диске; foreign keys включены; версия схемы и миграции.
-Таблицы ниже — будущая общая модель, а не буквальные имена текущей schema v4.
+Таблицы ниже — будущая общая модель, а не буквальные имена текущей schema v5.
 Текущий этап реализует только source/run/query/vacancy/discovery/filter/work/event
 сущности. resumes/evaluations/routing и model checkpoints отложены.
 

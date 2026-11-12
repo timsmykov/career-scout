@@ -1,7 +1,8 @@
 # Эксплуатационный контракт
 
-HH runtime реализован; остальные источники и общий эксплуатационный контракт ниже
-ещё предстоят. Рабочие команды, exit codes и продолжение: [development.md](development.md).
+Все четыре источника реализованы. Основной путь: initial → manual new;
+resume CAMPAIGN_ID продолжает общий сохранённый проход. Refresh/мониторинг
+карточек и расписание не входят в текущий этап. Рабочие команды, exit codes и продолжение: [development.md](development.md).
 Для HH `resume RUN_ID` сохраняет исходный план и получает новый конечный бюджет.
 `partial` означает оставшийся хвост; `blocked` указывает на доступ/429. До retry_at
 запросов не будет. При аварии ОС снимает flock; leases/checkpoints в HH-срезе нет.
@@ -15,7 +16,7 @@ SQLite `/data/ledger.sqlite3`, WAL и экспорты лежат в external vo
 `career-scout-data`; удаление контейнера их не удаляет. Проверенная база с 315
 карточками импортирована в volume через backup API, исходный host файл оставлен.
 Ключи — read-only host `.env`, обновляемый token cache — в volume.
-Первое открытие старой БД переносит schema v1→v2 с backup; явная команда —
+Первое открытие старой БД переносит schema v1/v2/v3/v4→v5 с backup; явная команда —
 `docker compose run --rm collector migrate`. [Контракт/восстановление](normalization.md).
 [Команды и проверка пересоздания](docker.md).
 

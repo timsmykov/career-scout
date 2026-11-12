@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "updated_on": "2026-11-11",
-  "status": "hh_slice_implemented_collector_mvp_in_progress",
+  "updated_on": "2026-11-12",
+  "status": "campaign_runtime_implemented_full_initial_acceptance_in_progress",
   "milestones": {
     "M0": "complete",
     "M1": "in_progress",
@@ -246,22 +246,22 @@
     {
       "id": "CS-018",
       "milestone": "M3",
-      "title": "Окна и общая справедливость",
+      "title": "Полный обход окон и общий resume без квот на число карточек",
       "status": "in_progress",
       "depends_on": [
         "CS-006",
         "CS-007",
         "CS-013"
       ],
-      "deliverable": "collectors/windows.py, scheduling.py",
-      "acceptance": "Большой запрос не забирает весь budget; пересечения окон дедуплицируются; остаток виден",
+      "deliverable": "storage.py windows; campaigns.py drive",
+      "acceptance": "Все доступные окна обходятся без лимита на число карточек; дубли границ пропускаются; общий campaign resume; truncated виден",
       "scope": "collector",
-      "implementation_note": "HH/SJ saved date windows и dedup границ; round-robin queries и отдельные budgets/run/cooldown каждого source в batch. Нет watermark reconciliation или параллельных leases."
+      "implementation_note": "Initial14дней по публикации; new без исключающего watermark; HH/SJ split и frozen parent/child runs. Ограничение запросов относится к chunk; число chunks не ограничено по умолчанию. Нет выравнивания объёмов площадок. Synthetic restart и all-source проверены; полный live проход идёт."
     },
     {
       "id": "CS-019",
       "milestone": "M3",
-      "title": "Сверка обновлений и source acceptance",
+      "title": "Первичный сбор и ручное добавление новых ID",
       "status": "in_progress",
       "depends_on": [
         "CS-015",
@@ -269,10 +269,10 @@
         "CS-017",
         "CS-018"
       ],
-      "deliverable": "services/reconciliation.py, live acceptance receipts",
-      "acceptance": "TTL обновляет прежние listing; сбой источника даёт partial; доступ/retention отдельно",
+      "deliverable": "campaigns.py; initial/new/resume CLI; acquisitions",
+      "acceptance": "После full initial ручной new добавляет только неизвестные описания; старые строки неизменны; backlog дочитывается; ошибки не скрываются",
       "scope": "collector",
-      "implementation_note": "Все4adapter probes и bounded постоянный collection/restart проверены, включая SuperJob после подтверждения владельца. Source failures независимы, listing hashes игнорируют viewer counters. Полная reconciliation/retention впереди."
+      "implementation_note": "Append-only режим реализован. Daily повторяет все доступные списки без остановки на known ID; detail только отсутствующих. Backlog/new/known различаются, new export — delta. Refresh/проверка закрытия исключены владельцем из текущего этапа. Полная live приёмка выполняется."
     },
     {
       "id": "CS-020",
@@ -463,7 +463,7 @@
       "id": "CS-034",
       "milestone": "M6",
       "title": "Сроки хранения коллектора",
-      "status": "planned",
+      "status": "deferred",
       "depends_on": [
         "CS-010",
         "CS-012",
@@ -471,7 +471,8 @@
       ],
       "deliverable": "Retention service и maintenance command",
       "acceptance": "Expiry raw/snapshot/очереди/export/backup согласован; данные не попадают в готовый набор после истечения",
-      "scope": "collector"
+      "scope": "future_operations",
+      "implementation_note": "Не входит в запрос 12.11: владелец просит initial и manual daily без мониторинга, обновления старых карточек или расписания."
     },
     {
       "id": "CS-035",
@@ -498,7 +499,6 @@
         "CS-031",
         "CS-032",
         "CS-033",
-        "CS-034",
         "CS-035"
       ],
       "deliverable": "Runbook и release acceptance",
@@ -519,5 +519,5 @@
       "acceptance": "Проверены discovery, целостность текста, условия, дубли, версии и потери фильтра; резюме и LLM не нужны"
     }
   ],
-  "current_scope": "collector_first"
+  "current_scope": "append_only_initial_and_manual_daily"
 }

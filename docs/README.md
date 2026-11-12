@@ -31,12 +31,12 @@
 
 ## Подготовка и приёмка
 
-- [development.md](development.md) — действующие HH-команды и аргументы CLI.
+- [development.md](development.md) — действующие команды initial/new и legacy collect и аргументы CLI.
 - [docker.md](docker.md) — контейнер, persistent volume, credentials и проверка пересоздания.
 - [operations.md](operations.md) — запуск, восстановление, лимиты, диагностика.
 - [hh-volume-acceptance.md](hh-volume-acceptance.md) — фактическая проверка сотен HH карточек и SIGKILL/resume.
 - [acceptance.md](acceptance.md) — сценарии и показатели качества.
-- [roadmap.md](roadmap.md) — фичи коллектора, 28 активных и 9 отложенных задач.
+- [roadmap.md](roadmap.md) — фичи коллектора, 27 активных и 10 отложенных задач.
 - [backlog.json](backlog.json) — машиночитаемые зависимости и статусы задач.
 - [references/README.md](references/README.md) — официальная документация и XERJ.
 - [research/README.md](research/README.md) — результат исследования аналогов.

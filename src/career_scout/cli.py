@@ -8,11 +8,13 @@ import os
 import re
 import sqlite3
 import tempfile
+import time
 from pathlib import Path
 from typing import get_args
 
 from pydantic import ValidationError
 
+from career_scout.campaigns import Campaigns
 from career_scout.collector import collect
 from career_scout.hh import Credentials, HHClient, SourceError
 from career_scout.models import Identity, Source
@@ -44,6 +46,19 @@ def parser():
     p.add_argument("--token-file", type=Path, help="Writable token cache for read-only credentials")
     sub = p.add_subparsers(dest="command", required=True)
     sub.add_parser("migrate", help="Upgrade the local ledger with a backup; no network")
+    for name in ("initial", "new"):
+        command = sub.add_parser(name, help="Append-only full discovery across selected sources")
+        command.add_argument("--source", choices=[*get_args(Source), "all"], default="all")
+        command.add_argument("--query", action="append")
+        command.add_argument("--per-page", type=positive, choices=range(1, 101))
+        if name == "initial":
+            command.add_argument("--days", type=positive, default=14)
+    for name in ("initial", "new", "resume"):
+        command = sub.choices[name] if name in sub.choices else sub.add_parser(name)
+        command.add_argument("--chunk-requests", type=positive, default=200)
+        command.add_argument("--max-rounds", type=positive)
+        command.add_argument("--progress", action="store_true")
+        command.add_argument("--retry-failed", action="store_true")
     for name in ("plan", "collect", "probe"):
         command = sub.add_parser(name)
         command.add_argument("--query", action="append")
@@ -52,9 +67,7 @@ def parser():
         command.add_argument("--per-page", type=positive, choices=range(1, 101), default=None)
         command.add_argument("--refresh-hours", type=nonnegative, default=None)
     for name in ("plan", "collect", "probe", "resume"):
-        command = (
-            sub.choices[name] if name in {"plan", "collect", "probe"} else sub.add_parser(name)
-        )
+        command = sub.choices[name]
         if name == "resume":
             command.add_argument("run_id")
         command.add_argument("--requests", type=positive, default=None)
@@ -72,6 +85,7 @@ def parser():
     export.add_argument("run_id")
     export.add_argument("--output", type=Path, required=True)
     export.add_argument("--include-excluded", action="store_true")
+    export.add_argument("--include-known", action="store_true", default=None)
     return p
 
 
@@ -174,12 +188,12 @@ def main(argv=None):
     plans = []
     try:
         if (
-            args.command in {"collect", "resume", "probe"}
+            args.command in {"collect", "resume", "probe", "initial", "new"}
             and args.token_file
             and args.token_file.resolve() == args.env.resolve()
         ):
             raise SourceError("token_cache_overlaps_credentials")
-        if args.command in {"plan", "collect", "probe", "refilter"}:
+        if args.command in {"plan", "collect", "probe", "refilter", "initial", "new"}:
             config = load_config(args.config)
         if args.command in {"plan", "collect", "probe"}:
             names = (
@@ -238,9 +252,48 @@ def main(argv=None):
         ):
             raise SourceError("database_not_found")
         store = Store(args.db)
+        campaigns = Campaigns(store)
+        cid = campaigns.resolve(args.run_id) if hasattr(args, "run_id") else None
+        if args.command in {"initial", "new"} or (args.command == "resume" and cid):
+            if cid is None:
+                cid = campaigns.create(
+                    config,
+                    args.command,
+                    sources=None if args.source == "all" else [args.source],
+                    queries=args.query,
+                    per_page=args.per_page,
+                    lookback_days=getattr(args, "days", 14),
+                )
+            last_progress = [0.0]
+
+            def progress(event):
+                now = time.monotonic()
+                if event["event"] != "request" or now - last_progress[0] >= 30:
+                    print(json.dumps(event, ensure_ascii=False), flush=True)
+                    last_progress[0] = now
+
+            if args.progress:
+                progress({"event": "campaign", **campaigns.report(cid)})
+
+            def factory(frozen, budget):
+                options = dict(frozen["runtime"], requests=budget)
+                if args.command == "resume":
+                    options = runtime_options(options, args)
+                return client_for(frozen, args, options)
+
+            output = campaigns.drive(
+                cid,
+                factory,
+                chunk_requests=args.chunk_requests,
+                max_rounds=args.max_rounds,
+                retry_failed=args.retry_failed,
+                progress=progress if args.progress else None,
+            )
+            print(json.dumps(output, ensure_ascii=False, indent=2), flush=True)
+            return 0 if output["status"] == "complete" else 2
         if args.command == "migrate":
             output = {
-                "schema_version": 4,
+                "schema_version": 5,
                 "vacancy_schema_version": 2,
                 "backup_path": str(store.backup_path) if store.backup_path else None,
             }
@@ -249,11 +302,17 @@ def main(argv=None):
                 store.filter_run(args.run_id, config.filters)
             output = store.report(args.run_id)
         elif args.command == "status":
-            output = store.report(args.run_id)
+            output = campaigns.report(cid) if cid else store.report(args.run_id)
         elif args.command == "inspect":
             output = store.inspect(args.vacancy_id, source=args.source)
         elif args.command == "export":
-            output = store.export(args.run_id, include_excluded=args.include_excluded)
+            output = (
+                campaigns.export(
+                    cid, include_excluded=args.include_excluded, include_known=args.include_known
+                )
+                if cid
+                else store.export(args.run_id, include_excluded=args.include_excluded)
+            )
             # An explicit output path is required; do not overwrite credentials or an existing file.
             args.output.parent.mkdir(parents=True, exist_ok=True)
             fd, temporary = tempfile.mkstemp(prefix=".export.", dir=args.output.parent)

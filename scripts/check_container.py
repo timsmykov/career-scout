@@ -10,6 +10,7 @@ import uuid
 FIRST = r"""
 import json
 from pathlib import Path
+from datetime import UTC, datetime
 import httpx
 from career_scout.hh import Credentials, HHClient, normalize
 from career_scout.storage import Store, SCHEMA
@@ -35,7 +36,7 @@ if phase=='first':
         old.execute('INSERT INTO snapshots VALUES(?,?,?,?)',
           ('0',original['content_hash'],original['detail_fetched_at'],json.dumps(original)))
 s=Store(Path('/data/ledger.sqlite3'))
-assert s.db.execute('PRAGMA user_version').fetchone()[0]==4
+assert s.db.execute('PRAGMA user_version').fetchone()[0]==5
 assert s.inspect('0')['snapshots'][0]['description']=='Legacy text'
 assert s.inspect('0')['normalized_snapshots'][0]['description']=='Legacy text'
 committed=(set(json.loads(Path('/data/first-full-ids.json').read_text()))
@@ -51,6 +52,7 @@ def handler(req):
     assert vid not in committed, 'committed detail was fetched twice'
     return httpx.Response(200,json={'id':vid,
       'name':('Senior' if int(vid)%3==0 else 'Junior')+' analyst',
+      'published_at':datetime.now(UTC).isoformat(),
       'experience':{'id':'between1And3'}, 'salary':None,
       'description':'<p>Complete synthetic IT text '+vid+'</p>'})
 
@@ -85,6 +87,67 @@ s.close()
 transport.close()
 """
 
+CAMPAIGN = r"""
+import json, sys
+from pathlib import Path
+import httpx
+from career_scout.campaigns import Campaigns
+from career_scout.hh import HHClient, Credentials
+from career_scout.search_config import load_config
+from career_scout.storage import Store
+s=Store(Path('/data/ledger.sqlite3'))
+c=Campaigns(s)
+phase=sys.argv[1]
+ids=list(range(1,301))
+details=[]
+def handler(req):
+    if req.url.path=='/vacancies':
+        assert 'date_from' in req.url.params
+        p=int(req.url.params['page'])
+        return httpx.Response(200,json={
+          'items':[{'id':str(i),'name':'Changed listing'} for i in ids[p*100:(p+1)*100]],
+          'page':p,'pages':(len(ids)+99)//100,'found':len(ids),'per_page':100})
+    vid=req.url.path.split('/')[-1]
+    assert int(vid)>300, 'old complete description was fetched twice'
+    details.append(vid)
+    return httpx.Response(200,json={'id':vid,'name':'Junior IT analyst',
+      'description':'<p>Full synthetic description.</p>'})
+def factory(frozen,budget):
+    return HHClient(Credentials(Path('/tmp/test.env')),
+      client=httpx.Client(transport=httpx.MockTransport(handler)),
+      max_requests=budget,interval=0)
+Path('/tmp/test.env').write_text('HH_USER_AGENT=OfflineCampaignTest\nHH_ACCESS_TOKEN=fake\n')
+if phase=='campaign-first':
+    cid=c.create(load_config(Path('/app/configs/search.toml')),'initial',
+                 sources=['hh'],queries=['test'])
+    Path('/data/campaign-id').write_text(cid)
+    result=c.drive(cid,factory,chunk_requests=1,max_rounds=1)
+    assert result['status']=='partial'
+    assert not details
+else:
+    cid=Path('/data/campaign-id').read_text()
+    assert c.drive(cid,factory)['status']=='complete'
+    assert c.report(cid)['totals']['known_ids']==300
+    assert c.report(cid)['totals']['new_descriptions']==0
+    assert len(c.export(cid,include_excluded=True)['vacancies'])==300
+    ids.extend([301,302])
+    daily=c.create(load_config(Path('/app/configs/search.toml')),'new',
+                   sources=['hh'],queries=['test'])
+    assert c.drive(daily,factory,chunk_requests=2)['status']=='complete'
+    delta=c.export(daily)
+    assert {v['source_id'] for v in delta['vacancies']}=={'301','302'}
+    assert len(details)==2
+    details.clear()
+    again=c.create(load_config(Path('/app/configs/search.toml')),'new',
+                   sources=['hh'],queries=['test'])
+    assert c.drive(again,factory)['status']=='complete'
+    assert c.export(again)['vacancies']==[]
+    assert not details
+assert not s.db.execute('PRAGMA foreign_key_check').fetchall()
+print(json.dumps({'phase':phase,'campaign':cid,'detail_requests':len(details)}))
+s.close()
+"""
+
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
@@ -97,7 +160,7 @@ def main():
 
     command("docker", "volume", "create", volume)
     try:
-        for phase in ("first", "recreated"):
+        for phase in ("first", "recreated", "campaign-first", "campaign-recreated"):
             result = command(
                 "docker",
                 "run",
@@ -113,7 +176,7 @@ def main():
                 "/app/.venv/bin/python",
                 args.image,
                 "-c",
-                FIRST,
+                CAMPAIGN if phase.startswith("campaign") else FIRST,
                 phase,
             )
             print(result)

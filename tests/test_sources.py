@@ -637,3 +637,24 @@ def test_explicit_interrupt_stops_batch_before_other_sources(tmp_path, monkeypat
     report = json.loads(capsys.readouterr().out)
     assert len(report["runs"]) == 1 and report["runs"][0]["error"] == "interrupted"
     assert report["not_started_sources"] == ["trudvsem", "habr", "superjob"]
+
+
+def test_trudvsem_uses_smaller_native_pages_without_a_total_result_quota(tmp_path):
+    params = []
+
+    def handler(req):
+        params.append(dict(req.url.params))
+        return httpx.Response(
+            200,
+            json={
+                "status": "200",
+                "meta": {"total": 1000, "limit": 20},
+                "results": {"vacancies": [{"vacancy": trud(str(i))} for i in range(20)]},
+            },
+        )
+
+    c = client("trudvsem", tmp_path, handler)
+    result = c.search("test", None, END, 0, 100)
+    assert params[0]["limit"] == "20"
+    assert params[0]["modifiedFrom"].startswith("1970-01-01")
+    assert result.per_page == 20 and result.pages == 50 and result.has_more

@@ -29,8 +29,8 @@ class SourceClient(Protocol):
     def search(
         self,
         query: str,
-        start: str,
-        end: str,
+        start: str | None,
+        end: str | None,
         page: int,
         per_page: int,
         *,

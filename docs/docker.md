@@ -29,15 +29,16 @@ Volume объявлен external: Compose использует заранее с
 
 ```sh
 docker compose run --rm collector plan --query "бизнес аналитик" --days 7
-docker compose run --rm collector collect --query "бизнес аналитик" --requests 50
-docker compose run --rm collector resume RUN_ID --requests 50
-docker compose run --rm collector status RUN_ID
+docker compose run --rm collector initial --source all --progress
+docker compose run --rm collector new --source all --progress
+docker compose run --rm collector resume CAMPAIGN_ID --progress
+docker compose run --rm collector status CAMPAIGN_ID
 docker compose run --rm collector inspect VACANCY_ID
-docker compose run --rm collector export RUN_ID --output /data/exports/run.json
+docker compose run --rm collector export CAMPAIGN_ID --output /data/exports/run.json
 ```
 
 `--rm` удаляет только завершившийся контейнер. Бюджеты, `partial` и exit code 2
-сохраняют прежний смысл: это не авария Docker. Повторный `resume` с тем же run ID
+сохраняют прежний смысл: это не авария Docker. Повторный `resume` с тем же campaign ID
 продолжает сохранённый план, а не создаёт новую выборку. Без команды выводится help.
 Один активный collector на ledger защищён flock между контейнерами на этом volume.
 
@@ -87,8 +88,8 @@ commits могут находиться в WAL. Для следующей миг
 
 ## Обновление схемы
 
-Текущая база в volume имеет schema v4 и общий export v2. Первый запуск нового
-образа на v1/v2/v3 делает backup и атомарный перенос; явная команда:
+Текущая база в volume имеет schema v5 и общий export v2. Первый запуск нового
+образа на v1/v2/v3/v4 делает backup и атомарный перенос; явная команда:
 `docker compose run --rm collector migrate`. Инструкция и доказательства —
 [normalization.md](normalization.md). Исходные v1 payload не переписываются.
 
@@ -108,6 +109,8 @@ Docker network=none. Проверены отсутствие повторног�
 Рабочий config прочитан из образа; из 300 карточек без зарплаты выбираются
 200 junior, 100 senior исключаются с сохранением всех 300 full в архиве. После теста
 удаляется только его synthetic volume; рабочий `career-scout-data` не затрагивается.
+Ещё два новых контейнера проверяют campaign initial/resume на300 известных ID
+без повторных detail, daily добавление ровно301/302 и пустую следующую delta.
 Проверка включена в отдельный CI job.
 
 Фактическая серверная приёмка: [docker-live-20261111.json](references/docker-live-20261111.json).

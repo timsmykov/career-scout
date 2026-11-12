@@ -101,7 +101,7 @@ def test_v1_upgrade_is_lossless_and_idempotent(tmp_path):
             "SELECT vacancy_id,content_hash,fetched_at,payload FROM snapshots ORDER BY content_hash"
         ).fetchall()
     store = Store(path)
-    assert store.db.execute("PRAGMA user_version").fetchone()[0] == 4
+    assert store.db.execute("PRAGMA user_version").fetchone()[0] == 5
     assert [
         tuple(r)
         for r in store.db.execute(
@@ -159,7 +159,7 @@ def test_migration_failure_rolls_back_schema_rows_and_cursor(tmp_path, monkeypat
         )
     monkeypatch.setattr(migrations, "project_snapshot", original)
     migrated = Store(path)
-    assert migrated.db.execute("PRAGMA user_version").fetchone()[0] == 4
+    assert migrated.db.execute("PRAGMA user_version").fetchone()[0] == 5
     migrated.close()
 
 
@@ -284,7 +284,7 @@ def test_cli_migration_and_namespaced_inspect_need_no_credentials(tmp_path, monk
     monkeypatch.setattr(cli, "HHClient", lambda *a, **kw: pytest.fail("no HTTP during migration"))
     assert cli.main(["--db", str(path), "migrate"]) == 0
     output = json.loads(capsys.readouterr().out)
-    assert output["schema_version"] == 4 and Path(output["backup_path"]).exists()
+    assert output["schema_version"] == 5 and Path(output["backup_path"]).exists()
     store = Store(path)
     rid = store.create(["test"], "2026-11-10", "2026-11-11", 2, 24, source="habr")
     store.save_page(store.next_query(rid), page("1"), 24)
@@ -363,7 +363,7 @@ def test_v2_filter_migration_only_adds_tables_and_creates_recoverable_backup(tmp
     path = v2_database(tmp_path / "v2.sqlite3")
     before = table_rows(path)
     store = Store(path)
-    assert store.db.execute("PRAGMA user_version").fetchone()[0] == 4
+    assert store.db.execute("PRAGMA user_version").fetchone()[0] == 5
     assert store.report("run")["filtering"]["applied"] is False
     assert len(store.export("run")["vacancies"]) == 1
     backup = store.backup_path
@@ -401,7 +401,7 @@ def test_v3_pagination_upgrade_preserves_every_existing_table_and_filter_decisio
         migrations.upgrade_v2(db)
     before = table_rows(path)
     store = Store(path)
-    assert store.db.execute("PRAGMA user_version").fetchone()[0] == 4
+    assert store.db.execute("PRAGMA user_version").fetchone()[0] == 5
     backup = store.backup_path
     store.close()
     after = table_rows(path)

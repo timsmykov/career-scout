@@ -1,6 +1,7 @@
 # Общая вакансия v2 и миграция SQLite v1→v2
 
-SQLite v3 добавила историю фильтров, текущая v4 — query_pagination; формат вакансии остаётся v2.
+SQLite v3 добавила историю фильтров, v4 — query_pagination, текущая v5 —
+campaigns/очередь/acquisitions; формат вакансии остаётся v2.
 Ниже — контракт нормализации и проверка предшествующей миграции.
 
 `models.py` задаёт Pydantic-контракт всех четырёх источников, `normalization.py`
@@ -141,6 +142,6 @@ docker compose run --rm collector export RUN_ID --output /data/exports/common-v2
 
 Inspect возвращает immutable `snapshots` и отдельные `normalized_snapshots`.
 Export envelope имеет schema_version=2 и normalizer_version=common-1; каждая запись
-проверяется общей моделью. Новые API-адаптеры ещё предстоит реализовать; common store
-принимает валидные v2 snapshots других источников, а HH transport не запускается
-для чужого source run.
+проверяется общей моделью. Все четыре API-адаптера реализованы; common store принимает их валидные v2
+snapshots, а HH transport не запускается для чужого source run. Основной initial
+по публикации за14дней описан в [development.md](development.md).

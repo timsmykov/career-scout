@@ -67,10 +67,15 @@ class TrudvsemClient(ReadClient):
         params = {
             "text": query,
             "offset": page,
-            "limit": per_page,
-            "modifiedFrom": utc(start),
-            "modifiedTo": utc(end),
+            # Live 100-row responses timed out; 20-row pages returned the full
+            # objects in under ten seconds. This limits page size, not total IDs.
+            "limit": min(per_page, 20),
         }
+        if start or end:
+            # Keep both date bounds explicit, including all available history.
+            params["modifiedFrom"] = utc(start or "1970-01-01T00:00:00+00:00")
+        if end:
+            params["modifiedTo"] = utc(end)
         region = self.options.get("region_code")
         path = self.base + ("/region/" + quote(region, safe="") if region else "")
         body = self.get(path, params)
@@ -114,6 +119,15 @@ class TrudvsemClient(ReadClient):
             raise SourceError("detail_schema_drift")
         return trudvsem_record(data[0], vacancy_id)
 
+    def inline_detail(self, item):
+        # REST lists contain the complete vacancy object, including all text sections.
+        raw = {k: v for k, v in item.items() if k != "_vacancy_id"}
+        raw["id"] = item["_vacancy_id"]
+        try:
+            return trudvsem_record(raw, item["id"])
+        except SourceError:
+            return None  # The dedicated endpoint can still resolve an incomplete list row.
+
 
 class SuperJobClient(ReadClient):
     source = "superjob"
@@ -137,8 +151,16 @@ class SuperJobClient(ReadClient):
                 "keyword": query,
                 "page": page,
                 "count": size,
-                "date_published_from": int(datetime.fromisoformat(start).timestamp()),
-                "date_published_to": int(datetime.fromisoformat(end).timestamp()),
+                **(
+                    {"date_published_from": int(datetime.fromisoformat(start).timestamp())}
+                    if start
+                    else {}
+                ),
+                **(
+                    {"date_published_to": int(datetime.fromisoformat(end).timestamp())}
+                    if end
+                    else {}
+                ),
                 "order_field": "date",
                 "order_direction": "desc",
                 **({"town": self.options["town_id"]} if self.options.get("town_id") else {}),

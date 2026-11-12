@@ -11,8 +11,8 @@ source_normalization.py, source_types.py, storage/collector/CLI.
 постоянный сбор разрешён для всех четырёх источников. Probe остаётся режимом без записи.
 Docker/Compose: batch CLI, external volume career-scout-data; .env — read-only secret,
 HH token cache — в volume. Не удалять этот volume и не добавлять scheduler без запроса.
-SQLite schema v4 (vacancy/export v2): source+source_id, immutable snapshots и отдельные common-1
-normalized_snapshots. V1/v2/v3 авто-мигрируются с backup под flock. Не переписывать
+SQLite schema v5 (vacancy/export v2): source+source_id, immutable snapshots и отдельные common-1
+normalized_snapshots. V1/v2/v3/v4 авто-мигрируются с backup под flock. Не переписывать
 старый payload/content_hash при изменении нормализатора. Контракт: docs/normalization.md.
 Нативный page size сохраняется в query_pagination; HH cap2000, SJ500,
 Trudvsem offset=page0, Habr page1. Не переносить HH geography/Boolean syntax в другие API.
@@ -20,6 +20,13 @@ Trudvsem offset=page0, Habr page1. Не переносить HH geography/Boolea
 решений в docs/filtering.md. Unknown/conflict сохранять; зарплата не фильтрует.
 Текущий scope: только collect/normalize/store/quality/export. Анализ по резюме и
 LangGraph отложены владельцем до приёмки коллектора. Не начинать их по старому roadmap.
+
+Основной путь — campaigns.py: initial/new/resume CAMPAIGN_ID. Append-only: все
+видимые ID, full descriptions только неизвестных, без TTL refresh. Initial —
+14дней по published_at, frozen start/end; modified_at не доказывает свежесть.
+Old/date-unknown хранить отдельно от свежей выгрузки, прежние записи не удалять. Конечный HTTP
+budget ограничивает chunk, не общий объём источника. Daily manual, без расписаний.
+Legacy collect сохраняется для прежних run IDs и имеет отдельный TTL-контракт.
 
 ## Инварианты
 
