@@ -1,5 +1,6 @@
 """Continuous refill, per-profile exclusivity, exact ceiling and safe resumption."""
 
+import collections
 import json
 import threading
 
@@ -25,11 +26,11 @@ def continuous_fixture(tmp_path, monkeypatch):
     return values
 
 
-def continuous_workers(monkeypatch, *, overlap=False, fail_route=None):
+def continuous_workers(monkeypatch, *, overlap=False, fail_route=None, shared=False):
     calls, routed = [], []
     owner = threading.get_ident()
     release = threading.Event()
-    active = set()
+    active = collections.Counter()
     guard = threading.Lock()
     actual = evaluate_all
 
@@ -44,9 +45,10 @@ def continuous_workers(monkeypatch, *, overlap=False, fail_route=None):
             assert threading.get_ident() != owner
             p = requests[0].profile_id
             with guard:
-                assert p not in active
-                active.add(p)
-                assert len(active) <= 4
+                if not shared:
+                    assert p not in active
+                active[p] += 1
+                assert sum(active.values()) <= 4
             try:
                 source = requests[0].vacancy.source
                 ids = [r.vacancy.source_id for r in requests]
@@ -64,7 +66,9 @@ def continuous_workers(monkeypatch, *, overlap=False, fail_route=None):
                 )
             finally:
                 with guard:
-                    active.remove(p)
+                    active[p] -= 1
+                    if not active[p]:
+                        del active[p]
 
     def route(store, run_id, frozen, client):
         assert threading.get_ident() == owner
@@ -181,3 +185,14 @@ def test_limit_cannot_hide_previously_admitted_work(continuous_fixture, monkeypa
     array_analysis.execute(config, path, output, chunk_size=2, continuous=True, stop_after=3)
     with pytest.raises(EvaluationError, match="stop_limit_(crosses|below)_admitted"):
         array_analysis.execute(config, path, output, chunk_size=2, continuous=True, stop_after=1)
+
+
+def test_shared_pool_keeps_source_barrier_and_exact_limit(continuous_fixture, monkeypatch):
+    config, path, output, _, _ = continuous_fixture
+    calls, routed = continuous_workers(monkeypatch, shared=True)
+    state = array_analysis.execute(
+        config, path, output, chunk_size=2, continuous=True, stop_after=4, shared_slots=True
+    )
+    assert state["status"] == "stopped_at_limit" and state["shared_worker_slots"] is True
+    assert [source for source, _ in routed] == ["hh", "hh", "hh", "habr"]
+    assert sum(len(ids) for _, _, ids in calls) == 4

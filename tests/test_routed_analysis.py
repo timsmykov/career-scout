@@ -501,3 +501,89 @@ def test_routed_export_does_not_leak_unselected_legacy_cached_results(routed_set
     assert set(payload["vacancies"][0]["evaluations"]) == {"product"}
     assert store.db.execute("SELECT COUNT(*) FROM evaluations").fetchone()[0] == 4
     store.close()
+
+
+def test_shared_slots_run_four_same_profile_batches_without_duplicate_active_keys(routed_setup):
+    store, run, frozen, _ = prepare_routed(
+        routed_setup, [["business_assistant"] for _ in range(80)], max_calls=10
+    )
+    frozen["routing"].update(batch_size=20, max_batch_characters=2_000_000)
+    barrier = threading.Barrier(4, timeout=15)
+    guard = threading.Lock()
+    active_keys, calls = set(), []
+    active_count = peak = 0
+
+    class Worker:
+        def __init__(self, _):
+            pass
+
+        def cancel(self):
+            pass
+
+        def batch(self, requests):
+            nonlocal active_count, peak
+            keys = {r.evaluation_key for r in requests}
+            assert {r.profile_id for r in requests} == {"business_assistant"}
+            assert len({r.resume.content_hash for r in requests}) == 1
+            with guard:
+                assert not active_keys & keys
+                active_keys.update(keys)
+                active_count += 1
+                peak = max(peak, active_count)
+                assert active_count <= 4
+                calls.append(len(requests))
+                number = len(calls)
+            try:
+                if number <= 4:
+                    barrier.wait()
+                errors = (
+                    {requests[0].evaluation_key: "invalid_evidence_range_length"}
+                    if number == 1
+                    else {}
+                )
+                return reply_for(requests, errors=errors)
+            finally:
+                with guard:
+                    active_keys.difference_update(keys)
+                    active_count -= 1
+
+    assert evaluate_queues(store, run, frozen, Worker, shared_slots=True) is None
+    assert peak == 4 and sorted(calls) == [1, 20, 20, 20, 20]
+    assert report(store, run)["outcomes"] == {"ACCEPTED": 80}
+    assert evaluate_queues(store, run, frozen, Worker, shared_slots=True) is None
+    assert len(calls) == 5
+    store.close()
+
+
+def test_shared_slots_give_each_waiting_profile_a_turn_before_lending(routed_setup):
+    store, run, frozen, _ = prepare_routed(
+        routed_setup,
+        [[p] for p in ORDER] + [["business_assistant"] for _ in range(40)],
+        max_calls=20,
+    )
+    frozen["routing"].update(batch_size=20, max_batch_characters=2_000_000)
+    barrier = threading.Barrier(4, timeout=15)
+    guard = threading.Lock()
+    calls = []
+
+    class Worker:
+        def __init__(self, _):
+            pass
+
+        def cancel(self):
+            pass
+
+        def batch(self, requests):
+            assert len({r.profile_id for r in requests}) == 1
+            with guard:
+                calls.append((requests[0].profile_id, len(requests)))
+                number = len(calls)
+            if number <= 4:
+                barrier.wait()
+            return reply_for(requests)
+
+    evaluate_queues(store, run, frozen, Worker, shared_slots=True)
+    assert {p for p, _ in calls[:4]} == set(ORDER)
+    assert sum(n for _, n in calls) == 44
+    assert report(store, run)["status"] == "complete"
+    store.close()

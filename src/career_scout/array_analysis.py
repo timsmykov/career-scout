@@ -146,7 +146,16 @@ def publish(store, directory, state):
     save(directory / "state.json", state)
 
 
-def execute(config, catalog_path, directory, *, chunk_size=100, continuous=False, stop_after=None):
+def execute(
+    config,
+    catalog_path,
+    directory,
+    *,
+    chunk_size=100,
+    continuous=False,
+    stop_after=None,
+    shared_slots=False,
+):
     """Finite source phases. All repeat invocations resume the same persisted tasks."""
     directory.mkdir(parents=True, exist_ok=True)
     settings = AnalysisSettings.model_validate_json(config.read_text())
@@ -185,7 +194,11 @@ def execute(config, catalog_path, directory, *, chunk_size=100, continuous=False
                 raise EvaluationError("invalid_array_stop_limit", fatal=True)
             state["stop_after"] = stop_after
         if continuous:
-            return execute_continuous(config, catalog, directory, state, database)
+            return execute_continuous(
+                config, catalog, directory, state, database, shared_slots=shared_slots
+            )
+        if shared_slots:
+            raise EvaluationError("shared_slots_requires_continuous_mode", fatal=True)
         if state.get("stop_after") is not None:
             raise EvaluationError("stop_limit_requires_continuous_mode", fatal=True)
         state["status"] = "running"
@@ -301,7 +314,7 @@ def apply_stop_limit(state):
     return limit
 
 
-def execute_continuous(config, catalog, directory, state, database):
+def execute_continuous(config, catalog, directory, state, database, *, shared_slots=False):
     """Refill one shared profile pool, retaining source barriers and persisted runs."""
     from career_scout.decisions import DecisionsClient
     from career_scout.routed_pipeline import (
@@ -314,7 +327,12 @@ def execute_continuous(config, catalog, directory, state, database):
 
     limit = apply_stop_limit(state)
     checkpoint = directory / "state.json"
-    state.update(status="running", execution_mode="continuous", updated_at=utcnow())
+    state.update(
+        status="running",
+        execution_mode="continuous",
+        updated_at=utcnow(),
+        shared_worker_slots=shared_slots,
+    )
     state.pop("error", None)
     state.setdefault("continuous_started_at", utcnow())
     save(checkpoint, state)
@@ -417,7 +435,12 @@ def execute_continuous(config, catalog, directory, state, database):
                         initial = refill()
                     if initial:
                         error = evaluate_queues(
-                            store, initial, frozen, refill=refill, on_progress=progress
+                            store,
+                            initial,
+                            frozen,
+                            refill=refill,
+                            on_progress=progress,
+                            shared_slots=shared_slots,
                         )
                 except EvaluationError as exc:
                     error = exc.code
@@ -468,6 +491,11 @@ def main(argv=None):
     parser.add_argument(
         "--stop-after", type=int, help="Stop at this catalog ordinal, including prior work"
     )
+    parser.add_argument(
+        "--share-worker-slots",
+        action="store_true",
+        help="Lend idle slots to other profile queues, at most four calls total",
+    )
     args = parser.parse_args(argv)
     if not args.freeze and args.output is None:
         parser.error("--output is required for execution")
@@ -482,6 +510,7 @@ def main(argv=None):
             chunk_size=args.chunk_size,
             continuous=args.continuous,
             stop_after=args.stop_after,
+            shared_slots=args.share_worker_slots,
         )
         print(json.dumps({k: v for k, v in state.items() if k != "tasks"}, ensure_ascii=False))
         return 0 if state["status"] in {"complete", "stopped_at_limit"} else 2

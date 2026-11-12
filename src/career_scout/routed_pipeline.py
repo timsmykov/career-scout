@@ -300,9 +300,16 @@ def aggregate(store, run_id):
 
 
 def evaluate_queues(
-    store, run_id, frozen, worker_factory=CodexBatchWorker, *, refill=None, on_progress=None
+    store,
+    run_id,
+    frozen,
+    worker_factory=CodexBatchWorker,
+    *,
+    refill=None,
+    on_progress=None,
+    shared_slots=False,
 ):
-    """One worker per profile across runs; refill admits work while other profiles run.
+    """Four slots across runs; optional lending preserves one role per invocation.
 
     Refill executes on the SQLite owner thread and returns more already routed run
     IDs, or None at the source/limit boundary. Each batch retains its own run budget.
@@ -323,6 +330,7 @@ def evaluate_queues(
         while True:
             blocked_progress = False
             queues = {p: [] for p in ORDER}
+            in_flight = {r.evaluation_key for _, _, batch, _, _ in active.values() for r in batch}
             for current_run in run_ids:
                 for row in store.db.execute(
                     "SELECT s.* FROM routed_selections s JOIN run_jobs j "
@@ -342,49 +350,61 @@ def evaluate_queues(
                         ).fetchone()
                         if (
                             not blocked
+                            and request.evaluation_key not in in_flight
                             and store.cached(request) is None
                             and attempts(store, current_run, request.evaluation_key)
                             < config.max_attempts_per_profile
                         ):
                             queues[p].append((current_run, request))
-            busy = {p for p, _, _, _ in active.values()}
-            if error is None:
-                for profile in ORDER:
-                    if profile in busy or not queues[profile]:
-                        continue
-                    batch = []
-                    current_run = queues[profile][0][0]
-                    for candidate_run, request in queues[profile][:batch_size]:
-                        if candidate_run != current_run:
-                            break
-                        if batch_size_characters([*batch, request]) > batch_limit:
-                            if batch:
-                                break
-                            with store.db:
-                                store.db.execute(
-                                    "INSERT OR REPLACE INTO routed_input_errors VALUES(?,?,?)",
-                                    (
-                                        current_run,
-                                        request.evaluation_key,
-                                        "input_exceeds_configured_context",
-                                    ),
-                                )
-                            blocked_progress = True
-                            continue
-                        batch.append(request)
-                    if not batch:
-                        continue
-                    try:
-                        ident = reserve_batch(store, current_run, profile, batch)
-                    except EvaluationError as exc:
-                        error = exc.code
+            while error is None and len(active) < 4:
+                busy = {p for p, _, _, _, _ in active.values()}
+                available = [p for p in ORDER if queues[p] and (shared_slots or p not in busy)]
+                if not available:
+                    break
+                # Give each waiting profile a slot before lending spare slots to
+                # the largest queue. Each invocation still has one CV and role.
+                unrepresented = [p for p in available if p not in busy]
+                profile = (unrepresented or sorted(available, key=lambda p: -len(queues[p])))[0]
+                batch, consumed = [], set()
+                current_run = queues[profile][0][0]
+                for candidate_run, request in queues[profile][:batch_size]:
+                    if candidate_run != current_run:
                         break
-                    active[pool.submit(workers[profile].batch, batch)] = (
-                        profile,
-                        ident,
-                        batch,
-                        current_run,
-                    )
+                    if batch_size_characters([*batch, request]) > batch_limit:
+                        if batch:
+                            break
+                        with store.db:
+                            store.db.execute(
+                                "INSERT OR REPLACE INTO routed_input_errors VALUES(?,?,?)",
+                                (
+                                    current_run,
+                                    request.evaluation_key,
+                                    "input_exceeds_configured_context",
+                                ),
+                            )
+                        blocked_progress = True
+                    else:
+                        batch.append(request)
+                    consumed.add(request.evaluation_key)
+                queues[profile] = [
+                    (rid, r) for rid, r in queues[profile] if r.evaluation_key not in consumed
+                ]
+                if not batch:
+                    continue
+                try:
+                    ident = reserve_batch(store, current_run, profile, batch)
+                except EvaluationError as exc:
+                    error = exc.code
+                    break
+                used_slots = {slot for _, _, _, _, slot in active.values()}
+                slot = next(p for p in ORDER if p not in used_slots) if shared_slots else profile
+                active[pool.submit(workers[slot].batch, batch)] = (
+                    profile,
+                    ident,
+                    batch,
+                    current_run,
+                    slot,
+                )
             # A small look-ahead keeps fast profile queues fed while slow batches
             # are in flight. No extra model pool or SQLite writer is created.
             refilled = False
@@ -409,7 +429,7 @@ def evaluate_queues(
                 break
             done, _ = wait(active, timeout=0 if refilled else None, return_when=FIRST_COMPLETED)
             for future in done:
-                _, ident, batch, current_run = active.pop(future)
+                _, ident, batch, current_run, _ = active.pop(future)
                 usage = response = None
                 errors = {}
                 try:
