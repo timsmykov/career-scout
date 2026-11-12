@@ -33,3 +33,7 @@ Habr official CRM reference не описывает frontend search.
 [Закрытая карточка Habr](habr-closed-card-live-20261112.json) — исправление
 наблюдаемого parser_drift: подтверждённый архив без описания учитывается как
 unavailable, без подмены полным текстом. Общий initial остаётся partial.
+
+[Временные окна Trudvsem](trud-window-partitions-live-20261112.json) — рабочие
+подокна со страницей5, включённые границы и сохранение3595снимков при обновлении
+контейнера. Цель300 результатов на окно не ограничивает общий объём; initial partial.

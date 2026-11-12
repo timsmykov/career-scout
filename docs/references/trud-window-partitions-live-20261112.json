@@ -1,0 +1,482 @@
+{
+  "verified_at_utc": "2026-11-12T06:25:54.195031+00:00",
+  "scope": "Live temporal partitioning and preservation acceptance during a partial fourteen-day initial campaign; not complete source or market coverage",
+  "campaign_status": "partial",
+  "campaign_id": "e7cc5d06-ee09-4766-ad15-b64c18e60f21",
+  "publication_window": [
+    {
+      "source": "hh",
+      "from": "2026-10-29T03:08:18+00:00",
+      "to": "2026-11-12T03:08:18+00:00"
+    },
+    {
+      "source": "trudvsem",
+      "from": "2026-10-29T03:08:18+00:00",
+      "to": "2026-11-12T03:08:18+00:00"
+    },
+    {
+      "source": "habr",
+      "from": "2026-10-29T03:08:18+00:00",
+      "to": "2026-11-12T03:08:18+00:00"
+    },
+    {
+      "source": "superjob",
+      "from": "2026-10-29T03:08:18+00:00",
+      "to": "2026-11-12T03:08:18+00:00"
+    }
+  ],
+  "runtime": {
+    "commit": "731065abbd3a9a04395a06b82551f299314f3170",
+    "image": "sha256:79dda0e17fdeca71a4a098698d3df8567430b7343fed16de78db407cbe531294",
+    "container": "career-scout-initial-14d-20261112-r731",
+    "running_verified": true,
+    "started_at": "2026-11-12T06:13:22.072190527Z",
+    "producer_exec_session": 54711,
+    "chunk_requests": 20,
+    "retry_failed": false,
+    "matches": true
+  },
+  "partition_policy": {
+    "source": "trudvsem",
+    "target_results_per_window": 300,
+    "api_cap": null,
+    "total_card_quota": null,
+    "child_page_size": 5,
+    "one_second_windows_still_paginate_all_results": true,
+    "publication_age_uses_original_campaign_window": true
+  },
+  "safe_probe_results": {
+    "large_page_narrow_windows": [
+      {
+        "window": "first_day",
+        "from": "2026-10-29T03:08:18+00:00",
+        "to": "2026-10-30T03:08:18+00:00",
+        "page_size": 20,
+        "transport_exception_type": "ReadTimeout",
+        "elapsed_seconds": 41.047,
+        "result": "transport_error"
+      },
+      {
+        "window": "older_six_hours",
+        "from": "2026-10-29T03:08:18+00:00",
+        "to": "2026-10-29T09:08:18+00:00",
+        "page_size": 20,
+        "transport_exception_type": "ReadTimeout",
+        "elapsed_seconds": 41.635,
+        "result": "transport_error"
+      },
+      {
+        "window": "last_day",
+        "from": "2026-11-11T03:08:18+00:00",
+        "to": "2026-11-12T03:08:18+00:00",
+        "page_size": 20,
+        "transport_exception_type": "ReadTimeout",
+        "elapsed_seconds": 39.989,
+        "result": "transport_error"
+      }
+    ],
+    "five_row_control": [
+      {
+        "window": "full_window_size5",
+        "page_size": 5,
+        "result": "ok",
+        "items": 5,
+        "total": 1592,
+        "elapsed_seconds": 10.812
+      },
+      {
+        "window": "last_day_size5",
+        "page_size": 5,
+        "result": "ok",
+        "items": 5,
+        "total": 111,
+        "elapsed_seconds": 12.212
+      }
+    ],
+    "older_day_and_inclusive_boundary": [
+      {
+        "case": "first_day_size5",
+        "result": "ok",
+        "total": 91,
+        "items": 5,
+        "elapsed_seconds": 12.021
+      },
+      {
+        "case": "equal_modified_bounds_size5",
+        "at": "2026-10-29T15:02:55+03:00",
+        "result": "ok",
+        "total": 1,
+        "items": 1,
+        "all_modified_dates_equal_boundary": true,
+        "elapsed_seconds": 10.168
+      }
+    ]
+  },
+  "preservation": {
+    "checked_at": "2026-11-12T06:14:30.872792+00:00",
+    "campaign_id": "e7cc5d06-ee09-4766-ad15-b64c18e60f21",
+    "same_frozen_plan": true,
+    "same_child_runs": true,
+    "old_query_cursor_resets": 0,
+    "foreign_key_violations": 0,
+    "preserved": {
+      "snapshots": {
+        "old_rows": 3595,
+        "missing_or_changed": 0
+      },
+      "normalized_snapshots": {
+        "old_rows": 3595,
+        "missing_or_changed": 0
+      },
+      "vacancies": {
+        "old_rows": 3595,
+        "missing_or_changed": 0
+      }
+    }
+  },
+  "frozen_search_tree_audit": {
+    "checked_at": "2026-11-12T06:20:15.715537+00:00",
+    "campaign_id": "e7cc5d06-ee09-4766-ad15-b64c18e60f21",
+    "status": "partial",
+    "scope": "Frozen search-tree and stored page-prefix integrity, not completed discovery while any leaf remains pending. Does not prove a historical snapshot of dynamic API results.",
+    "sources": {
+      "hh": {
+        "frozen_roots": 16,
+        "queries_total": 58,
+        "date_splits": 21,
+        "pagination_replans": 0,
+        "leaf_statuses": {
+          "pending": 37
+        },
+        "pages_saved": 13,
+        "all_frozen_roots_present": true,
+        "all_date_partitions_cover_parent_without_gap": true,
+        "all_replans_preserve_query_and_window": true,
+        "all_queries_reachable_from_frozen_roots": true,
+        "saved_page_prefixes_contiguous": true,
+        "full_discovery_verified": false
+      },
+      "trudvsem": {
+        "frozen_roots": 12,
+        "queries_total": 26,
+        "date_splits": 5,
+        "pagination_replans": 4,
+        "leaf_statuses": {
+          "complete": 10,
+          "pending": 7
+        },
+        "pages_saved": 412,
+        "all_frozen_roots_present": true,
+        "all_date_partitions_cover_parent_without_gap": true,
+        "all_replans_preserve_query_and_window": true,
+        "all_queries_reachable_from_frozen_roots": true,
+        "saved_page_prefixes_contiguous": true,
+        "full_discovery_verified": false
+      },
+      "habr": {
+        "frozen_roots": 12,
+        "queries_total": 12,
+        "date_splits": 0,
+        "pagination_replans": 0,
+        "leaf_statuses": {
+          "pending": 7,
+          "complete": 5
+        },
+        "pages_saved": 67,
+        "all_frozen_roots_present": true,
+        "all_date_partitions_cover_parent_without_gap": true,
+        "all_replans_preserve_query_and_window": true,
+        "all_queries_reachable_from_frozen_roots": true,
+        "saved_page_prefixes_contiguous": true,
+        "full_discovery_verified": false
+      },
+      "superjob": {
+        "frozen_roots": 12,
+        "queries_total": 28,
+        "date_splits": 8,
+        "pagination_replans": 0,
+        "leaf_statuses": {
+          "complete": 11,
+          "pending": 9
+        },
+        "pages_saved": 29,
+        "all_frozen_roots_present": true,
+        "all_date_partitions_cover_parent_without_gap": true,
+        "all_replans_preserve_query_and_window": true,
+        "all_queries_reachable_from_frozen_roots": true,
+        "saved_page_prefixes_contiguous": true,
+        "full_discovery_verified": false
+      }
+    }
+  },
+  "observed_live_subwindows": [
+    {
+      "id": 177,
+      "start": "2026-10-29T03:08:18+00:00",
+      "end": "2026-11-05T03:08:18+00:00",
+      "next_page": 0,
+      "total": 480,
+      "status": "split",
+      "page_size": 5
+    },
+    {
+      "id": 178,
+      "start": "2026-11-05T03:08:18+00:00",
+      "end": "2026-11-12T03:08:18+00:00",
+      "next_page": 0,
+      "total": 608,
+      "status": "split",
+      "page_size": 5
+    },
+    {
+      "id": 179,
+      "start": "2026-10-29T03:08:18+00:00",
+      "end": "2026-11-01T15:08:18+00:00",
+      "next_page": 2,
+      "total": 146,
+      "status": "pending",
+      "page_size": 5
+    },
+    {
+      "id": 180,
+      "start": "2026-11-01T15:08:18+00:00",
+      "end": "2026-11-05T03:08:18+00:00",
+      "next_page": 0,
+      "total": 334,
+      "status": "split",
+      "page_size": 5
+    },
+    {
+      "id": 181,
+      "start": "2026-11-05T03:08:18+00:00",
+      "end": "2026-11-08T15:08:18+00:00",
+      "next_page": 2,
+      "total": 265,
+      "status": "pending",
+      "page_size": 5
+    },
+    {
+      "id": 182,
+      "start": "2026-11-08T15:08:18+00:00",
+      "end": "2026-11-12T03:08:18+00:00",
+      "next_page": 0,
+      "total": 343,
+      "status": "split",
+      "page_size": 5
+    },
+    {
+      "id": 183,
+      "start": "2026-11-01T15:08:18+00:00",
+      "end": "2026-11-03T09:08:18+00:00",
+      "next_page": 2,
+      "total": 255,
+      "status": "pending",
+      "page_size": 5
+    },
+    {
+      "id": 184,
+      "start": "2026-11-03T09:08:18+00:00",
+      "end": "2026-11-05T03:08:18+00:00",
+      "next_page": 1,
+      "total": 79,
+      "status": "pending",
+      "page_size": 5
+    },
+    {
+      "id": 185,
+      "start": "2026-11-08T15:08:18+00:00",
+      "end": "2026-11-10T09:08:18+00:00",
+      "next_page": 1,
+      "total": 182,
+      "status": "pending",
+      "page_size": 5
+    },
+    {
+      "id": 186,
+      "start": "2026-11-10T09:08:18+00:00",
+      "end": "2026-11-12T03:08:18+00:00",
+      "next_page": 1,
+      "total": 161,
+      "status": "pending",
+      "page_size": 5
+    }
+  ],
+  "report": {
+    "campaign_id": "e7cc5d06-ee09-4766-ad15-b64c18e60f21",
+    "mode": "initial",
+    "created_at": "2026-11-12T03:08:18.468144+00:00",
+    "publication_window": [
+      {
+        "source": "hh",
+        "from": "2026-10-29T03:08:18+00:00",
+        "to": "2026-11-12T03:08:18+00:00"
+      },
+      {
+        "source": "trudvsem",
+        "from": "2026-10-29T03:08:18+00:00",
+        "to": "2026-11-12T03:08:18+00:00"
+      },
+      {
+        "source": "habr",
+        "from": "2026-10-29T03:08:18+00:00",
+        "to": "2026-11-12T03:08:18+00:00"
+      },
+      {
+        "source": "superjob",
+        "from": "2026-10-29T03:08:18+00:00",
+        "to": "2026-11-12T03:08:18+00:00"
+      }
+    ],
+    "status": "partial",
+    "sources": [
+      {
+        "run_id": "7f41c0f0-d9bc-4e07-b76e-944239294114",
+        "source": "hh",
+        "status": "partial",
+        "error": "request_budget_exhausted",
+        "requests": 977,
+        "pages_saved": 13,
+        "pending_queries": 37,
+        "truncated_queries": 0,
+        "rejected_rows": 0,
+        "discovery_complete": false,
+        "pagination_replans": 0,
+        "discovered_ids": 1120,
+        "new_ids": 939,
+        "known_ids": 174,
+        "backlog_ids": 7,
+        "saved_descriptions": 1117,
+        "unavailable": 0,
+        "pending_details": 3,
+        "outside_publication_window": 1,
+        "unknown_publication_date": 0,
+        "failed_details": 0,
+        "new_descriptions": 943,
+        "filtering": {
+          "FILTERED_OUT": 463,
+          "KEEP": 18,
+          "KEEP_UNKNOWN": 636
+        }
+      },
+      {
+        "run_id": "8aaca3de-7fe8-4309-ac42-cde8cc95ea29",
+        "source": "trudvsem",
+        "status": "partial",
+        "error": "request_budget_exhausted",
+        "requests": 475,
+        "pages_saved": 415,
+        "pending_queries": 7,
+        "truncated_queries": 0,
+        "rejected_rows": 0,
+        "discovery_complete": false,
+        "pagination_replans": 4,
+        "discovered_ids": 2603,
+        "new_ids": 2594,
+        "known_ids": 9,
+        "backlog_ids": 0,
+        "saved_descriptions": 638,
+        "unavailable": 0,
+        "pending_details": 0,
+        "outside_publication_window": 1971,
+        "unknown_publication_date": 64,
+        "failed_details": 0,
+        "new_descriptions": 629,
+        "filtering": {
+          "FILTERED_OUT": 102,
+          "KEEP": 2,
+          "KEEP_UNKNOWN": 534
+        }
+      },
+      {
+        "run_id": "77b896bb-8997-49a8-9af1-e8535f2fd5a7",
+        "source": "habr",
+        "status": "partial",
+        "error": "request_budget_exhausted",
+        "requests": 755,
+        "pages_saved": 70,
+        "pending_queries": 7,
+        "truncated_queries": 0,
+        "rejected_rows": 0,
+        "discovery_complete": false,
+        "pagination_replans": 0,
+        "discovered_ids": 908,
+        "new_ids": 703,
+        "known_ids": 200,
+        "backlog_ids": 5,
+        "saved_descriptions": 881,
+        "unavailable": 1,
+        "pending_details": 7,
+        "outside_publication_window": 475,
+        "unknown_publication_date": 25,
+        "failed_details": 0,
+        "new_descriptions": 681,
+        "filtering": {
+          "FILTERED_OUT": 345,
+          "KEEP": 36,
+          "KEEP_UNKNOWN": 500
+        }
+      },
+      {
+        "run_id": "f30f3476-9f04-4dea-aeb4-f3de9a721259",
+        "source": "superjob",
+        "status": "partial",
+        "error": "request_budget_exhausted",
+        "requests": 700,
+        "pages_saved": 29,
+        "pending_queries": 9,
+        "truncated_queries": 0,
+        "rejected_rows": 0,
+        "discovery_complete": false,
+        "pagination_replans": 0,
+        "discovered_ids": 844,
+        "new_ids": 677,
+        "known_ids": 167,
+        "backlog_ids": 0,
+        "saved_descriptions": 830,
+        "unavailable": 0,
+        "pending_details": 14,
+        "outside_publication_window": 1,
+        "unknown_publication_date": 0,
+        "failed_details": 0,
+        "new_descriptions": 663,
+        "filtering": {
+          "FILTERED_OUT": 89,
+          "KEEP": 23,
+          "KEEP_UNKNOWN": 718
+        }
+      }
+    ],
+    "totals": {
+      "requests": 2907,
+      "pages_saved": 527,
+      "discovered_ids": 5475,
+      "new_ids": 4913,
+      "known_ids": 550,
+      "backlog_ids": 12,
+      "new_descriptions": 2916,
+      "saved_descriptions": 3466,
+      "pending_details": 24,
+      "failed_details": 0,
+      "unavailable": 1,
+      "outside_publication_window": 2448,
+      "unknown_publication_date": 89
+    }
+  },
+  "checks": {
+    "offline_tests_passed": 234,
+    "offline_test_seconds_on_this_host": 717.46,
+    "focused_new_cases": 3,
+    "focused_new_cases_passed": true,
+    "ruff_format_checker": "passed;138 links/8 schema examples",
+    "github_actions_url": "https://github.com/timsmykov/career-scout/actions/runs/43165980672",
+    "github_actions_conclusion": "success",
+    "container_recreation": "network=none first/recreated/campaign-first/campaign-recreated passed"
+  },
+  "local_evidence": [
+    "data/acceptance/runtime-code-731065a.json",
+    "data/acceptance/trud-window-partition-preservation.json",
+    "data/acceptance/coverage-trud-window-partitions.json",
+    "data/acceptance/initial-14d-20261112.log"
+  ],
+  "remaining": "Finish every source query leaf and available description, then repeat full publication/raw-text/preservation/export audits before completing the goal."
+}
