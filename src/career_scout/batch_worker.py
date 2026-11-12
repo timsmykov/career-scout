@@ -7,8 +7,9 @@ from dataclasses import dataclass
 
 from pydantic import ValidationError
 
+from career_scout.application import result_model
 from career_scout.codex_worker import CodexWorker, WorkerReply, build_prompt, output_schema
-from career_scout.evaluation import EvaluationError, EvaluationResult, validate_result
+from career_scout.evaluation import EvaluationError, validate_result
 from career_scout.evidence import documents, hydrate_response
 
 
@@ -123,7 +124,7 @@ class CodexBatchWorker(CodexWorker):
                 continue
             try:
                 result = hydrate_response(request, by_key[key], f"B{index}V")
-                checked = validate_result(request, EvaluationResult.model_validate(result))
+                checked = validate_result(request, result_model(request).model_validate(result))
             except EvaluationError as exc:
                 errors[key] = exc.code
             except ValidationError:

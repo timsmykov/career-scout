@@ -2,13 +2,18 @@
 
 import json
 import uuid
+from collections import Counter
 from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 from pathlib import Path
 
+from pydantic import ValidationError
+
+from career_scout.application import parse_result
 from career_scout.batch_worker import CodexBatchWorker, batch_size_characters
 from career_scout.common import utcnow
 from career_scout.decisions import DecisionsClient, select_profiles
-from career_scout.evaluation import ORDER, EvaluationError, EvaluationResult, EvaluatorConfig
+from career_scout.evaluation import ORDER, EvaluationError, EvaluatorConfig, validate_result
+from career_scout.evidence import hydrate_response
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS routed_selections(
@@ -26,11 +31,48 @@ CREATE TABLE IF NOT EXISTS batch_items(
  error TEXT,PRIMARY KEY(batch_id,key));
 CREATE TABLE IF NOT EXISTS routed_input_errors(
  run_id TEXT NOT NULL,key TEXT NOT NULL,error TEXT NOT NULL,PRIMARY KEY(run_id,key));
+CREATE TABLE IF NOT EXISTS validation_recoveries(
+ batch_id TEXT NOT NULL REFERENCES batch_attempts(id),key TEXT NOT NULL REFERENCES inputs(key),
+ validator_version TEXT NOT NULL,recovered_at TEXT NOT NULL,
+ PRIMARY KEY(batch_id,key,validator_version));
 """
 
 
 def initialize(store):
     store.db.executescript(SCHEMA)
+
+
+def revalidate_saved_responses(store, run_id):
+    """Replay unchanged wire results after validator fixes, without model calls."""
+    for batch in store.db.execute(
+        "SELECT * FROM batch_attempts WHERE run_id=? AND response_json IS NOT NULL "
+        "ORDER BY started_at DESC",
+        (run_id,),
+    ).fetchall():
+        wire = json.loads(batch["response_json"])
+        items = wire.get("results", []) if isinstance(wire, dict) else []
+        if not isinstance(items, list):
+            continue
+        items = [
+            v for v in items if isinstance(v, dict) and isinstance(v.get("evaluation_key"), str)
+        ]
+        counts = Counter(v["evaluation_key"] for v in items)
+        by_key = {v["evaluation_key"]: v for v in items}
+        for index, key in enumerate(json.loads(batch["keys_json"])):
+            request = store.request(key)
+            if store.cached(request) or counts[key] != 1:
+                continue
+            try:
+                value = hydrate_response(request, by_key[key], f"B{index}V")
+                result = validate_result(request, parse_result(value))
+            except (EvaluationError, ValidationError):
+                continue
+            with store.db:
+                store.db.execute(
+                    "INSERT OR IGNORE INTO validation_recoveries VALUES(?,?,?,?)",
+                    (batch["id"], key, "application-validator-2", utcnow()),
+                )
+                store.save_result(request, result)
 
 
 def reserve_batch(store, run_id, profile, requests):
@@ -212,9 +254,7 @@ def evaluate_queues(store, run_id, frozen, worker_factory=CodexBatchWorker):
                     for request in batch:
                         saved = reply.replies.get(request.evaluation_key)
                         if saved:
-                            store.save_result(
-                                request, EvaluationResult.model_validate(saved.result)
-                            )
+                            store.save_result(request, parse_result(saved.result))
                 except EvaluationError as exc:
                     errors = {r.evaluation_key: exc.code for r in batch}
                     usage = exc.usage
@@ -251,6 +291,7 @@ def evaluate_queues(store, run_id, frozen, worker_factory=CodexBatchWorker):
 
 def run_routed(store, run_id, frozen, *, worker_factory=CodexBatchWorker, client=None):
     initialize(store)
+    revalidate_saved_responses(store, run_id)
     try:
         route_jobs(
             store, run_id, frozen, client or DecisionsClient(Path(frozen["routing"]["workspace"]))

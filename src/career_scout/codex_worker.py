@@ -11,7 +11,6 @@ from pathlib import Path
 
 from career_scout.evaluation import (
     EvaluationError,
-    EvaluationResult,
     EvaluatorConfig,
     WorkerInput,
 )
@@ -95,9 +94,12 @@ def worker_environment():
 
 
 def output_schema(request, vacancy_prefix="V"):
-    schema = EvaluationResult.model_json_schema()
+    from career_scout.application import result_model
+
+    schema = result_model(request).model_json_schema()
     vacancy, resume = documents(request, vacancy_prefix)
-    assessment = schema["$defs"]["Assessment"]
+    name = "ApplicationAssessment" if "ApplicationAssessment" in schema["$defs"] else "Assessment"
+    assessment = schema["$defs"][name]
     fields = assessment["properties"]
     del fields["vacancy_quote"], fields["resume_quote"]
     fields["vacancy_reference"] = vacancy.reference_schema()
@@ -160,6 +162,8 @@ def build_command(config: EvaluatorConfig, directory: Path, binary="codex"):
 
 
 def build_prompt(request: WorkerInput):
+    from career_scout.application import POLICY, TRANSPORT_INSTRUCTIONS
+
     vacancy, resume = documents(request)
     values = {
         "schema_version": 2,
@@ -182,6 +186,16 @@ def build_prompt(request: WorkerInput):
         },
         "filters": request.filters,
     }
+    if request.filters.get("evaluation_policy") == POLICY:
+        return (
+            request.common_instructions
+            + "\n\n"
+            + request.rubric
+            + "\n\n"
+            + TRANSPORT_INSTRUCTIONS
+            + "\n\n"
+            + json.dumps(values, ensure_ascii=False, sort_keys=True)
+        )
     return (
         request.common_instructions
         + "\n\n"

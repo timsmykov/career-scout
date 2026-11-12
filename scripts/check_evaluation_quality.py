@@ -11,11 +11,11 @@ from pydantic import ValidationError
 
 from career_scout.analysis import AnalysisSettings
 from career_scout.analysis_store import AnalysisStore
+from career_scout.application import parse_result
 from career_scout.codex_worker import CodexWorker
 from career_scout.common import digest
 from career_scout.evaluation import (
     EvaluationError,
-    EvaluationResult,
     ResumeSnapshot,
     make_input,
     validate_result,
@@ -53,7 +53,14 @@ def prepare(config_path, cases_path, output, max_calls):
                 resume=ResumeSnapshot.model_validate_json(
                     (root / settings.profiles[role]).read_text()
                 ),
-                filters={"owner_attributes": settings.owner_attributes},
+                filters={
+                    "owner_attributes": settings.owner_attributes,
+                    **(
+                        {"evaluation_policy": settings.evaluation_policy}
+                        if settings.evaluation_policy != "strict-1"
+                        else {}
+                    ),
+                },
                 filter_version="quality-sanity-1",
                 rubric=(root / settings.rubrics[role]).read_text(),
                 rubric_version=settings.rubric_version,
@@ -106,7 +113,7 @@ def execute(output, worker_factory=CodexWorker):
                 failed_response = None
                 try:
                     reply = worker(request)
-                    value = validate_result(request, EvaluationResult.model_validate(reply.result))
+                    value = validate_result(request, parse_result(reply.result))
                     value = store.save_result(request, value)
                 except (EvaluationError, ValidationError) as exc:
                     error = exc.code if isinstance(exc, EvaluationError) else "invalid_result"

@@ -1,0 +1,266 @@
+{
+  "$defs": {
+    "ApplicationAssessment": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "responsibility",
+            "requirement"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "requirement": {
+          "maxLength": 1000,
+          "minLength": 1,
+          "title": "Requirement",
+          "type": "string"
+        },
+        "mandatory": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Mandatory"
+        },
+        "vacancy_quote": {
+          "maxLength": 1000,
+          "minLength": 1,
+          "title": "Vacancy Quote",
+          "type": "string"
+        },
+        "resume_quote": {
+          "anyOf": [
+            {
+              "maxLength": 1000,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Resume Quote"
+        },
+        "status": {
+          "enum": [
+            "confirmed",
+            "unconfirmed",
+            "conflict",
+            "outside_profile"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "explanation": {
+          "maxLength": 1000,
+          "minLength": 1,
+          "title": "Explanation",
+          "type": "string"
+        },
+        "critical": {
+          "title": "Critical",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "kind",
+        "requirement",
+        "mandatory",
+        "vacancy_quote",
+        "resume_quote",
+        "status",
+        "explanation",
+        "critical"
+      ],
+      "title": "ApplicationAssessment",
+      "type": "object",
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "confirmed",
+                  "conflict"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "resume_quote": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "unconfirmed"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "resume_quote": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": 3,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "policy": {
+      "const": "applications-1",
+      "title": "Policy",
+      "type": "string"
+    },
+    "evaluation_key": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Evaluation Key",
+      "type": "string"
+    },
+    "profile_id": {
+      "enum": [
+        "product",
+        "automation",
+        "business_assistant",
+        "business_analyst"
+      ],
+      "title": "Profile Id",
+      "type": "string"
+    },
+    "verdict": {
+      "enum": [
+        "PASS",
+        "REJECT"
+      ],
+      "title": "Verdict",
+      "type": "string"
+    },
+    "reason": {
+      "maxLength": 1200,
+      "minLength": 1,
+      "title": "Reason",
+      "type": "string"
+    },
+    "assessments": {
+      "items": {
+        "$ref": "#/$defs/ApplicationAssessment"
+      },
+      "maxItems": 12,
+      "minItems": 1,
+      "title": "Assessments",
+      "type": "array"
+    },
+    "questions": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 0,
+      "title": "Questions",
+      "type": "array"
+    }
+  },
+  "required": [
+    "schema_version",
+    "policy",
+    "evaluation_key",
+    "profile_id",
+    "verdict",
+    "reason",
+    "assessments",
+    "questions"
+  ],
+  "title": "ApplicationResult",
+  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://career-scout.local/schemas/application-result.schema.json",
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "verdict": {
+            "const": "PASS"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "assessments": {
+            "contains": {
+              "properties": {
+                "kind": {
+                  "const": "responsibility"
+                },
+                "critical": {
+                  "const": true
+                },
+                "status": {
+                  "const": "confirmed"
+                }
+              }
+            },
+            "items": {
+              "not": {
+                "properties": {
+                  "critical": {
+                    "const": true
+                  },
+                  "status": {
+                    "not": {
+                      "const": "confirmed"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "verdict": {
+            "const": "REJECT"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "assessments": {
+            "contains": {
+              "properties": {
+                "critical": {
+                  "const": true
+                },
+                "status": {
+                  "not": {
+                    "const": "confirmed"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

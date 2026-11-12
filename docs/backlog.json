@@ -328,7 +328,7 @@
       "deliverable": "evaluation/validation.py",
       "acceptance": "Schema, profile/version identity, цитаты в нужном тексте, без silent truncation",
       "scope": "analysis",
-      "implementation_note": "evaluation.py: v2 schema, profile/hash identity, точные цитаты; wire schema ограничивает цитаты фрагментами одного входа. Смысловая верность проверяется отдельно."
+      "implementation_note": "evaluation.py: v2 schema, profile/hash identity, точные цитаты; wire schema ограничивает цитаты фрагментами одного входа. Смысловая верность проверяется отдельно. ApplicationResult v3: critical отдельно от mandatory, PASS/REJECT без вопросов; strict v2 сохранён."
     },
     {
       "id": "CS-024",
@@ -357,13 +357,13 @@
       "deliverable": "evaluation/cache.py, recovery.py",
       "acceptance": "Все входные версии в ключах; checkpoint сверяется с ledger; error не кешируется как reject",
       "scope": "analysis",
-      "implementation_note": "Проверенные ответы записываются до checkpoint. Cache по полным версиям входов; тестируется сбой между результатом и checkpoint, сохранён бюджет попыток. В routed mode кэш по карточкам, usage/бюджет по батчу; DB пишет один координатор."
+      "implementation_note": "Проверенные ответы записываются до checkpoint. Cache по полным версиям входов; тестируется сбой между результатом и checkpoint, сохранён бюджет попыток. В routed mode кэш по карточкам, usage/бюджет по батчу; DB пишет один координатор. analysis_admissions/selection_key: следующие порции, восстановление после сбоя, pending runs сохраняются."
     },
     {
       "id": "CS-026",
       "milestone": "M4",
       "title": "Очередь уточнений",
-      "status": "planned",
+      "status": "deferred",
       "depends_on": [
         "CS-024",
         "CS-025"
@@ -371,7 +371,7 @@
       "deliverable": "services/review.py, cli review",
       "acceptance": "Показать основание/вопрос, ответ владельца версионируется; перепроверка затронутой пары",
       "scope": "analysis",
-      "implementation_note": "NEEDS_CLARIFICATION и вопросы сохраняются/экспортируются; интерфейса версионированного ответа владельца и адресной перепроверки пока нет."
+      "implementation_note": "Владелец12.11 исключил вопросы/ввод ответов. Новая applications-1 оценивает по резюме и параметрам, questions=[]; shortlist содержит только рекомендации."
     },
     {
       "id": "CS-027",

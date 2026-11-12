@@ -6,8 +6,9 @@ import sqlite3
 import uuid
 from pathlib import Path
 
+from career_scout.application import parse_result
 from career_scout.common import digest, utcnow
-from career_scout.evaluation import EvaluationError, EvaluationResult, WorkerInput, validate_result
+from career_scout.evaluation import EvaluationError, WorkerInput, validate_result
 
 APPLICATION_ID = 0x43534131
 SCHEMA = """
@@ -86,9 +87,7 @@ class AnalysisStore:
         row = self.db.execute(
             "SELECT payload FROM evaluations WHERE key=?", (request.evaluation_key,)
         ).fetchone()
-        return (
-            validate_result(request, EvaluationResult.model_validate_json(row[0])) if row else None
-        )
+        return validate_result(request, parse_result(json.loads(row[0]))) if row else None
 
     def save_result(self, request, result):
         validate_result(request, result)

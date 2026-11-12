@@ -9,13 +9,16 @@ import tempfile
 from collections import Counter
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Literal
 
 from pydantic import Field, ValidationError, model_validator
 
+from career_scout import intake
 from career_scout.analysis_graph import AnalysisGraph
 from career_scout.analysis_store import AnalysisStore
 from career_scout.campaigns import Campaigns
 from career_scout.codex_worker import CodexWorker
+from career_scout.common import digest
 from career_scout.evaluation import (
     ORDER,
     EvaluationError,
@@ -51,6 +54,7 @@ class AnalysisSettings(Model):
     owner_attributes: dict = Field(default_factory=dict)
     model: EvaluatorConfig = Field(default_factory=EvaluatorConfig)
     routing: RoutingSettings | None = None
+    evaluation_policy: Literal["strict-1", "applications-1"] = "strict-1"
 
     @model_validator(mode="after")
     def validate_profiles(self):
@@ -58,6 +62,8 @@ class AnalysisSettings(Model):
             raise ValueError("four_profiles_required")
         if len(self.order) != 4 or set(self.order) != set(ORDER):
             raise ValueError("invalid_profile_order")
+        if self.evaluation_policy == "applications-1" and not self.routing:
+            raise ValueError("application_policy_requires_routed_mode")
         return self
 
 
@@ -93,7 +99,7 @@ def read_catalog(path: Path, campaign_id):
         store.db.close()
 
 
-def prepare(config_path: Path, *, limit, max_calls):
+def prepare(config_path: Path, *, limit, max_calls, reprocess=False):
     settings = AnalysisSettings.model_validate_json(config_path.read_text())
     parent = config_path.resolve().parent
 
@@ -112,7 +118,6 @@ def prepare(config_path: Path, *, limit, max_calls):
     rubrics = {p: resolve(path).read_text() for p, path in settings.rubrics.items()}
     routing = None
     if settings.routing:
-        from career_scout.common import digest
         from career_scout.decisions import INSTRUCTIONS, MODEL, PROFILES
 
         calibration = json.loads(resolve(settings.routing.calibration_file).read_text())
@@ -129,28 +134,57 @@ def prepare(config_path: Path, *, limit, max_calls):
             "margin": margin,
             "workspace": str(resolve(settings.routing.workspace)),
             "calibration_hash": digest(calibration),
+            "policy_hash": expected,
         }
     vacancies, policies = read_catalog(resolve(settings.collector_database), settings.campaign_id)
     prepared_at = datetime.now(UTC)
     store = AnalysisStore(resolve(settings.database))
+    lock = Path(str(store.path) + ".lock").open("a")
     try:
+        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        intake.initialize(store)
         frozen = {
             "model": settings.model.model_dump(mode="json"),
             "order": settings.order,
             "order_confirmed": settings.order_confirmed,
             "external_calls_enabled": settings.external_calls_enabled,
             "source_campaign_id": settings.campaign_id,
+            "evaluation_policy": settings.evaluation_policy,
         }
         if routing:
             frozen["routing"] = routing
+        frozen["selection_key"] = digest(
+            {
+                "resumes": {p: r.model_dump(mode="json") for p, r in resumes.items()},
+                "rubrics": rubrics,
+                "common": common,
+                "attributes": settings.owner_attributes,
+                "model": frozen["model"],
+                "evaluation_policy": settings.evaluation_policy,
+                "filters": {s: p["policy_hash"] for s, p in policies.items()},
+                "route": {"policy_hash": routing["policy_hash"], "margin": routing["margin"]}
+                if routing
+                else settings.order,
+            }
+        )
         rid = store.create_run(frozen, max_calls)
-        for vacancy in vacancies[:limit]:
+        skipped = 0
+        for vacancy in vacancies:
+            if (
+                store.db.execute("SELECT COUNT(*) FROM run_jobs WHERE run_id=?", (rid,)).fetchone()[
+                    0
+                ]
+                >= limit
+            ):
+                break
             source = vacancy["source"]
             policy = policies[source]
             filters = {
                 "eligibility": json.loads(policy["policy_json"]),
                 "owner_attributes": settings.owner_attributes,
             }
+            if settings.evaluation_policy != "strict-1":
+                filters["evaluation_policy"] = settings.evaluation_policy
             requests = [
                 make_input(
                     vacancy=Vacancy.model_validate(vacancy),
@@ -165,11 +199,22 @@ def prepare(config_path: Path, *, limit, max_calls):
                 )
                 for p in settings.order
             ]
-            store.add_job(
-                rid, requests, policy="decisions-one-two-1" if routing else "first-pass-1"
-            )
-        return report(store, rid)
+            policy_name = "decisions-one-two-1" if routing else "first-pass-1"
+            key = intake.route_key(requests, policy_name)
+            if not reprocess and intake.admitted(store, frozen, key):
+                skipped += 1
+                continue
+            store.add_job(rid, requests, policy=policy_name)
+            if not intake.admitted(store, frozen, key):
+                intake.record(store, frozen, key, rid)
+        result = report(store, rid)
+        result["previously_admitted_skipped"] = skipped
+        result["pending_previous_runs"] = [
+            r for r in intake.pending_runs(store, frozen) if r != rid
+        ]
+        return result
     finally:
+        lock.close()
         store.close()
 
 
@@ -344,6 +389,15 @@ def main(argv=None):
     command.add_argument("--config", type=Path, required=True)
     command.add_argument("--limit", type=positive, default=20)
     command.add_argument("--max-calls", type=int, default=0)
+    command.add_argument(
+        "--reprocess", action="store_true", help="Explicitly prepare previous inputs again"
+    )
+    shortlist = commands.add_parser("shortlist", help="Only application recommendations")
+    shortlist.add_argument("--db", type=Path, required=True)
+    shortlist.add_argument("--run-id")
+    shortlist.add_argument("--profile", choices=list(ORDER))
+    shortlist.add_argument("--limit", type=positive, default=20)
+    shortlist.add_argument("--output", type=Path)
     for name in ("run", "resume", "status", "export"):
         command = commands.add_parser(name)
         command.add_argument("run_id")
@@ -357,10 +411,26 @@ def main(argv=None):
     store = None
     try:
         if args.command == "prepare":
-            result = prepare(args.config, limit=args.limit, max_calls=args.max_calls)
+            result = prepare(
+                args.config, limit=args.limit, max_calls=args.max_calls, reprocess=args.reprocess
+            )
         else:
             store = AnalysisStore(args.db)
-            if args.command in ("run", "resume"):
+            if args.command == "shortlist":
+                from career_scout.shortlist import recommendations, render
+
+                content = render(
+                    recommendations(
+                        store, run_id=args.run_id, profile=args.profile, limit=args.limit
+                    )
+                )
+                if args.output:
+                    fd = os.open(args.output, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+                    with os.fdopen(fd, "w") as stream:
+                        stream.write(content)
+                print(content)
+                return 0
+            elif args.command in ("run", "resume"):
                 with Path(str(args.db) + ".lock").open("a") as lock:
                     fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
                     result = run_pending(

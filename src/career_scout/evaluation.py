@@ -242,6 +242,9 @@ def evidence_spans(text):
 
 
 def validate_result(request: WorkerInput, result: EvaluationResult):
+    expected_schema = 3 if request.filters.get("evaluation_policy") == "applications-1" else 2
+    if result.schema_version != expected_schema:
+        raise EvaluationError("result_policy_mismatch")
     if result.evaluation_key != request.evaluation_key or result.profile_id != request.profile_id:
         raise EvaluationError("result_identity_mismatch")
     vacancy_text = canonical_quote(vacancy_evidence_text(request.vacancy))

@@ -43,6 +43,8 @@ def check_schemas() -> int:
         "evaluation-borderline.synthetic.json": "evaluation-result.schema.json",
         "evaluation-reject.synthetic.json": "evaluation-result.schema.json",
         "collection-report.synthetic.json": "collection-report.schema.json",
+        "worker-input-applications.synthetic.json": "worker-input.schema.json",
+        "application-pass.synthetic.json": "application-result.schema.json",
     }
     for example, schema in pairs.items():
         validators[schema].validate(read_json("examples/" + example))

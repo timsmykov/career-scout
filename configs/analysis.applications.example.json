@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "collector_database": "../data/ledger.sqlite3",
+  "campaign_id": "REPLACE_WITH_CAMPAIGN_ID",
+  "database": "../data/applications.sqlite3",
+  "profiles": {
+    "product": "../private/resumes/product.json",
+    "automation": "../private/resumes/automation.json",
+    "business_assistant": "../private/resumes/business_assistant.json",
+    "business_analyst": "../private/resumes/business_analyst.json"
+  },
+  "rubrics": {
+    "product": "../prompts/product.md",
+    "automation": "../prompts/automation.md",
+    "business_assistant": "../prompts/business_assistant.md",
+    "business_analyst": "../prompts/business_analyst.md"
+  },
+  "common_prompt": "../prompts/applications.md",
+  "rubric_version": "applications-roles-1",
+  "order": [
+    "product",
+    "automation",
+    "business_assistant",
+    "business_analyst"
+  ],
+  "order_confirmed": false,
+  "external_calls_enabled": false,
+  "owner_attributes": {},
+  "model": {
+    "provider": "codex_subscription",
+    "model": "gpt-6-luna",
+    "reasoning_effort": "max",
+    "timeout_seconds": 900,
+    "max_input_characters": 200000,
+    "max_attempts_per_profile": 2
+  },
+  "routing": {
+    "calibration_file": "../private/routing-calibration.json",
+    "workspace": "/var/lib/docker/volumes/openbot-tim_openbot-data/_data/OpenBot/Shared/REPLACE_WITH_PRIVATE_RUN_DIRECTORY",
+    "max_requests": 0,
+    "batch_size": 10,
+    "workers": 4
+  },
+  "evaluation_policy": "applications-1"
+}
