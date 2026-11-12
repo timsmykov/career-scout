@@ -1,6 +1,6 @@
 # Документация
 
-Текущий этап: коллектор данных. Оценка/LangGraph/профили — отложенные материалы.
+Текущий этап: продолжающийся сбор и разработка анализатора через подписку Codex.
 
 ## Задача и решения
 
@@ -23,7 +23,8 @@
 - [collector.md](collector.md) — поиск, страницы, окна, бюджет и полнота.
 - [sources/README.md](sources/README.md) — четыре площадки и статус доступа.
 - [filtering.md](filtering.md) — рабочий TOML, семейства, допустимые грейды, unknown и история решений.
-- [evaluation.md](evaluation.md) — вход/выход, маршрутизация, определения вердиктов.
+- [evaluation.md](evaluation.md) — Codex CLI, ручные prepare/run/resume/export,
+  вход/выход v2, маршрутизация и определения вердиктов.
 - [storage.md](storage.md) — идентичность, версии, очередь и транзакции.
 - [security.md](security.md) — секреты, данные, действия и tracing.
 - ../schemas/ — проверяемые JSON Schema.
@@ -36,7 +37,7 @@
 - [operations.md](operations.md) — запуск, восстановление, лимиты, диагностика.
 - [hh-volume-acceptance.md](hh-volume-acceptance.md) — фактическая проверка сотен HH карточек и SIGKILL/resume.
 - [acceptance.md](acceptance.md) — сценарии и показатели качества.
-- [roadmap.md](roadmap.md) — фичи коллектора, 27 активных и 10 отложенных задач.
+- [roadmap.md](roadmap.md) — коллектор, анализатор и незакрытая приёмка.
 - [backlog.json](backlog.json) — машиночитаемые зависимости и статусы задач.
 - [references/README.md](references/README.md) — официальная документация и XERJ.
 - [research/README.md](research/README.md) — результат исследования аналогов.

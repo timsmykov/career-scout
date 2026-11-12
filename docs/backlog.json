@@ -1,13 +1,13 @@
 {
   "schema_version": 1,
   "updated_on": "2026-11-12",
-  "status": "campaign_runtime_implemented_full_initial_acceptance_in_progress",
+  "status": "collection_continues_codex_analysis_acceptance_in_progress",
   "milestones": {
     "M0": "complete",
     "M1": "in_progress",
     "M2": "in_progress",
     "M3": "planned",
-    "M4": "deferred",
+    "M4": "in_progress",
     "M5": "planned",
     "M6": "planned"
   },
@@ -278,107 +278,114 @@
       "id": "CS-020",
       "milestone": "M4",
       "title": "Импорт резюме и профилей",
-      "status": "deferred",
+      "status": "in_progress",
       "depends_on": [
         "CS-003",
         "CS-009"
       ],
       "deliverable": "profiles/importer.py, registry.py",
       "acceptance": "Ровно четыре актуальных текста, hash/версия, universal/research исключены",
-      "scope": "future_analysis"
+      "scope": "analysis",
+      "implementation_note": "Загрузка четырёх полных ResumeSnapshot с hash/версиями реализована; рабочие HH-снимки сверены с источником и очищены от UI. Импорт пока через приватные JSON."
     },
     {
       "id": "CS-021",
       "milestone": "M4",
       "title": "Рубрики и версия маршрута",
-      "status": "deferred",
+      "status": "in_progress",
       "depends_on": [
         "CS-014",
         "CS-020"
       ],
       "deliverable": "evaluation/policy.py, validated rubric config",
       "acceptance": "Вердикты однозначны; order подтверждён до evaluate; без скрытого обогащения биографии",
-      "scope": "future_analysis"
+      "scope": "analysis",
+      "implementation_note": "Владелец12.11 подтвердил Product → automation → business_assistant → BA; роли и общая инструкция входят в hash. Проверка качества рубрик продолжается."
     },
     {
       "id": "CS-022",
       "milestone": "M4",
       "title": "Модельный адаптер и бюджет",
-      "status": "deferred",
+      "status": "in_progress",
       "depends_on": [
         "CS-003",
         "CS-004"
       ],
       "deliverable": "evaluation/model.py, usage.py",
-      "acceptance": "API model ID проверен, finite retries, timeout/context, tokens/cost_unknown, расходы ограничены",
-      "scope": "future_analysis"
+      "acceptance": "Codex subscription model/reasoning проверены; finite retries, timeout/context, tokens/cost_unknown, durable max_calls",
+      "scope": "analysis",
+      "implementation_note": "codex_worker.py: native Codex CLI через ChatGPT login, Luna/max, timeout, строгий context size и durable max_calls. USD не оценивается для подписки."
     },
     {
       "id": "CS-023",
       "milestone": "M4",
       "title": "Проверка результата",
-      "status": "deferred",
+      "status": "in_progress",
       "depends_on": [
         "CS-020",
         "CS-021"
       ],
       "deliverable": "evaluation/validation.py",
       "acceptance": "Schema, profile/version identity, цитаты в нужном тексте, без silent truncation",
-      "scope": "future_analysis"
+      "scope": "analysis",
+      "implementation_note": "evaluation.py: v2 schema, profile/hash identity, точные цитаты; wire schema ограничивает цитаты фрагментами одного входа. Смысловая верность проверяется отдельно."
     },
     {
       "id": "CS-024",
       "milestone": "M4",
       "title": "Последовательный LangGraph",
-      "status": "deferred",
+      "status": "in_progress",
       "depends_on": [
-        "CS-012",
         "CS-021",
         "CS-022",
         "CS-023"
       ],
       "deliverable": "evaluation/graph.py, routing.py",
       "acceptance": "First PASS прекращает вызовы; 256 сочетаний исходов и реальные call counts; persistent checkpoint",
-      "scope": "future_analysis"
+      "scope": "analysis",
+      "implementation_note": "analysis_graph.py реализует first-PASS и persistent SqliteSaver. Один исполнитель на analysis DB; многопроцессные leases не требуются этому режиму."
     },
     {
       "id": "CS-025",
       "milestone": "M4",
       "title": "Кэш и согласование checkpoint",
-      "status": "deferred",
+      "status": "in_progress",
       "depends_on": [
         "CS-010",
         "CS-024"
       ],
       "deliverable": "evaluation/cache.py, recovery.py",
       "acceptance": "Все входные версии в ключах; checkpoint сверяется с ledger; error не кешируется как reject",
-      "scope": "future_analysis"
+      "scope": "analysis",
+      "implementation_note": "Проверенные ответы записываются до checkpoint. Cache по полным версиям входов; тестируется сбой между результатом и checkpoint, сохранён бюджет попыток."
     },
     {
       "id": "CS-026",
       "milestone": "M4",
       "title": "Очередь уточнений",
-      "status": "deferred",
+      "status": "planned",
       "depends_on": [
         "CS-024",
         "CS-025"
       ],
       "deliverable": "services/review.py, cli review",
       "acceptance": "Показать основание/вопрос, ответ владельца версионируется; перепроверка затронутой пары",
-      "scope": "future_analysis"
+      "scope": "analysis",
+      "implementation_note": "NEEDS_CLARIFICATION и вопросы сохраняются/экспортируются; интерфейса версионированного ответа владельца и адресной перепроверки пока нет."
     },
     {
       "id": "CS-027",
       "milestone": "M5",
       "title": "Контрольная разметка",
-      "status": "deferred",
+      "status": "planned",
       "depends_on": [
         "CS-014",
         "CS-021"
       ],
       "deliverable": "private evaluation dataset + anonymized protocol",
       "acceptance": "Наборы настройки/контроля раздельны; по четырём профилям есть пограничные/негативные случаи",
-      "scope": "future_analysis"
+      "scope": "analysis",
+      "implementation_note": "Диагностический live-пилот не является независимой контрольной разметкой. Нужен отдельный набор и процедура разметки."
     },
     {
       "id": "CS-028",
@@ -398,14 +405,15 @@
       "id": "CS-029",
       "milestone": "M5",
       "title": "Качество оценщиков",
-      "status": "deferred",
+      "status": "planned",
       "depends_on": [
         "CS-025",
         "CS-027"
       ],
       "deliverable": "evaluation report per profile and route",
       "acceptance": "False rejects/accepts, clarification/error rates; отдельно по профилям; пороги согласованы",
-      "scope": "future_analysis"
+      "scope": "analysis",
+      "implementation_note": "Доступ, формат и цитаты проходят приёмку; false accept/reject rates и согласованные пороги ещё не измерены."
     },
     {
       "id": "CS-030",
@@ -519,5 +527,5 @@
       "acceptance": "Проверены discovery, целостность текста, условия, дубли, версии и потери фильтра; резюме и LLM не нужны"
     }
   ],
-  "current_scope": "append_only_initial_and_manual_daily"
+  "current_scope": "append_only_collection_and_codex_subscription_analysis"
 }

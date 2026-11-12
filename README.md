@@ -9,14 +9,17 @@
 Общий формат vacancy/export v2; SQLite schema5 мигрирует прежнюю базу с backup.
 Поиск и фильтры — [configs/search.toml](configs/search.toml): IT/финтех/ИИ/ML,
 стажёр/junior/middle, без опыта/1–3 года. Unknown/conflict сохраняются, зарплата
-не ограничивает отбор. LangGraph и анализ по резюме отложены, отклики не отправляются.
+не ограничивает отбор. Начата приёмка анализатора на LangGraph через подписку Codex;
+отклики не отправляются. [Анализ и ручной запуск](docs/evaluation.md).
 
 ## Что строим
 
 Текущий этап: сбор HH, Хабр Карьеры, «Работы России» и SuperJob, полные описания,
 нормализация условий, версии и дедупликация, надёжное хранение и продолжение после
 сбоев. Выход — готовый набор вакансий с происхождением и локальным экспортом.
-LangGraph, анализ по резюме и настройка моделей отложены до приёмки коллектора.
+Анализ готовых карточек развивается параллельно сбору: Product → автоматизация →
+бизнес-ассистент → BA, первый PASS завершает маршрут. У каждой оценки собственное
+полное резюме; общий отказ требует четырёх валидных REJECT.
 
 Четыре выбранных источника имеют разный статус доступа. У Хабра проверен
 недокументированный frontend JSON и HTML, а официальная API-справка относится к CRM
@@ -92,6 +95,30 @@ docker compose run --rm collector resume CAMPAIGN_ID --progress
 SQLite сохраняется в `/data/ledger.sqlite3`, `.env` монтируется read-only;
 контейнер можно пересоздать. [Устройство, миграция и проверки](docs/docker.md).
 
+## Анализ через подписку Codex
+
+Анализатор запускается на хосте с установленным Codex CLI и существующим входом
+через ChatGPT. Проверена CLI0.166.0; ключ model API не требуется. `gpt-6-luna`/`max`
+вызывается отдельно для каждого профиля. Граф, сохранение и повторы выполняет код.
+
+Нужны четыре полных приватных снимка резюме и собственный JSON по
+[analysis.example.json](configs/analysis.example.json). Пути в JSON считаются
+относительно его каталога. В примере вызовы выключены; рабочий конфиг фиксирует
+подтверждённый порядок и разрешение модельных вызовов.
+
+```sh
+# Фиксация входов: модель не вызывается, частичный campaign допускается
+uv run --no-sync python -m career_scout.analysis prepare --config private/analysis.json --limit 20 --max-calls 80
+uv run --no-sync python -m career_scout.analysis run RUN_ID --db data/analysis.sqlite3
+uv run --no-sync python -m career_scout.analysis status RUN_ID --db data/analysis.sqlite3
+uv run --no-sync python -m career_scout.analysis resume RUN_ID --db data/analysis.sqlite3
+uv run --no-sync python -m career_scout.analysis export RUN_ID --db data/analysis.sqlite3 --output data/analysis-results.json
+```
+
+Бюджет вызовов сохраняется до обращения к Codex. Подробности об ошибках, явном
+повторе и версиях: [evaluation.md](docs/evaluation.md). SQLite коллектора не меняется.
+Состояние графа и проверенные ответы сохраняются в отдельной `analysis.sqlite3`.
+
 ## Читать по порядку
 
 1. [Задача и границы](docs/product.md).
@@ -102,7 +129,7 @@ SQLite сохраняется в `/data/ledger.sqlite3`, `.env` монтируе
 6. [Разработка](docs/development.md), [критерии приёмки](docs/acceptance.md).
 
 [Полный указатель](docs/README.md). Старая [схема будущего анализа](docs/assets/funnel.png)
-сохранена как отложенный материал; текущий поток показан в архитектуре.
+сохранена как исторический материал; текущий поток описан в архитектуре.
 
 ## Данные
 

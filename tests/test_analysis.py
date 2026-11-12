@@ -1,6 +1,9 @@
 import copy
 import json
+import os
+import signal
 import sqlite3
+import subprocess
 import sys
 import time
 from datetime import UTC, datetime
@@ -30,6 +33,7 @@ from career_scout.evaluation import (
     text_hash,
     validate_result,
 )
+from career_scout.evidence import EvidenceDocument, documents, hydrate_response
 from career_scout.hh import normalize
 from career_scout.models import Vacancy
 from career_scout.normalization import project_snapshot
@@ -309,8 +313,10 @@ def test_hashes_and_exact_quotes_are_enforced(setup):
 def test_each_prompt_contains_only_its_own_resume(setup):
     for profile, request in setup[2].items():
         prompt = build_prompt(request)
-        assert request.resume.text in prompt
-        assert all(other.resume.text not in prompt for p, other in setup[2].items() if p != profile)
+        data = json.loads(prompt.rsplit("\n\n", 1)[1])
+        text = "".join(item["text"] for item in data["resume"]["evidence"])
+        assert text == request.resume.text
+        assert all(other.resume.text != text for p, other in setup[2].items() if p != profile)
 
 
 def test_codex_worker_has_no_api_keys_or_shared_context(monkeypatch, tmp_path, setup):
@@ -384,15 +390,17 @@ def fake_codex(tmp_path, body, *, auth="Logged in using ChatGPT"):
 def test_subscription_transport_and_usage_without_api_key(setup):
     path, config, requests = setup
     payload = result(requests["product"])
+    wire = wire_result(requests["product"])
     binary = fake_codex(
         path,
         "target=Path(sys.argv[sys.argv.index('--output-last-message')+1])\n"
-        f"target.write_text(json.dumps({payload!r}))\n"
+        f"target.write_text(json.dumps({wire!r}))\n"
         "print(json.dumps({'type':'turn.completed','usage':{'input_tokens':42,'output_tokens':7}}))\n",
     )
     reply = CodexWorker(config, binary=binary)(requests["product"])
     assert reply.result == payload
     assert reply.usage == {"input_tokens": 42, "output_tokens": 7}
+    assert reply.audit_response()["wire_response"] == wire
 
 
 def test_api_login_is_refused_before_worker_starts(setup):
@@ -458,6 +466,48 @@ def test_worker_timeout_stops_its_own_process_group(setup):
         pytest.fail("A worker child was left running after timeout")
 
 
+def test_keyboard_interrupt_stops_the_detached_worker_group(setup):
+    path, config, requests = setup
+    pid_file = path / "worker-pid"
+    binary = fake_codex(
+        path,
+        f"import time\nPath({str(pid_file)!r}).write_text(str(os.getpid()))\ntime.sleep(30)\n",
+    )
+    request_file = path / "input.json"
+    request_file.write_text(requests["product"].model_dump_json())
+    script = (
+        "from pathlib import Path\n"
+        "from career_scout.codex_worker import CodexWorker\n"
+        "from career_scout.evaluation import EvaluatorConfig,WorkerInput\n"
+        f"request=WorkerInput.model_validate_json(Path({str(request_file)!r}).read_text())\n"
+        "try:\n"
+        f" CodexWorker(EvaluatorConfig.model_validate({config.model_dump()!r}),"
+        f"binary={binary!r})(request)\n"
+        "except KeyboardInterrupt:\n raise SystemExit(130)\n"
+    )
+    parent = subprocess.Popen([sys.executable, "-c", script], start_new_session=True)
+    try:
+        for _ in range(200):
+            if pid_file.exists():
+                break
+            time.sleep(0.05)
+        assert pid_file.exists(), "Worker did not start"
+        worker_pid = int(pid_file.read_text())
+        parent.send_signal(signal.SIGINT)
+        assert parent.wait(timeout=10) == 130
+        with pytest.raises(ProcessLookupError):
+            os.kill(worker_pid, 0)
+    finally:
+        if parent.poll() is None:
+            parent.kill()
+            parent.wait()
+        if pid_file.exists():
+            try:
+                os.killpg(int(pid_file.read_text()), signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+
+
 def test_result_writes_and_background_checkpoints_use_separate_transactions(setup):
     _, config, templates = setup
     store, _, _ = prepared(setup)
@@ -490,14 +540,80 @@ def test_outside_primary_responsibility_can_reject_without_mandatory_label(setup
         EvaluationResult.model_validate(value)
 
 
-def test_wire_schema_quotes_are_contiguous_original_spans(setup):
+def wire_result(request, verdict="PASS"):
+    wire = result(request, verdict)
+    vacancy, resume = documents(request)
+    for item in wire["assessments"]:
+        for name, source in (("vacancy", vacancy), ("resume", resume)):
+            quote = item.pop(name + "_quote")
+            if quote is None:
+                reference = None
+            else:
+                key = next(
+                    k
+                    for k, part in zip(source.ids, source.parts, strict=True)
+                    if part.strip() == quote
+                )
+                reference = {"from": key, "to": key}
+            item[name + "_reference"] = reference
+    return wire
+
+
+def test_wire_schema_uses_short_ids_and_hydrates_literal_quotes(setup):
     request = setup[2]["product"]
     schema = output_schema(request)
     fields = schema["$defs"]["Assessment"]["properties"]
-    from career_scout.evaluation import canonical_quote, vacancy_evidence_text
+    vacancy, resume = documents(request)
+    assert fields["vacancy_reference"]["properties"]["from"]["enum"] == vacancy.ids
+    assert fields["resume_reference"]["anyOf"][0]["properties"]["to"]["enum"] == resume.ids
+    assert request.resume.text not in json.dumps(schema, ensure_ascii=False)
+    restored = hydrate_response(request, wire_result(request))
+    assert restored == result(request)
+    validate_result(request, EvaluationResult.model_validate(restored))
 
-    for quote in fields["vacancy_quote"]["enum"]:
-        assert canonical_quote(quote) in canonical_quote(vacancy_evidence_text(request.vacancy))
-    for quote in fields["resume_quote"]["anyOf"][0]["enum"]:
-        assert canonical_quote(quote) in canonical_quote(request.resume.text)
-    assert "invented or stitched citation" not in fields["vacancy_quote"]["enum"]
+
+def test_evidence_segments_preserve_the_complete_source_and_contiguous_ranges():
+    text = "Вступление.  \n\nНавык: SQL\nУровень: базовый\n" + "слово " * 400 + "е\u0308\tконец"
+    source = EvidenceDocument(text, "R")
+    assert "".join(item["text"] for item in source.payload()) == text
+    assert max(map(len, source.parts)) <= 900
+    start = next(i for i, part in enumerate(source.parts) if "Навык" in part)
+    quote = source.resolve({"from": source.ids[start], "to": source.ids[start + 1]})
+    assert quote == "Навык: SQL\nУровень: базовый"
+    assert quote in text
+
+
+@pytest.mark.parametrize(
+    ("reference", "error"),
+    [
+        ({"from": "V0001", "to": "V0001"}, "unknown_evidence_reference"),
+        ({"from": "R0002", "to": "R0001"}, "reversed_evidence_reference"),
+        ({"from": "R0001", "to": "R0004"}, "invalid_evidence_range_length"),
+        ({"from": "R0001", "to": "R0001", "extra": True}, "invalid_evidence_reference"),
+    ],
+)
+def test_invalid_evidence_ranges_fail_explicitly(reference, error):
+    source = EvidenceDocument("один\nдва\n" + "x" * 1000, "R")
+    with pytest.raises(EvaluationError, match=error):
+        source.resolve(reference)
+
+
+def test_invalid_native_reference_keeps_usage_and_raw_response(setup):
+    path, config, requests = setup
+    wire = wire_result(requests["product"])
+    wire["assessments"][0]["resume_reference"]["from"] = "V0001"
+    binary = fake_codex(
+        path,
+        "target=Path(sys.argv[sys.argv.index('--output-last-message')+1])\n"
+        f"target.write_text(json.dumps({wire!r}))\n"
+        "print(json.dumps({'type':'turn.completed','usage':{'input_tokens':42}}))\n",
+    )
+    store, rid, route = prepared(setup)
+    graph = AnalysisGraph(store, CodexWorker(config, binary=binary), config, order_confirmed=True)
+    outcome = graph.evaluate(rid, route)
+    assert outcome["status"] == "PENDING"
+    attempt = store.db.execute("SELECT * FROM attempts ORDER BY id LIMIT 1").fetchone()
+    assert attempt["error"] == "unknown_evidence_reference"
+    assert json.loads(attempt["usage_json"])["input_tokens"] == 42
+    assert json.loads(attempt["response_json"])["wire_response"] == wire
+    store.close()

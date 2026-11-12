@@ -38,6 +38,7 @@ def check_schemas() -> int:
         "vacancy-v2.synthetic.json": "vacancy-v2.schema.json",
         "worker-input.synthetic.json": "worker-input.schema.json",
         "worker-input-borderline.synthetic.json": "worker-input.schema.json",
+        "worker-input-reject.synthetic.json": "worker-input.schema.json",
         "evaluation-pass.synthetic.json": "evaluation-result.schema.json",
         "evaluation-borderline.synthetic.json": "evaluation-result.schema.json",
         "evaluation-reject.synthetic.json": "evaluation-result.schema.json",
@@ -62,6 +63,7 @@ def check_schemas() -> int:
     for result_name, input_name in [
         ("evaluation-pass.synthetic.json", "worker-input.synthetic.json"),
         ("evaluation-borderline.synthetic.json", "worker-input-borderline.synthetic.json"),
+        ("evaluation-reject.synthetic.json", "worker-input-reject.synthetic.json"),
     ]:
         result = read_json("examples/" + result_name)
         worker_input = read_json("examples/" + input_name)
@@ -120,7 +122,10 @@ def main() -> None:
     check_config()
     links = check_markdown()
     print(f"Bootstrap OK: {examples} schema examples; {links} local links; offline defaults.")
-    print("Runtime behavior is checked separately by pytest; LangGraph remains deferred.")
+    print(
+        "Runtime behavior is checked by pytest; "
+        "Codex subscription calls are separate live acceptance."
+    )
 
 
 if __name__ == "__main__":

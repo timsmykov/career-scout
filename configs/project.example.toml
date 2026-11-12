@@ -37,12 +37,12 @@ llm_transfer_allowed = false
 
 [evaluation]
 enabled = false
-order = ["product", "business_analyst", "business_assistant", "automation"]
+order = ["product", "automation", "business_assistant", "business_analyst"]
 order_confirmed = false
 max_attempts_per_profile = 2
 max_calls_per_run = 0
 max_spend_usd_per_run = 0.0
-# Не названия из подписки OpenBot; задаются после проверки API выбранного провайдера.
-model_provider = ""
-model_name = ""
-reasoning_effort = ""
+# Исторический bootstrap; действующий конфиг анализатора — analysis.example.json.
+model_provider = "codex_subscription"
+model_name = "gpt-6-luna"
+reasoning_effort = "max"

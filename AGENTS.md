@@ -18,8 +18,10 @@ normalized_snapshots. V1/v2/v3/v4 авто-мигрируются с backup по
 Trudvsem offset=page0, Habr page1. Не переносить HH geography/Boolean syntax в другие API.
 Рабочий config: configs/search.toml; frozen plan/resume, offline refilter и история
 решений в docs/filtering.md. Unknown/conflict сохранять; зарплата не фильтрует.
-Текущий scope: только collect/normalize/store/quality/export. Анализ по резюме и
-LangGraph отложены владельцем до приёмки коллектора. Не начинать их по старому roadmap.
+12.11.2026 владелец разрешил разработку анализа параллельно продолжающемуся сбору.
+Анализатор читает только готовые full записи через read-only соединение и хранит
+собственные inputs/results/attempts/checkpoints в отдельной SQLite.
+Контракт и ручной запуск: docs/evaluation.md; entrypoint: career_scout.analysis.
 
 Основной путь — campaigns.py: initial/new/resume CAMPAIGN_ID. Append-only: все
 видимые ID, full descriptions только неизвестных, без TTL refresh. Initial и manual new —
@@ -33,7 +35,7 @@ Legacy collect сохраняется для прежних run IDs и имее�
 - Сбор, HTTP, пагинация, дедупликация, лимиты и очередь — код, без LLM.
 - Воркер получает один полный актуальный текст резюме, вакансию и атрибуты владельца.
   Общая память не добавляет кандидату навыков.
-- Четыре профиля: product, business_analyst, business_assistant, automation.
+- Подтверждённый порядок: product → automation → business_assistant → business_analyst.
   Универсальное и исследовательское резюме не подключать.
 - Внутри одной вакансии оценка последовательна, первый PASS завершает.
   BORDERLINE и ERROR продолжают маршрут. Общий отказ — только четыре валидных REJECT.
@@ -41,13 +43,17 @@ Legacy collect сохраняется для прежних run IDs и имее�
 - У источника 401/403/429 — отразить состояние. Не менять IP/аккаунт/транспорт для обхода.
 - Не отправлять отклики, не править резюме и не создавать расписания в рамках MVP.
 - Не переносить credentials из OpenBot/подписочных сессий.
-- Предварительный порядок профилей и API моделей не выдавать за утверждённые/проверенные.
+- Вызовы модели — native Codex CLI через существующий ChatGPT login, не model API.
+  Подтверждены gpt-6-luna/max и порядок выше. Не копировать auth.json в приложение.
+  Worker запускается с пустым рабочим каталогом, без MCP/apps/tools/памяти; один
+  WorkerInput содержит только одно резюме. Персональные исходники не коммитить.
 - Новые зависимости добавлять только по реализации этапа. Проверять лицензии до копирования.
 
 ## Структура и проверки
 
 Python 3.12, uv.lock, src-layout, httpx/Pydantic, SQLite.
-Существующие модельные зависимости bootstrap не требуют использования сейчас.
+LangGraph управляет маршрутом; codex_worker.py вызывает установленный host Codex CLI.
+Offline-тесты используют подставной executable, без подписки и model calls.
 Обязательные offline-проверки:
 `uv run --no-sync python scripts/check_repository.py`,
 `uv run --no-sync ruff check .`, `uv run --no-sync ruff format --check .`,

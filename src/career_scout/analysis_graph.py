@@ -61,7 +61,9 @@ class AnalysisGraph:
                         attempt_id,
                         error=exc.code,
                         usage=reply.usage if reply else exc.usage,
-                        response=reply.result if reply else None,
+                        response=(
+                            reply.audit_response() if reply else getattr(exc, "response", None)
+                        ),
                     )
                     if exc.fatal:
                         raise
@@ -72,11 +74,13 @@ class AnalysisGraph:
                         attempt_id,
                         error="invalid_evaluation_result",
                         usage=reply.usage if reply else None,
-                        response=reply.result if reply else None,
+                        response=reply.audit_response() if reply else None,
                     )
                     errors.append("invalid_evaluation_result")
                 else:
-                    self.store.finish_attempt(attempt_id, usage=reply.usage, response=reply.result)
+                    self.store.finish_attempt(
+                        attempt_id, usage=reply.usage, response=reply.audit_response()
+                    )
             outcome = {
                 "verdict": result.verdict if result else "ERROR",
                 "evaluation_key": request.evaluation_key,

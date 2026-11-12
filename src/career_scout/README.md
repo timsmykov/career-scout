@@ -1,18 +1,20 @@
 # Модули
 
-Работают: hh.py (HTTP/auth/HTML normalizer), storage.py (SQLite v2),
-collector.py (последовательный collect/resume), cli.py и __main__.py.
-models.py/normalization.py задают общий контракт и HH mapping; migrations.py
-сохраняет v1 backup и переносит базу, common.py — ошибки/хеши/clock.
-Ни один runtime-модуль не импортирует LangGraph или модельный SDK.
+Коллектор запускается через `python -m career_scout`; анализатор — отдельно через
+`python -m career_scout.analysis`. Модельные вызовы не входят в путь сбора.
 
-Ниже сохранена целевая карта общего коллектора, а не список готовых импортов.
+| Модули | Назначение |
+|---|---|
+| hh.py, adapters.py, transport.py, source_types.py | Четыре источника, HTTP/auth, native pagination и ошибки |
+| collector.py, campaigns.py | Legacy collect и append-only initial/new/resume |
+| storage.py, migrations.py | Collector SQLite schema5, миграции с backup, snapshots и discoveries |
+| models.py, normalization.py, source_normalization.py | Общая вакансия v2 и нормализация источников |
+| filtering.py, search_config.py | Поисковый план и детерминированные фильтры |
+| cli.py, __main__.py | Команды коллектора |
+| evaluation.py | Версии полного входа, результата и проверка цитат |
+| evidence.py | Полные исходные тексты с адресами фрагментов, восстановление непрерывных цитат |
+| codex_worker.py | Изолированный native Codex CLI через ChatGPT login |
+| analysis_store.py, analysis_graph.py | Отдельная приватная SQLite, кэш, бюджет, попытки и LangGraph checkpoints |
+| analysis.py | Ручные prepare/run/resume/status/export, read-only доступ к collector ledger |
 
-- collectors/: transport, source contracts, HH/Habr/Trudvsem/SuperJob adapters.
-- domain/: vacancy, completeness, filter and evaluation models.
-- storage/: SQLite migrations, repositories, leases, versioned snapshots.
-- services/: collection, detail, refresh, quality, inspect/export.
-- evaluation/: будущий отложенный анализ; сейчас не реализовывать.
-- cli.py: явные команды plan / collect / status / inspect / export.
-
-Добавлять модули по этапам docs/roadmap.md. Пустые фиктивные клиенты не нужны.
+Точные команды и ограничения: [evaluation.md](../../docs/evaluation.md).

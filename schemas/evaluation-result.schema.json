@@ -162,11 +162,14 @@
     },
     "questions": {
       "items": {
-        "type": "string"
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 500
       },
       "maxItems": 12,
       "title": "Questions",
-      "type": "array"
+      "type": "array",
+      "uniqueItems": true
     }
   },
   "required": [
@@ -261,17 +264,34 @@
         "properties": {
           "assessments": {
             "contains": {
-              "properties": {
-                "mandatory": {
-                  "const": true
+              "anyOf": [
+                {
+                  "properties": {
+                    "mandatory": {
+                      "const": true
+                    },
+                    "status": {
+                      "const": "conflict"
+                    }
+                  }
                 },
-                "status": {
-                  "enum": [
-                    "conflict",
-                    "outside_profile"
-                  ]
+                {
+                  "properties": {
+                    "kind": {
+                      "const": "responsibility"
+                    },
+                    "mandatory": {
+                      "enum": [
+                        true,
+                        null
+                      ]
+                    },
+                    "status": {
+                      "const": "outside_profile"
+                    }
+                  }
                 }
-              }
+              ]
             },
             "minContains": 1
           }
