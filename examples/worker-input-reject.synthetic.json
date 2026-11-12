@@ -1,0 +1,168 @@
+{
+  "schema_version": 2,
+  "evaluation_key": "3dec34a60b8d888971cb808d4de4d4123b33a19ab7e8c5d9bf17e281b29b8338",
+  "profile_id": "business_analyst",
+  "vacancy": {
+    "source": "hh",
+    "source_id": "1",
+    "schema_version": 2,
+    "title": "Бизнес-аналитик цифрового сервиса",
+    "company": "Synthetic Co",
+    "url": "https://hh.ru/vacancy/1",
+    "description": "Нужно собирать требования заказчика и описывать пользовательские сценарии. Опыт 1–3 года. SQL желателен. Обязателен продвинутый SQL.",
+    "description_html": "<p>Нужно собирать требования заказчика и описывать пользовательские сценарии. Опыт 1–3 года. SQL желателен. Обязателен продвинутый SQL.</p>",
+    "source_payload": {
+      "id": "1",
+      "name": "Бизнес-аналитик цифрового сервиса",
+      "employer": {
+        "id": "example",
+        "name": "Synthetic Co"
+      },
+      "description": "<p>Нужно собирать требования заказчика и описывать пользовательские сценарии. Опыт 1–3 года. SQL желателен. Обязателен продвинутый SQL.</p>",
+      "salary_range": {
+        "from": 1000,
+        "to": 1500,
+        "currency": "USD",
+        "gross": true,
+        "mode": {
+          "id": "MONTH"
+        },
+        "frequency": {
+          "id": "TWICE_PER_MONTH"
+        }
+      },
+      "experience": {
+        "id": "between1And3"
+      },
+      "work_format": [
+        {
+          "id": "REMOTE"
+        },
+        {
+          "id": "HYBRID"
+        }
+      ]
+    },
+    "conditions": {
+      "name": "Бизнес-аналитик цифрового сервиса",
+      "description": "<p>Нужно собирать требования заказчика и описывать пользовательские сценарии. Опыт 1–3 года. SQL желателен. Обязателен продвинутый SQL.</p>",
+      "salary": null,
+      "salary_range": {
+        "from": 1000,
+        "to": 1500,
+        "currency": "USD",
+        "gross": true,
+        "mode": {
+          "id": "MONTH"
+        },
+        "frequency": {
+          "id": "TWICE_PER_MONTH"
+        }
+      },
+      "experience": {
+        "id": "between1And3"
+      },
+      "area": null,
+      "address": null,
+      "schedule": null,
+      "employment": null,
+      "employment_form": null,
+      "work_format": [
+        {
+          "id": "REMOTE"
+        },
+        {
+          "id": "HYBRID"
+        }
+      ],
+      "work_formats": null,
+      "working_hours": null,
+      "work_schedule_by_days": null,
+      "key_skills": null,
+      "professional_roles": null,
+      "languages": null,
+      "archived": null,
+      "accept_temporary": null,
+      "accept_handicapped": null,
+      "night_shifts": null,
+      "employer": {
+        "id": "example",
+        "name": "Synthetic Co"
+      }
+    },
+    "attributes": {
+      "salary": {
+        "amount_from": 1000,
+        "amount_to": 1500,
+        "currency": "USD",
+        "gross": true,
+        "period": "month",
+        "payout_frequency": "twice_monthly"
+      },
+      "experience": {
+        "category": "one_to_three",
+        "min_years": 1,
+        "max_years": 3,
+        "min_inclusive": true,
+        "max_inclusive": true
+      },
+      "work_formats": [
+        "hybrid",
+        "remote"
+      ],
+      "issues": [],
+      "conflicts": [],
+      "field_sources": {
+        "salary": [
+          "source_payload.salary_range"
+        ],
+        "salary.period": [
+          "source_payload.salary_range.mode.id"
+        ],
+        "experience": [
+          "source_payload.experience"
+        ],
+        "work_formats": [
+          "source_payload.work_format"
+        ]
+      }
+    },
+    "published_at": null,
+    "created_at": null,
+    "source_updated_at": null,
+    "detail_fetched_at": "2026-11-12T09:20:00.315532+00:00",
+    "detail_status": "full",
+    "content_hash": "6a187eec1ed5f95bf961191efe890e8e845e21c035e23ada81f395a468a0de78",
+    "source_normalizer_version": "hh-1",
+    "normalizer_version": "common-1",
+    "normalization_hash": "91fc4a78e797ba376dc520b557caaae7117801a46fbe8ad611d444bb9fc5c27a"
+  },
+  "resume": {
+    "profile_id": "business_analyst",
+    "resume_id": "synthetic-ba",
+    "source_url": "https://example.org/resumes/synthetic-ba",
+    "title": "Вымышленное резюме BA",
+    "version": "synthetic-1",
+    "captured_at": "2026-11-11T00:00:00Z",
+    "content_hash": "69dcf04c2291ddf5b09fe9420c680a44c19e6bf85503e52d7e34ea944ca5ab06",
+    "text": "Собирал требования заказчика и описывал пользовательские сценарии цифрового сервиса. Опыт 2 года. SQL — базовый уровень.",
+    "provenance": {
+      "synthetic": true
+    }
+  },
+  "filter_version": "synthetic-1",
+  "filters": {
+    "allowed_grades": [
+      "intern",
+      "junior",
+      "middle"
+    ],
+    "salary_optional": true
+  },
+  "rubric_version": "synthetic-1",
+  "rubric": "Сопоставь обязанности BA и обязательные требования с полным резюме.",
+  "common_instructions": "Используй только переданные факты. Желательные требования сами по себе не исключают.",
+  "model_config_hash": "1ceacb6cb6c0dd508cce438345a3d7633c6cfe839767f9556e3017a8b86fc4e8",
+  "evaluator_version": "evaluation-1",
+  "evaluation_date": "2026-11-11T09:10:00Z"
+}

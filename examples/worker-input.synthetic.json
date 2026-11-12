@@ -1,54 +1,168 @@
 {
-  "schema_version": 1,
-  "evaluation_key": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "schema_version": 2,
+  "evaluation_key": "528ec7fee07cc1bbf03de7ed03f41f92fb2815dd48ac295644ccfdc45d3ad0d5",
   "profile_id": "business_analyst",
   "vacancy": {
-    "schema_version": 1,
     "source": "hh",
-    "source_id": "synthetic-001",
-    "url": "https://example.org/vacancies/synthetic-001",
+    "source_id": "1",
+    "schema_version": 2,
     "title": "Бизнес-аналитик цифрового сервиса",
-    "company": "Вымышленная компания",
+    "company": "Synthetic Co",
+    "url": "https://hh.ru/vacancy/1",
     "description": "Нужно собирать требования заказчика и описывать пользовательские сценарии. Опыт 1–3 года. SQL желателен.",
-    "detail_status": "full",
-    "content_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-    "fetched_at": "2026-11-11T09:00:00Z",
-    "detail_fetched_at": "2026-11-11T09:00:01Z",
-    "published_at": "2026-11-10T09:00:00Z",
-    "source_updated_at": null,
-    "attributes": {
-      "grade": "junior",
-      "experience_bucket": "one_to_three",
-      "salary": null,
-      "location": null,
-      "work_format": null,
-      "technology_scope": "technology_function",
-      "conflicts": []
+    "description_html": "<p>Нужно собирать требования заказчика и описывать пользовательские сценарии. Опыт 1–3 года. SQL желателен.</p>",
+    "source_payload": {
+      "id": "1",
+      "name": "Бизнес-аналитик цифрового сервиса",
+      "employer": {
+        "id": "example",
+        "name": "Synthetic Co"
+      },
+      "description": "<p>Нужно собирать требования заказчика и описывать пользовательские сценарии. Опыт 1–3 года. SQL желателен.</p>",
+      "salary_range": {
+        "from": 1000,
+        "to": 1500,
+        "currency": "USD",
+        "gross": true,
+        "mode": {
+          "id": "MONTH"
+        },
+        "frequency": {
+          "id": "TWICE_PER_MONTH"
+        }
+      },
+      "experience": {
+        "id": "between1And3"
+      },
+      "work_format": [
+        {
+          "id": "REMOTE"
+        },
+        {
+          "id": "HYBRID"
+        }
+      ]
     },
-    "provenance": {
-      "query_ids": [
-        "business_analyst:0"
+    "conditions": {
+      "name": "Бизнес-аналитик цифрового сервиса",
+      "description": "<p>Нужно собирать требования заказчика и описывать пользовательские сценарии. Опыт 1–3 года. SQL желателен.</p>",
+      "salary": null,
+      "salary_range": {
+        "from": 1000,
+        "to": 1500,
+        "currency": "USD",
+        "gross": true,
+        "mode": {
+          "id": "MONTH"
+        },
+        "frequency": {
+          "id": "TWICE_PER_MONTH"
+        }
+      },
+      "experience": {
+        "id": "between1And3"
+      },
+      "area": null,
+      "address": null,
+      "schedule": null,
+      "employment": null,
+      "employment_form": null,
+      "work_format": [
+        {
+          "id": "REMOTE"
+        },
+        {
+          "id": "HYBRID"
+        }
       ],
-      "parser_version": "synthetic-1",
-      "normalizer_version": "draft-1"
-    }
+      "work_formats": null,
+      "working_hours": null,
+      "work_schedule_by_days": null,
+      "key_skills": null,
+      "professional_roles": null,
+      "languages": null,
+      "archived": null,
+      "accept_temporary": null,
+      "accept_handicapped": null,
+      "night_shifts": null,
+      "employer": {
+        "id": "example",
+        "name": "Synthetic Co"
+      }
+    },
+    "attributes": {
+      "salary": {
+        "amount_from": 1000,
+        "amount_to": 1500,
+        "currency": "USD",
+        "gross": true,
+        "period": "month",
+        "payout_frequency": "twice_monthly"
+      },
+      "experience": {
+        "category": "one_to_three",
+        "min_years": 1,
+        "max_years": 3,
+        "min_inclusive": true,
+        "max_inclusive": true
+      },
+      "work_formats": [
+        "hybrid",
+        "remote"
+      ],
+      "issues": [],
+      "conflicts": [],
+      "field_sources": {
+        "salary": [
+          "source_payload.salary_range"
+        ],
+        "salary.period": [
+          "source_payload.salary_range.mode.id"
+        ],
+        "experience": [
+          "source_payload.experience"
+        ],
+        "work_formats": [
+          "source_payload.work_format"
+        ]
+      }
+    },
+    "published_at": null,
+    "created_at": null,
+    "source_updated_at": null,
+    "detail_fetched_at": "2026-11-12T09:20:00.250110+00:00",
+    "detail_status": "full",
+    "content_hash": "60c88c04a15b26112cbfac05c370806c78452867b4b6487f6aca12d4bb7c19a4",
+    "source_normalizer_version": "hh-1",
+    "normalizer_version": "common-1",
+    "normalization_hash": "ae33b25d5e4928899c6137a8d47c2aa06d939881326e5d048bc0726b2a5ac1bf"
   },
   "resume": {
+    "profile_id": "business_analyst",
     "resume_id": "synthetic-ba",
+    "source_url": "https://example.org/resumes/synthetic-ba",
+    "title": "Вымышленное резюме BA",
     "version": "synthetic-1",
-    "content_hash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
-    "text": "Собирал требования заказчика и описывал пользовательские сценарии цифрового сервиса. Опыт 2 года."
+    "captured_at": "2026-11-11T00:00:00Z",
+    "content_hash": "731a193669fab1429ad3e677d355b604c9670b59307290e8d3256b199f1b8ffe",
+    "text": "Собирал требования заказчика и описывал пользовательские сценарии цифрового сервиса. Опыт 2 года.",
+    "provenance": {
+      "synthetic": true
+    }
   },
-  "filter_version": "draft-2026-11-11",
+  "filter_version": "synthetic-1",
   "filters": {
     "allowed_grades": [
       "intern",
       "junior",
       "middle"
-    ]
+    ],
+    "salary_optional": true
   },
-  "rubric_version": "draft-1",
-  "model_config_hash": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
-  "evaluator_version": "draft-1",
+  "rubric_version": "synthetic-1",
+  "rubric": "Сопоставь обязанности BA и обязательные требования с полным резюме.",
+  "common_instructions": "Используй только переданные факты. Желательные требования сами по себе не исключают.",
+  "model_config_hash": "1ceacb6cb6c0dd508cce438345a3d7633c6cfe839767f9556e3017a8b86fc4e8",
+  "evaluator_version": "evaluation-1",
   "evaluation_date": "2026-11-11T09:10:00Z"
 }

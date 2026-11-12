@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "collector_database": "../data/ledger.sqlite3",
+  "campaign_id": "REPLACE_WITH_CAMPAIGN_ID",
+  "database": "../data/analysis.sqlite3",
+  "profiles": {
+    "product": "../private/resumes/product.json",
+    "automation": "../private/resumes/automation.json",
+    "business_assistant": "../private/resumes/business_assistant.json",
+    "business_analyst": "../private/resumes/business_analyst.json"
+  },
+  "rubrics": {
+    "product": "../prompts/product.md",
+    "automation": "../prompts/automation.md",
+    "business_assistant": "../prompts/business_assistant.md",
+    "business_analyst": "../prompts/business_analyst.md"
+  },
+  "common_prompt": "../prompts/common.md",
+  "rubric_version": "roles-1",
+  "order": ["product", "automation", "business_assistant", "business_analyst"],
+  "order_confirmed": false,
+  "external_calls_enabled": false,
+  "owner_attributes": {},
+  "model": {
+    "provider": "codex_subscription",
+    "model": "gpt-6-luna",
+    "reasoning_effort": "max",
+    "timeout_seconds": 300,
+    "max_input_characters": 100000,
+    "max_attempts_per_profile": 2
+  }
+}
