@@ -109,7 +109,9 @@ def read_catalog(path: Path, campaign_id):
         store.db.close()
 
 
-def prepare(config_path: Path, *, limit, max_calls, reprocess=False, catalog=None):
+def prepare(
+    config_path: Path, *, limit, max_calls, reprocess=False, catalog=None, coordinator_lock=None
+):
     settings = AnalysisSettings.model_validate_json(config_path.read_text())
     parent = config_path.resolve().parent
 
@@ -168,7 +170,11 @@ def prepare(config_path: Path, *, limit, max_calls, reprocess=False, catalog=Non
             raise EvaluationError("incompatible_fit_screen_policy", fatal=True)
     prepared_at = datetime.now(UTC)
     store = AnalysisStore(resolve(settings.database))
-    lock = Path(str(store.path) + ".lock").open("a")
+    lock_path = Path(str(store.path) + ".lock")
+    if coordinator_lock is not None and Path(coordinator_lock.name).resolve() != lock_path:
+        store.close()
+        raise EvaluationError("analysis_lock_mismatch", fatal=True)
+    lock = coordinator_lock if coordinator_lock is not None else lock_path.open("a")
     try:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         intake.initialize(store)
@@ -254,7 +260,8 @@ def prepare(config_path: Path, *, limit, max_calls, reprocess=False, catalog=Non
         ]
         return result
     finally:
-        lock.close()
+        if coordinator_lock is None:
+            lock.close()
         store.close()
 
 
@@ -286,6 +293,8 @@ def report(store, run_id):
             (run_id,),
         ):
             selected = json.loads(selection["selected_json"])
+            if not selected:
+                continue
             incomplete_selected += sum(
                 r.profile_id in selected and store.cached(r) is None
                 for r in store.inputs(selection["route_key"])

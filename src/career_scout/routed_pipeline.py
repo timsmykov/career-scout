@@ -299,7 +299,16 @@ def aggregate(store, run_id):
         )
 
 
-def evaluate_queues(store, run_id, frozen, worker_factory=CodexBatchWorker):
+def evaluate_queues(
+    store, run_id, frozen, worker_factory=CodexBatchWorker, *, refill=None, on_progress=None
+):
+    """One worker per profile across runs; refill admits work while other profiles run.
+
+    Refill executes on the SQLite owner thread and returns more already routed run
+    IDs, or None at the source/limit boundary. Each batch retains its own run budget.
+    """
+    run_ids = [run_id] if isinstance(run_id, str) else list(run_id)
+    exhausted = refill is None
     config = EvaluatorConfig.model_validate(frozen["model"])
     workers = {p: worker_factory(config) for p in ORDER}
     batch_limit = frozen["routing"].get("max_batch_characters") or config.max_input_characters
@@ -314,35 +323,40 @@ def evaluate_queues(store, run_id, frozen, worker_factory=CodexBatchWorker):
         while True:
             blocked_progress = False
             queues = {p: [] for p in ORDER}
-            for row in store.db.execute(
-                "SELECT s.* FROM routed_selections s JOIN run_jobs j "
-                "ON j.run_id=s.run_id AND j.route_key=s.route_key "
-                "WHERE s.run_id=? AND j.status!='EXCLUDED' ORDER BY j.position",
-                (run_id,),
-            ):
-                by_profile = {r.profile_id: r for r in store.inputs(row["route_key"])}
-                if exclusions.blocked(store, next(iter(by_profile.values())).vacancy):
-                    continue
-                for p in json.loads(row["selected_json"]):
-                    request = by_profile[p]
-                    blocked = store.db.execute(
-                        "SELECT 1 FROM routed_input_errors WHERE run_id=? AND key=?",
-                        (run_id, request.evaluation_key),
-                    ).fetchone()
-                    if (
-                        not blocked
-                        and store.cached(request) is None
-                        and attempts(store, run_id, request.evaluation_key)
-                        < config.max_attempts_per_profile
-                    ):
-                        queues[p].append(request)
-            busy = {p for p, _, _ in active.values()}
+            for current_run in run_ids:
+                for row in store.db.execute(
+                    "SELECT s.* FROM routed_selections s JOIN run_jobs j "
+                    "ON j.run_id=s.run_id AND j.route_key=s.route_key "
+                    "WHERE s.run_id=? AND s.selected_json!='[]' AND j.status!='EXCLUDED' "
+                    "ORDER BY j.position",
+                    (current_run,),
+                ):
+                    by_profile = {r.profile_id: r for r in store.inputs(row["route_key"])}
+                    if exclusions.blocked(store, next(iter(by_profile.values())).vacancy):
+                        continue
+                    for p in json.loads(row["selected_json"]):
+                        request = by_profile[p]
+                        blocked = store.db.execute(
+                            "SELECT 1 FROM routed_input_errors WHERE run_id=? AND key=?",
+                            (current_run, request.evaluation_key),
+                        ).fetchone()
+                        if (
+                            not blocked
+                            and store.cached(request) is None
+                            and attempts(store, current_run, request.evaluation_key)
+                            < config.max_attempts_per_profile
+                        ):
+                            queues[p].append((current_run, request))
+            busy = {p for p, _, _, _ in active.values()}
             if error is None:
                 for profile in ORDER:
                     if profile in busy or not queues[profile]:
                         continue
                     batch = []
-                    for request in queues[profile][:batch_size]:
+                    current_run = queues[profile][0][0]
+                    for candidate_run, request in queues[profile][:batch_size]:
+                        if candidate_run != current_run:
+                            break
                         if batch_size_characters([*batch, request]) > batch_limit:
                             if batch:
                                 break
@@ -350,7 +364,7 @@ def evaluate_queues(store, run_id, frozen, worker_factory=CodexBatchWorker):
                                 store.db.execute(
                                     "INSERT OR REPLACE INTO routed_input_errors VALUES(?,?,?)",
                                     (
-                                        run_id,
+                                        current_run,
                                         request.evaluation_key,
                                         "input_exceeds_configured_context",
                                     ),
@@ -361,18 +375,41 @@ def evaluate_queues(store, run_id, frozen, worker_factory=CodexBatchWorker):
                     if not batch:
                         continue
                     try:
-                        ident = reserve_batch(store, run_id, profile, batch)
+                        ident = reserve_batch(store, current_run, profile, batch)
                     except EvaluationError as exc:
                         error = exc.code
                         break
-                    active[pool.submit(workers[profile].batch, batch)] = (profile, ident, batch)
+                    active[pool.submit(workers[profile].batch, batch)] = (
+                        profile,
+                        ident,
+                        batch,
+                        current_run,
+                    )
+            # A small look-ahead keeps fast profile queues fed while slow batches
+            # are in flight. No extra model pool or SQLite writer is created.
+            refilled = False
+            if error is None and not exhausted and any(len(queues[p]) <= batch_size for p in ORDER):
+                try:
+                    more = refill()
+                    if more is None:
+                        exhausted = True
+                    else:
+                        for next_run in more:
+                            model = json.loads(store.run(next_run)["config_json"])["model"]
+                            if model != frozen["model"]:
+                                raise EvaluationError("continuous_model_changed", fatal=True)
+                            if next_run not in run_ids:
+                                run_ids.append(next_run)
+                        refilled = True
+                except EvaluationError as exc:
+                    error = exc.code
             if not active:
-                if blocked_progress and error is None:
+                if (blocked_progress or refilled) and error is None:
                     continue
                 break
-            done, _ = wait(active, return_when=FIRST_COMPLETED)
+            done, _ = wait(active, timeout=0 if refilled else None, return_when=FIRST_COMPLETED)
             for future in done:
-                _, ident, batch = active.pop(future)
+                _, ident, batch, current_run = active.pop(future)
                 usage = response = None
                 errors = {}
                 try:
@@ -405,14 +442,17 @@ def evaluate_queues(store, run_id, frozen, worker_factory=CodexBatchWorker):
                             "UPDATE batch_items SET error=? WHERE batch_id=? AND key=?",
                             (errors.get(request.evaluation_key), ident, request.evaluation_key),
                         )
-                aggregate(store, run_id)
+                aggregate(store, current_run)
+                if on_progress:
+                    on_progress()
     except BaseException:
         for worker in workers.values():
             worker.cancel()
         raise
     finally:
         pool.shutdown(wait=True, cancel_futures=True)
-    aggregate(store, run_id)
+    for current_run in run_ids:
+        aggregate(store, current_run)
     return error
 
 

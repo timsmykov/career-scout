@@ -146,7 +146,7 @@ def publish(store, directory, state):
     save(directory / "state.json", state)
 
 
-def execute(config, catalog_path, directory, *, chunk_size=100):
+def execute(config, catalog_path, directory, *, chunk_size=100, continuous=False, stop_after=None):
     """Finite source phases. All repeat invocations resume the same persisted tasks."""
     directory.mkdir(parents=True, exist_ok=True)
     settings = AnalysisSettings.model_validate_json(config.read_text())
@@ -180,6 +180,14 @@ def execute(config, catalog_path, directory, *, chunk_size=100):
         )
         if any(state.get(k) != v for k, v in identity.items()):
             raise EvaluationError("array_configuration_changed", fatal=True)
+        if stop_after is not None:
+            if stop_after < 1:
+                raise EvaluationError("invalid_array_stop_limit", fatal=True)
+            state["stop_after"] = stop_after
+        if continuous:
+            return execute_continuous(config, catalog, directory, state, database)
+        if state.get("stop_after") is not None:
+            raise EvaluationError("stop_limit_requires_continuous_mode", fatal=True)
         state["status"] = "running"
         state.pop("error", None)
         save(checkpoint, state)
@@ -262,6 +270,190 @@ def execute(config, catalog_path, directory, *, chunk_size=100):
         return state
 
 
+def apply_stop_limit(state):
+    """Split only unadmitted portions; never dispatch a card beyond the boundary."""
+    limit = state.get("stop_after", state["total"])
+    ordinal = 0
+    for index, task in enumerate(state["tasks"]):
+        end = ordinal + task["count"]
+        if ordinal < limit < end:
+            if "runs" in task:
+                raise EvaluationError("stop_limit_crosses_admitted_task", fatal=True)
+            first = limit - ordinal
+            state["tasks"][index : index + 1] = [
+                {**task, "count": first},
+                {
+                    "source": task["source"],
+                    "start": task["start"] + first,
+                    "count": task["count"] - first,
+                },
+            ]
+            break
+        if ordinal >= limit and "runs" in task:
+            raise EvaluationError("stop_limit_below_admitted_work", fatal=True)
+        ordinal = end
+    # Check the suffix too after a split.
+    ordinal = 0
+    for task in state["tasks"]:
+        if ordinal >= limit and "runs" in task:
+            raise EvaluationError("stop_limit_below_admitted_work", fatal=True)
+        ordinal += task["count"]
+    return limit
+
+
+def execute_continuous(config, catalog, directory, state, database):
+    """Refill one shared profile pool, retaining source barriers and persisted runs."""
+    from career_scout.decisions import DecisionsClient
+    from career_scout.routed_pipeline import (
+        aggregate,
+        evaluate_queues,
+        initialize,
+        revalidate_saved_responses,
+        route_jobs,
+    )
+
+    limit = apply_stop_limit(state)
+    checkpoint = directory / "state.json"
+    state.update(status="running", execution_mode="continuous", updated_at=utcnow())
+    state.pop("error", None)
+    state.setdefault("continuous_started_at", utcnow())
+    save(checkpoint, state)
+    store = AnalysisStore(database)
+    initialize(store)
+    ordinal = 0
+    eligible = []
+    for index, task in enumerate(state["tasks"]):
+        if ordinal < limit:
+            eligible.append((index, task))
+        ordinal += task["count"]
+    try:
+        with Path(str(database) + ".lock").open("a") as lock:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            for source in SOURCE_ORDER:
+                tasks = [
+                    (i, t)
+                    for i, t in eligible
+                    if t["source"] == source
+                    and t.get("status") not in {"complete", "incomplete_evaluations"}
+                ]
+                if not tasks:
+                    continue
+                pending = iter(tasks)
+                active_runs = []
+                frozen = None
+                state["active_source"] = source
+
+                def progress():
+                    state["updated_at"] = utcnow()
+                    save(checkpoint, state)
+
+                def refill(pending=pending, source=source, active_runs=active_runs):
+                    nonlocal frozen
+                    item = next(pending, None)
+                    if item is None:
+                        return None
+                    index, task = item
+                    state["active_task"] = index
+                    progress()
+                    if "runs" not in task:
+                        values = [v for v in catalog["vacancies"] if v["source"] == source]
+                        values = values[task["start"] : task["start"] + task["count"]]
+                        prepared = prepare(
+                            config,
+                            limit=len(values),
+                            max_calls=4 * len(values),
+                            catalog=(values, catalog["policies"]),
+                            coordinator_lock=lock,
+                        )
+                        task["runs"] = [*prepared["reused_runs"], prepared["run_id"]]
+                        task["new_jobs"] = prepared["jobs"]
+                        task["reused_jobs"] = prepared["previously_admitted_skipped"]
+                        save(checkpoint, state)
+                    ready = []
+                    for run_id in task["runs"]:
+                        current = report(store, run_id)
+                        if current["status"] == "complete":
+                            continue
+                        if pending_sources(store, run_id) - {source}:
+                            raise EvaluationError("pending_run_crosses_source_phase", fatal=True)
+                        value = json.loads(store.run(run_id)["config_json"])
+                        if not value["external_calls_enabled"]:
+                            raise EvaluationError("model_calls_disabled", fatal=True)
+                        if frozen is None:
+                            frozen = value
+                        if value["model"] != frozen["model"]:
+                            raise EvaluationError("continuous_model_changed", fatal=True)
+                        extra = max(0, 4 * current["jobs"] - current["max_calls"])
+                        if extra:
+                            with store.db:
+                                store.db.execute(
+                                    "UPDATE analysis_runs SET max_calls=max_calls+? WHERE id=?",
+                                    (extra, run_id),
+                                )
+                        revalidate_saved_responses(store, run_id)
+                        try:
+                            route_jobs(
+                                store,
+                                run_id,
+                                value,
+                                DecisionsClient(
+                                    Path(value["routing"]["workspace"]),
+                                    max_attempts=value["routing"].get("native_max_attempts", 1),
+                                ),
+                            )
+                        finally:
+                            aggregate(store, run_id)
+                        if run_id not in active_runs:
+                            active_runs.append(run_id)
+                            ready.append(run_id)
+                    progress()
+                    return ready
+
+                error = None
+                try:
+                    initial = refill()
+                    # Entire portions can consist of earlier exclusions/cache.
+                    while initial is not None and not initial:
+                        initial = refill()
+                    if initial:
+                        error = evaluate_queues(
+                            store, initial, frozen, refill=refill, on_progress=progress
+                        )
+                except EvaluationError as exc:
+                    error = exc.code
+                for _, task in tasks:
+                    if "runs" not in task:
+                        continue
+                    task["reports"] = [report(store, r) for r in task["runs"]]
+                    if all(r["status"] == "complete" for r in task["reports"]):
+                        task["status"] = "complete"
+                    elif not error:
+                        task["status"] = "incomplete_evaluations"
+                if error:
+                    state.update(status="blocked", error=error)
+                    publish(store, directory, state)
+                    return state
+                publish(store, directory, state)
+            complete = all(t.get("status") == "complete" for _, t in eligible)
+            state["status"] = (
+                "stopped_at_limit"
+                if complete and limit < state["total"]
+                else "complete"
+                if complete
+                else "complete_with_errors"
+            )
+            state["completed_catalog_count"] = sum(
+                t["count"] for _, t in eligible if t.get("status") == "complete"
+            )
+            state["finished_at"] = utcnow()
+            state.pop("active_task", None)
+            state.pop("active_source", None)
+            publish(store, directory, state)
+            return state
+    finally:
+        store.close()
+
+
 def main(argv=None):
     os.umask(0o077)
     parser = argparse.ArgumentParser(description=__doc__)
@@ -270,6 +462,12 @@ def main(argv=None):
     parser.add_argument("--output", type=Path)
     parser.add_argument("--freeze", action="store_true", help="Only freeze an exclusive catalog")
     parser.add_argument("--chunk-size", type=int, default=100)
+    parser.add_argument(
+        "--continuous", action="store_true", help="Keep four queues fed across portions"
+    )
+    parser.add_argument(
+        "--stop-after", type=int, help="Stop at this catalog ordinal, including prior work"
+    )
     args = parser.parse_args(argv)
     if not args.freeze and args.output is None:
         parser.error("--output is required for execution")
@@ -282,9 +480,11 @@ def main(argv=None):
             args.catalog.resolve(),
             args.output.resolve(),
             chunk_size=args.chunk_size,
+            continuous=args.continuous,
+            stop_after=args.stop_after,
         )
         print(json.dumps({k: v for k, v in state.items() if k != "tasks"}, ensure_ascii=False))
-        return 0 if state["status"] == "complete" else 2
+        return 0 if state["status"] in {"complete", "stopped_at_limit"} else 2
     except EvaluationError as exc:
         print(json.dumps({"error": exc.code}), flush=True)
         return 3
