@@ -197,7 +197,7 @@ def screen_profile_fit(client, requests, settings):
 
 def route_screened(store, run_id, frozen, client, rows):
     """Four bounded native requests; only the coordinator writes SQLite."""
-    from career_scout.prescreen import POLICY_HASH
+    from career_scout.prescreen import POLICY_HASH, local_occupation_exclusion
 
     settings = frozen["routing"]
     if settings["prescreen_policy_hash"] != POLICY_HASH:
@@ -216,7 +216,22 @@ def route_screened(store, run_id, frozen, client, rows):
             (run_id, row["route_key"]),
         ).fetchone()
     ]
-    queue = iter((row["route_key"], store.inputs(row["route_key"])) for row in pending)
+
+    def inputs_requiring_native_screen():
+        for row in pending:
+            key = row["route_key"]
+            requests = store.inputs(key)
+            local = local_occupation_exclusion(requests[0].vacancy)
+            if local is None:
+                yield key, requests
+            else:
+                with store.db:
+                    store.db.execute(
+                        "INSERT INTO routed_selections VALUES(?,?,?,?)",
+                        (run_id, key, json.dumps(local), "[]"),
+                    )
+
+    queue = iter(inputs_requiring_native_screen())
     active, error, exhausted = {}, None, False
     with ThreadPoolExecutor(max_workers=4) as pool:
         while active or not exhausted:

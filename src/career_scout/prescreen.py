@@ -44,6 +44,26 @@ POLICY_HASH = digest(
 )
 
 
+def local_occupation_exclusion(vacancy):
+    """A direct service occupation is outside all four supported civilian roles.
+
+    Match the occupation itself at the start of the title, never industry,
+    description keywords or military experience mentioned as a qualification.
+    This is an independent local rule, not a fabricated Decisions distribution.
+    """
+    if not re.match(r"^\s*военнослужащ(?:ий|ая)\b", vacancy.title, re.I):
+        return None
+    return {
+        "provider": "local_rule",
+        "rule_version": "direct-military-occupation-1",
+        "selected_profiles": [],
+        "exclusion": {
+            "reason": "occupation_outside_supported_profiles",
+            "quote": vacancy.title,
+        },
+    }
+
+
 def body(vacancies):
     if not 1 <= len(vacancies) <= 20:
         raise EvaluationError("invalid_prescreen_batch", fatal=True)

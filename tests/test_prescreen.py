@@ -1,5 +1,7 @@
 """Native screening cannot silently drop unknowns or shift evidence across cases."""
 
+import json
+
 import pytest
 from test_analysis import setup as shared_setup
 from test_routed_analysis import clone, prepare_routed, probs
@@ -182,6 +184,89 @@ def test_confirmed_hard_exclusion_never_reaches_evaluator(fixture):
     aggregate(store, rid)
     assert store.db.execute("SELECT status FROM run_jobs").fetchone()[0] == "PRESCREENED_OUT"
     assert store.db.execute("SELECT COUNT(*) FROM batch_attempts").fetchone()[0] == 0
+    store.close()
+
+
+@pytest.mark.parametrize(
+    "title",
+    [
+        "Product Manager военного сервиса",
+        "Разработчик ПО для военнослужащих",
+        "Бизнес-ассистент; приветствуется служба",
+        "Бизнес-аналитик оборонной компании",
+        "Оператор БПЛА",
+    ],
+)
+def test_local_occupation_rule_does_not_reject_industry_or_ambiguous_roles(fixture, title):
+    vacancy = fixture[2]["product"].vacancy.model_copy(update={"title": title})
+    assert prescreen.local_occupation_exclusion(vacancy) is None
+
+
+def test_direct_outside_occupation_is_persisted_before_native_calls(fixture):
+    from career_scout.evaluation import make_input
+
+    store, rid, frozen, _ = prepare_routed(fixture, [])
+    with store.db:
+        store.db.execute(
+            "UPDATE analysis_runs SET config_json=json_set(config_json,"
+            "'$.evaluation_policy','applications-1') WHERE id=?",
+            (rid,),
+        )
+    title = "Военнослужащий по контракту / Доброволец"
+    requests = []
+    for request in fixture[2].values():
+        vacancy = clone(request, 100).vacancy.model_copy(update={"title": title})
+        requests.append(
+            make_input(
+                vacancy=vacancy,
+                resume=request.resume,
+                filters=request.filters,
+                filter_version=request.filter_version,
+                rubric=request.rubric,
+                rubric_version=request.rubric_version,
+                common_instructions=request.common_instructions,
+                config=fixture[1],
+                evaluation_date=request.evaluation_date,
+            )
+        )
+    store.add_job(rid, requests, policy="decisions-one-two-1")
+    frozen["routing"]["prescreen_policy_hash"] = prescreen.POLICY_HASH
+
+    class Client:
+        def request(self, body):
+            pytest.fail("direct outside occupation must not reach Decisions")
+
+    route_jobs(store, rid, frozen, Client())
+    aggregate(store, rid)
+    route_jobs(store, rid, frozen, Client())
+    assert store.db.execute("SELECT status FROM run_jobs").fetchone()[0] == "PRESCREENED_OUT"
+    assert store.db.execute("SELECT requests FROM routing_budgets").fetchone()[0] == 0
+    assert store.db.execute("SELECT COUNT(*) FROM batch_attempts").fetchone()[0] == 0
+    decision = store.db.execute("SELECT decision_json FROM routed_selections").fetchone()[0]
+    proof = json.loads(decision)
+    assert proof["provider"] == "local_rule"
+    assert proof["exclusion"]["quote"] == title
+    assert "probabilities" not in proof
+    assert store.db.execute("SELECT COUNT(*) FROM vacancy_exclusions").fetchone()[0] == 1
+
+    # A following civilian card is screened normally; the excluded one stays closed.
+    store.add_job(rid, [clone(r, 101) for r in fixture[2].values()], policy="decisions-one-two-1")
+    calls = []
+
+    class FollowingClient:
+        def request(self, body):
+            calls.append(body)
+            assert body["input"][0]["content"][0]["data"]["title"] != title
+            return {"response": single_payload(), "key": "next-card"}
+
+    route_jobs(store, rid, frozen, FollowingClient())
+    aggregate(store, rid)
+    assert len(calls) == 1
+    assert store.db.execute("SELECT requests FROM routing_budgets").fetchone()[0] == 1
+    assert dict(store.db.execute("SELECT status,COUNT(*) FROM run_jobs GROUP BY status")) == {
+        "PRESCREENED_OUT": 1,
+        "PENDING": 1,
+    }
     store.close()
 
 
