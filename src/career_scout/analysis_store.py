@@ -116,10 +116,10 @@ class AnalysisStore:
             raise EvaluationError("unknown_analysis_run", fatal=True)
         return row
 
-    def add_job(self, run_id, requests):
+    def add_job(self, run_id, requests, *, policy="first-pass-1"):
         for request in requests:
             self.save_input(request)
-        manifest = {"policy": "first-pass-1", "keys": [r.evaluation_key for r in requests]}
+        manifest = {"policy": policy, "keys": [r.evaluation_key for r in requests]}
         route_key = digest(manifest)
         with self.db:
             self.db.execute(

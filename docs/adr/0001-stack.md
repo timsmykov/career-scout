@@ -16,3 +16,7 @@ OpenBot необязателен для ядра. CAMEL и автономный 
 PostgreSQL/брокер/UI/векторная БД отложены до измеренного требования.
 Источники: https://docs.langchain.com/oss/python/langgraph/workflows-agents ,
 https://docs.langchain.com/oss/python/langgraph/persistence .
+
+Новый routed mode12.11 использует обычный Python-координатор четырёх профильных
+очередей и SQLite ledger; LangGraph остаётся только в legacy first-PASS. Категоризация
+идёт через native Decisions API; оценщики остаются на Codex subscription.

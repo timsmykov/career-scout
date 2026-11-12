@@ -61,16 +61,16 @@ class EvidenceDocument:
         return quote
 
 
-def documents(request):
+def documents(request, vacancy_prefix="V"):
     return (
-        EvidenceDocument(vacancy_evidence_text(request.vacancy), "V"),
+        EvidenceDocument(vacancy_evidence_text(request.vacancy), vacancy_prefix),
         EvidenceDocument(request.resume.text, "R"),
     )
 
 
-def hydrate_response(request, wire):
+def hydrate_response(request, wire, vacancy_prefix="V"):
     """Resolve contiguous ranges only. Never invent, merge or fuzzy-match quotes."""
-    vacancy, resume = documents(request)
+    vacancy, resume = documents(request, vacancy_prefix)
     value = copy.deepcopy(wire)
     if not isinstance(value, dict) or not isinstance(value.get("assessments"), list):
         raise EvaluationError("invalid_wire_response")

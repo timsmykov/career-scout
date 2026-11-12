@@ -314,7 +314,7 @@
       "deliverable": "evaluation/model.py, usage.py",
       "acceptance": "Codex subscription model/reasoning проверены; finite retries, timeout/context, tokens/cost_unknown, durable max_calls",
       "scope": "analysis",
-      "implementation_note": "codex_worker.py: native Codex CLI через ChatGPT login, Luna/max, timeout, строгий context size и durable max_calls. USD не оценивается для подписки."
+      "implementation_note": "codex_worker.py: native Codex CLI через ChatGPT login, Luna/max, timeout, строгий context size и durable max_calls. USD не оценивается для подписки. Батчевый вызов Codex до10карточек,4профиля параллельно; routing Decisions с отдельным budget через существующий native helper."
     },
     {
       "id": "CS-023",
@@ -333,17 +333,17 @@
     {
       "id": "CS-024",
       "milestone": "M4",
-      "title": "Последовательный LangGraph",
+      "title": "Decisions и четыре профильные очереди",
       "status": "in_progress",
       "depends_on": [
         "CS-021",
         "CS-022",
         "CS-023"
       ],
-      "deliverable": "evaluation/graph.py, routing.py",
-      "acceptance": "First PASS прекращает вызовы; 256 сочетаний исходов и реальные call counts; persistent checkpoint",
+      "deliverable": "decisions.py, routed_pipeline.py, batch_worker.py; legacy analysis_graph.py",
+      "acceptance": "Выбор одного/двух профилей, четыре параллельных очереди, до10полных карточек; обе оценки, finite budgets/resume",
       "scope": "analysis",
-      "implementation_note": "analysis_graph.py реализует first-PASS и persistent SqliteSaver. Один исполнитель на analysis DB; многопроцессные leases не требуются этому режиму."
+      "implementation_note": "Реализован новый routed mode; legacy first-PASS сохранён. Калибровка100 primary98/100; владелец подтвердил достаточность одного уверенного профиля. Второй при рабочем gap≤0.10 внутри равнозначного development-плато0…0.55."
     },
     {
       "id": "CS-025",
@@ -357,7 +357,7 @@
       "deliverable": "evaluation/cache.py, recovery.py",
       "acceptance": "Все входные версии в ключах; checkpoint сверяется с ledger; error не кешируется как reject",
       "scope": "analysis",
-      "implementation_note": "Проверенные ответы записываются до checkpoint. Cache по полным версиям входов; тестируется сбой между результатом и checkpoint, сохранён бюджет попыток."
+      "implementation_note": "Проверенные ответы записываются до checkpoint. Cache по полным версиям входов; тестируется сбой между результатом и checkpoint, сохранён бюджет попыток. В routed mode кэш по карточкам, usage/бюджет по батчу; DB пишет один координатор."
     },
     {
       "id": "CS-026",
@@ -377,7 +377,7 @@
       "id": "CS-027",
       "milestone": "M5",
       "title": "Контрольная разметка",
-      "status": "planned",
+      "status": "in_progress",
       "depends_on": [
         "CS-014",
         "CS-021"
@@ -385,7 +385,7 @@
       "deliverable": "private evaluation dataset + anonymized protocol",
       "acceptance": "Наборы настройки/контроля раздельны; по четырём профилям есть пограничные/негативные случаи",
       "scope": "analysis",
-      "implementation_note": "Диагностический live-пилот не является независимой контрольной разметкой. Нужен отдельный набор и процедура разметки."
+      "implementation_note": "100реальных ролей, фиксированные labels и split60/40; native Decisions primary98/100. Уверенный один профиль достаточен по уточнению владельца; второй при gap≤0.10. Это авторская предварительная разметка, не независимый gold соответствия CV."
     },
     {
       "id": "CS-028",
@@ -405,7 +405,7 @@
       "id": "CS-029",
       "milestone": "M5",
       "title": "Качество оценщиков",
-      "status": "planned",
+      "status": "in_progress",
       "depends_on": [
         "CS-025",
         "CS-027"
@@ -413,7 +413,7 @@
       "deliverable": "evaluation report per profile and route",
       "acceptance": "False rejects/accepts, clarification/error rates; отдельно по профилям; пороги согласованы",
       "scope": "analysis",
-      "implementation_note": "Доступ, формат и цитаты проходят приёмку; false accept/reject rates и согласованные пороги ещё не измерены."
+      "implementation_note": "100реальных ролей, фиксированные labels и split60/40; native Decisions primary98/100. Уверенный один профиль достаточен по уточнению владельца; второй при gap≤0.10. Это авторская предварительная разметка, не независимый gold соответствия CV."
     },
     {
       "id": "CS-030",

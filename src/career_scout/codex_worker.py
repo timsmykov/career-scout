@@ -5,6 +5,7 @@ import os
 import signal
 import subprocess
 import tempfile
+import threading
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -93,9 +94,9 @@ def worker_environment():
     return {key: value for key, value in os.environ.items() if key in allowed}
 
 
-def output_schema(request):
+def output_schema(request, vacancy_prefix="V"):
     schema = EvaluationResult.model_json_schema()
-    vacancy, resume = documents(request)
+    vacancy, resume = documents(request, vacancy_prefix)
     assessment = schema["$defs"]["Assessment"]
     fields = assessment["properties"]
     del fields["vacancy_quote"], fields["resume_quote"]
@@ -237,6 +238,18 @@ class CodexWorker:
         self.config = config
         self.binary = binary
         self._preflight_checked = False
+        self._processes = set()
+        self._process_lock = threading.Lock()
+        self._cancelled = threading.Event()
+
+    def cancel(self):
+        self._cancelled.set()
+        with self._process_lock:
+            for process in self._processes:
+                try:
+                    os.killpg(process.pid, signal.SIGTERM)
+                except ProcessLookupError:
+                    pass
 
     def preflight(self):
         try:
@@ -257,11 +270,23 @@ class CodexWorker:
         if request.model_config_hash != self.config.key():
             raise EvaluationError("model_config_mismatch", fatal=True)
         prompt = build_prompt(request)
-        schema = json.dumps(output_schema(request), ensure_ascii=False)
+        result, usage = self.invoke(prompt, output_schema(request))
+        try:
+            hydrated = hydrate_response(request, result)
+        except EvaluationError as error:
+            error.usage = usage
+            error.response = {"wire_version": WIRE_VERSION, "wire_response": result}
+            raise
+        return WorkerReply(result=hydrated, usage=usage, wire_result=result)
+
+    def invoke(self, prompt, schema):
+        schema = json.dumps(schema, ensure_ascii=False)
         if len(prompt) + len(schema) > self.config.max_input_characters:
             raise EvaluationError("input_exceeds_configured_context")
         if not self._preflight_checked:
             self.preflight()
+        if self._cancelled.is_set():
+            raise EvaluationError("codex_cancelled", fatal=True)
         with tempfile.TemporaryDirectory(prefix="career-scout-worker-") as temporary:
             directory = Path(temporary)
             (directory / "schema.json").write_text(schema)
@@ -277,6 +302,13 @@ class CodexWorker:
                 )
             except OSError:
                 raise EvaluationError("codex_unavailable", fatal=True) from None
+            with self._process_lock:
+                self._processes.add(process)
+                if self._cancelled.is_set():
+                    try:
+                        os.killpg(process.pid, signal.SIGTERM)
+                    except ProcessLookupError:
+                        pass
             try:
                 stdout, stderr = process.communicate(prompt, timeout=self.config.timeout_seconds)
             except (subprocess.TimeoutExpired, KeyboardInterrupt) as interrupted:
@@ -297,6 +329,9 @@ class CodexWorker:
                 if isinstance(interrupted, KeyboardInterrupt):
                     raise
                 raise EvaluationError("codex_timeout") from None
+            finally:
+                with self._process_lock:
+                    self._processes.discard(process)
             events = []
             for line in stdout.splitlines():
                 try:
@@ -323,10 +358,4 @@ class CodexWorker:
                 result = json.loads((directory / "result.json").read_text())
             except (OSError, ValueError):
                 raise EvaluationError("codex_invalid_json", usage=usage) from None
-            try:
-                hydrated = hydrate_response(request, result)
-            except EvaluationError as error:
-                error.usage = usage
-                error.response = {"wire_version": WIRE_VERSION, "wire_response": result}
-                raise
-            return WorkerReply(result=hydrated, usage=usage, wire_result=result)
+            return result, usage

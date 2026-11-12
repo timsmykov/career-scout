@@ -28,6 +28,14 @@ from career_scout.models import Model, Vacancy
 from career_scout.storage import Store
 
 
+class RoutingSettings(Model):
+    calibration_file: str
+    workspace: str
+    max_requests: int = Field(default=0, ge=0)
+    batch_size: int = Field(default=10, ge=10, le=10)
+    workers: int = Field(default=4, ge=4, le=4)
+
+
 class AnalysisSettings(Model):
     schema_version: int = 1
     collector_database: str
@@ -42,6 +50,7 @@ class AnalysisSettings(Model):
     external_calls_enabled: bool = False
     owner_attributes: dict = Field(default_factory=dict)
     model: EvaluatorConfig = Field(default_factory=EvaluatorConfig)
+    routing: RoutingSettings | None = None
 
     @model_validator(mode="after")
     def validate_profiles(self):
@@ -101,6 +110,26 @@ def prepare(config_path: Path, *, limit, max_calls):
         raise EvaluationError("resume_profile_mismatch", fatal=True)
     common = resolve(settings.common_prompt).read_text()
     rubrics = {p: resolve(path).read_text() for p, path in settings.rubrics.items()}
+    routing = None
+    if settings.routing:
+        from career_scout.common import digest
+        from career_scout.decisions import INSTRUCTIONS, MODEL, PROFILES
+
+        calibration = json.loads(resolve(settings.routing.calibration_file).read_text())
+        expected = digest({"model": MODEL, "instructions": INSTRUCTIONS, "profiles": PROFILES})
+        margin = calibration.get("margin")
+        if (
+            calibration.get("policy_hash") != expected
+            or type(margin) not in (int, float)
+            or not 0 <= margin <= 1
+        ):
+            raise EvaluationError("invalid_routing_calibration", fatal=True)
+        routing = {
+            **settings.routing.model_dump(),
+            "margin": margin,
+            "workspace": str(resolve(settings.routing.workspace)),
+            "calibration_hash": digest(calibration),
+        }
     vacancies, policies = read_catalog(resolve(settings.collector_database), settings.campaign_id)
     prepared_at = datetime.now(UTC)
     store = AnalysisStore(resolve(settings.database))
@@ -112,6 +141,8 @@ def prepare(config_path: Path, *, limit, max_calls):
             "external_calls_enabled": settings.external_calls_enabled,
             "source_campaign_id": settings.campaign_id,
         }
+        if routing:
+            frozen["routing"] = routing
         rid = store.create_run(frozen, max_calls)
         for vacancy in vacancies[:limit]:
             source = vacancy["source"]
@@ -134,7 +165,9 @@ def prepare(config_path: Path, *, limit, max_calls):
                 )
                 for p in settings.order
             ]
-            store.add_job(rid, requests)
+            store.add_job(
+                rid, requests, policy="decisions-one-two-1" if routing else "first-pass-1"
+            )
         return report(store, rid)
     finally:
         store.close()
@@ -154,10 +187,25 @@ def report(store, run_id):
             "SELECT usage_json FROM attempts WHERE run_id=? AND usage_json IS NOT NULL", (run_id,)
         )
     ]
+    batches = []
+    incomplete_selected = 0
+    if store.db.execute("SELECT 1 FROM sqlite_master WHERE name='batch_attempts'").fetchone():
+        batches = store.db.execute(
+            "SELECT * FROM batch_attempts WHERE run_id=?", (run_id,)
+        ).fetchall()
+        usages.extend(json.loads(r["usage_json"]) for r in batches if r["usage_json"])
+        for selection in store.db.execute(
+            "SELECT route_key,selected_json FROM routed_selections WHERE run_id=?", (run_id,)
+        ):
+            selected = json.loads(selection["selected_json"])
+            incomplete_selected += sum(
+                r.profile_id in selected and store.cached(r) is None
+                for r in store.inputs(selection["route_key"])
+            )
     return {
         "run_id": run_id,
         "database": str(store.path),
-        "status": "partial" if states["PENDING"] else "complete",
+        "status": "partial" if states["PENDING"] or incomplete_selected else "complete",
         "jobs": len(jobs),
         "outcomes": dict(states),
         "calls_reserved": run["calls"],
@@ -171,6 +219,9 @@ def report(store, run_id):
         else None,
         "billing": "codex_subscription",
         "cost_usd": None,
+        "batch_calls": len(batches),
+        "batch_items": sum(len(json.loads(b["keys_json"])) for b in batches),
+        "incomplete_selected_evaluations": incomplete_selected,
     }
 
 
@@ -181,6 +232,14 @@ def run_pending(store, run_id, *, additional_calls=0, retry_errors=False):
     if not frozen["external_calls_enabled"]:
         raise EvaluationError("model_calls_disabled", fatal=True)
     config = EvaluatorConfig.model_validate(frozen["model"])
+    if frozen.get("routing"):
+        from career_scout.routed_pipeline import run_routed
+
+        error = run_routed(store, run_id, frozen)
+        result = report(store, run_id)
+        if error:
+            result["error"] = error
+        return result
     graph = AnalysisGraph(
         store,
         CodexWorker(config),
@@ -209,6 +268,20 @@ def run_pending(store, run_id, *, additional_calls=0, retry_errors=False):
 
 def export_results(store, run_id, path: Path):
     result = {"report": report(store, run_id), "vacancies": []}
+    routed = bool(json.loads(store.run(run_id)["config_json"]).get("routing"))
+    selections = {}
+    if (
+        routed
+        and store.db.execute(
+            "SELECT 1 FROM sqlite_master WHERE name='routed_selections'"
+        ).fetchone()
+    ):
+        selections = {
+            r["route_key"]: json.loads(r["selected_json"])
+            for r in store.db.execute(
+                "SELECT route_key,selected_json FROM routed_selections WHERE run_id=?", (run_id,)
+            )
+        }
     for job in store.db.execute(
         "SELECT * FROM run_jobs WHERE run_id=? ORDER BY position", (run_id,)
     ):
@@ -217,7 +290,8 @@ def export_results(store, run_id, path: Path):
         results = {
             r.profile_id: cached.model_dump(mode="json")
             for r in requests
-            if (cached := store.cached(r)) is not None
+            if (not routed or r.profile_id in selections.get(job["route_key"], []))
+            and (cached := store.cached(r)) is not None
         }
         result["vacancies"].append(
             {

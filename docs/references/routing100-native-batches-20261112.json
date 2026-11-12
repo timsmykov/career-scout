@@ -1,0 +1,88 @@
+{
+  "native_run_id": "8c93c7a7-3e6f-4e05-9c7b-1c9711845b28",
+  "working_cache_run_id": "967c6089-81e2-4b1d-bcee-70c5470a768c",
+  "decisions_requests": 100,
+  "decisions_http_200": 100,
+  "unique_request_ids": 100,
+  "labels_and_samples_unchanged": true,
+  "native_model": "gpt-6-luna",
+  "reasoning_effort": "max",
+  "billing": "codex_subscription",
+  "max_overlapping_batch_attempts": 4,
+  "first_phase_batch_sizes": [
+    10,
+    10,
+    10,
+    10
+  ],
+  "resumed_batch_sizes": [
+    4,
+    2,
+    2,
+    8
+  ],
+  "valid_evaluations": 56,
+  "technical_errors": 0,
+  "outcomes": {
+    "NEEDS_CLARIFICATION": 38,
+    "REJECTED_BY_SELECTED": 18,
+    "ROUTING_REVIEW": 44
+  },
+  "cache_proof_new_codex_calls": 0,
+  "cache_proof_native_receipts_reused": 100,
+  "operating_margin": 0.1,
+  "input_tokens": 365137,
+  "output_tokens": 106025,
+  "subscription_cost_usd": null,
+  "batch_intervals": [
+    {
+      "profile": "product",
+      "started_at": "2026-11-12T15:20:44.650379+00:00",
+      "finished_at": "2026-11-12T15:25:30.389626+00:00",
+      "error": null
+    },
+    {
+      "profile": "automation",
+      "started_at": "2026-11-12T15:20:45.992733+00:00",
+      "finished_at": "2026-11-12T15:28:14.399709+00:00",
+      "error": null
+    },
+    {
+      "profile": "business_assistant",
+      "started_at": "2026-11-12T15:20:47.376532+00:00",
+      "finished_at": "2026-11-12T15:29:18.248304+00:00",
+      "error": null
+    },
+    {
+      "profile": "business_analyst",
+      "started_at": "2026-11-12T15:20:49.083368+00:00",
+      "finished_at": "2026-11-12T15:26:21.274093+00:00",
+      "error": null
+    },
+    {
+      "profile": "product",
+      "started_at": "2026-11-12T15:29:53.152538+00:00",
+      "finished_at": "2026-11-12T15:35:28.858254+00:00",
+      "error": null
+    },
+    {
+      "profile": "automation",
+      "started_at": "2026-11-12T15:29:53.313548+00:00",
+      "finished_at": "2026-11-12T15:36:13.001507+00:00",
+      "error": null
+    },
+    {
+      "profile": "business_assistant",
+      "started_at": "2026-11-12T15:29:53.525178+00:00",
+      "finished_at": "2026-11-12T15:34:11.284841+00:00",
+      "error": null
+    },
+    {
+      "profile": "business_analyst",
+      "started_at": "2026-11-12T15:29:54.017131+00:00",
+      "finished_at": "2026-11-12T15:34:28.496881+00:00",
+      "error": null
+    }
+  ],
+  "semantic_quality": "eight results inspected by same author; no independent CV-fit goldset for these56"
+}

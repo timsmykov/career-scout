@@ -10,10 +10,14 @@
 - [reuse.md](reuse.md) — выбор сборщика и точные донорские исходники.
 - [adr/0004-collector-first.md](adr/0004-collector-first.md) — текущий приоритет: самостоятельный коллектор.
 - [adr/0001-stack.md](adr/0001-stack.md) — Python, LangGraph, SQLite.
-- [adr/0002-routing.md](adr/0002-routing.md) — последовательность и первый PASS.
+- [adr/0002-routing.md](adr/0002-routing.md) — native Decisions, четыре очереди и legacy first-PASS.
 - [adr/0003-source-boundaries.md](adr/0003-source-boundaries.md) — транспорт и права источников.
 
 ## Контракты
+
+- [routing-batches.md](routing-batches.md) — один/два профиля, четыре параллельных батча,
+  budgets/resume и фактическая калибровка100.
+- [decisions-routing100-20261112.md](decisions-routing100-20261112.md) — протокол и метрики100.
 
 - [multi-source.md](multi-source.md) — четыре адаптера, общий CLI, native pagination и статус SuperJob.
 
