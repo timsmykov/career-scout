@@ -10,7 +10,7 @@ LangGraph, LLM-оценка, импорт резюме и настройка м�
 
 ## Реализованные источники — 11.11.2026
 
-Работают `plan/collect/resume/status/inspect/export/refilter/probe`, полный HH/Trudvsem/Habr detail и SuperJob probe, курсор
+Работают `plan/collect/resume/status/inspect/export/refilter/probe` и полный detail всех четырёх источников, курсор
 страницы в одной транзакции с discoveries, SQLite WAL/schema v5, дедупликация,
 история содержательных версий, разбиение выдачи свыше 2000 по времени, finite
 retries, request budget и сохранённый cooldown 429. Один процесс на БД через flock;
@@ -24,6 +24,9 @@ retries, request budget и сохранённый cooldown 429. Один про�
 пропуск известных detail, backlog/retry, delta export и миграцию без изменения
 прежних строк. Полная live приёмка initial идёт; фактический результат будет
 добавлен после завершения всех площадок.
+[Промежуточная проверка](references/initial-14d-live-20261112.json) фиксирует
+14-дневное окно, сохранность снимков после пересоздания контейнера и аудит
+текстов/выгрузки; её `partial` не означает завершения поискового плана.
 
 **HH core принят для одного процесса и ограниченного поискового плана.**
 315 real full, 8 страниц, exact-ID dedup, настоящий SIGKILL/resume и Docker
@@ -34,7 +37,7 @@ volume recreation проверены; 300 synthetic карточек прохо�
 | Часть | Фактическая готовность | Остаток |
 |---|---|---|
 | HH auth/search/detail | Реализовано, CS-005/006 complete | Длительная эксплуатационная проверка |
-| Страницы/версии/дочитывание | Работают для HH/Trudvsem/Habr; SJ код проверен synthetic | Полный initial и ручной new |
+| Страницы/версии/дочитывание | Работают для всех четырёх источников; bounded live resume/хранение проверены | Полный initial и ручной new |
 | Размещение | Docker CLI + external SQLite volume | Backup policy/расписание — отдельная будущая потребность |
 | Поиск/конфигурация | Валидируемый TOML, четыре семейства, география, frozen plan/resume | Doctor, измерение охвата |
 | Условия/фильтры | Domain/grade/experience, unknown/conflict, зарплата нейтральна, история/refilter/export | Дальнейший контроль потерь |
