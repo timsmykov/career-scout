@@ -342,3 +342,24 @@ def test_revalidation_uses_unchanged_wire_and_never_fixes_invalid_quotes(fixture
         0 if bad_reference else 1
     )
     store.close()
+
+
+def test_shortlist_skips_large_nonaccepted_inputs_without_leaking_older_pass(fixture, monkeypatch):
+    store = AnalysisStore(fixture[0] / "light-shortlist.sqlite3")
+    frozen = {"evaluation_policy": "applications-1", "selection_key": "same"}
+    rs = [app_input(fixture[2][p], fixture[1], "2026-11-12T00:00:00+00:00") for p in ORDER]
+    original = store.create_run(frozen, 0)
+    key = store.add_job(original, rs)
+    request = rs[0]
+    store.save_result(request, ApplicationResult.model_validate(app_result(request)))
+    store.save_outcome(original, key, {"status": "ACCEPTED", "accepted_profile": "product"})
+    later = store.create_run(frozen, 0)
+    store.add_job(later, rs)  # Newer PENDING is not an exclusion, but supersedes old PASS.
+
+    def no_hydration(_):
+        raise AssertionError("Nonaccepted rows must not load full CV/vacancy inputs")
+
+    monkeypatch.setattr(store, "inputs", no_hydration)
+    now = datetime.fromisoformat("2026-11-12T01:00:00+00:00")
+    assert recommendations(store, now=now) == []
+    store.close()

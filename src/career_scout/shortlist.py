@@ -94,8 +94,12 @@ def recommendations(store, *, run_id=None, profile=None, limit=20, now=None):
     if frozen.get("evaluation_policy") != "applications-1":
         raise EvaluationError("shortlist_requires_application_policy")
     rows = store.db.execute(
-        "SELECT j.*,r.config_json,r.created_at FROM run_jobs j "
-        "JOIN analysis_runs r ON r.id=j.run_id ORDER BY r.created_at DESC,r.rowid DESC,j.position"
+        "SELECT j.*,r.config_json,r.created_at,"
+        "json_extract(i.payload,'$.vacancy.source') AS source,"
+        "json_extract(i.payload,'$.vacancy.source_id') AS source_id FROM run_jobs j "
+        "JOIN analysis_runs r ON r.id=j.run_id JOIN jobs m ON m.route_key=j.route_key "
+        "LEFT JOIN inputs i ON i.key=json_extract(m.manifest_json,'$.keys[0]') "
+        "ORDER BY r.created_at DESC,r.rowid DESC,j.position"
     ).fetchall()
     seen, output = set(), []
     for row in rows:
@@ -104,16 +108,22 @@ def recommendations(store, *, run_id=None, profile=None, limit=20, now=None):
             continue
         if config.get("selection_key") != frozen.get("selection_key"):
             continue
-        inputs = store.inputs(row["route_key"])
-        vacancy = inputs[0].vacancy
-        if exclusions.blocked(store, vacancy):
+        # Suppress older rows by identity before hydrating large CV/vacancy inputs.
+        # Pending or negative newer rows must still hide an older PASS.
+        identity = (row["source"], row["source_id"])
+        inputs = None
+        if None in identity:
+            inputs = store.inputs(row["route_key"])
+            identity = (inputs[0].vacancy.source, inputs[0].vacancy.source_id)
+        if exclusions.identity_blocked(store.db, *identity):
             continue
-        identity = (vacancy.source, vacancy.source_id)
         if identity in seen:
             continue
         seen.add(identity)
         if row["status"] != "ACCEPTED" or not row["outcome_json"]:
             continue
+        inputs = inputs or store.inputs(row["route_key"])
+        vacancy = inputs[0].vacancy
         outcome = json.loads(row["outcome_json"])
         chosen = outcome.get("accepted_profile")
         if profile:
