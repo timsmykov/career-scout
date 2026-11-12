@@ -129,12 +129,15 @@ def select_profiles(probabilities, margin):
 
 
 class DecisionsClient:
-    def __init__(self, workspace: Path, *, binary=CLI):
+    def __init__(self, workspace: Path, *, binary=CLI, max_attempts=1):
         self.workspace = workspace.resolve()
         try:
             self.workspace.relative_to(NATIVE_ROOT.resolve())
         except ValueError:
             raise EvaluationError("invalid_decisions_workspace", fatal=True) from None
+        if type(max_attempts) is not int or not 1 <= max_attempts <= 3:
+            raise EvaluationError("invalid_native_retry_limit", fatal=True)
+        self.max_attempts = max_attempts
         self.binary = binary
         self._request_locks = {}
         self._locks_guard = threading.Lock()
@@ -150,50 +153,91 @@ class DecisionsClient:
     def _request(self, body):
         key = digest(body)
         request = self.workspace / (key + "-request.json")
-        receipt = self.workspace / (key + "-receipt.json")
-        cached = receipt.exists()
         started = time.perf_counter()
+        receipts = []
+        previous_status = None
+        retry_after = 0
         if request.exists() and json.loads(request.read_text()) != body:
             raise EvaluationError("decisions_request_collision", fatal=True)
-        if not receipt.exists():
-            fd = os.open(request, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
-            with os.fdopen(fd, "w") as stream:
-                json.dump(body, stream, ensure_ascii=False)
-            # The existing native helper reserves its receipt before contacting
-            # OpenAI and refuses overwrites. Never decrypt or export its key here.
+        for attempt in range(1, self.max_attempts + 1):
+            suffix = "-receipt.json" if attempt == 1 else f"-attempt-{attempt}-receipt.json"
+            receipt = self.workspace / (key + suffix)
+            cached = receipt.exists()
+            if not cached:
+                if receipts:
+                    # A definite temporary HTTP failure may be retried, but not an
+                    # incomplete receipt, timeout or unknown delivery outcome.
+                    delay = 15 * (attempt - 1) if previous_status == 429 else 2 ** (attempt - 2)
+                    time.sleep(max(delay, retry_after))
+                if not request.exists():
+                    fd = os.open(request, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+                    with os.fdopen(fd, "w") as stream:
+                        json.dump(body, stream, ensure_ascii=False)
+                try:
+                    subprocess.run(
+                        [
+                            self.binary,
+                            "decisions",
+                            "--request-file",
+                            str(request),
+                            "--output",
+                            str(receipt),
+                        ],
+                        capture_output=True,
+                        timeout=150,
+                        check=False,
+                    )
+                except subprocess.TimeoutExpired:
+                    raise EvaluationError("decisions_outcome_unknown", fatal=True) from None
+                except OSError:
+                    raise EvaluationError("decisions_connector_unavailable", fatal=True) from None
             try:
-                subprocess.run(
-                    [
-                        self.binary,
-                        "decisions",
-                        "--request-file",
-                        str(request),
-                        "--output",
-                        str(receipt),
-                    ],
-                    capture_output=True,
-                    timeout=150,
-                    check=False,
+                raw = json.loads(receipt.read_text())
+            except (OSError, ValueError):
+                raise EvaluationError("decisions_receipt_missing", fatal=True) from None
+            if not isinstance(raw, dict):
+                raise EvaluationError("decisions_receipt_missing", fatal=True)
+            receipts.append(str(receipt))
+            if raw.get("ok") and raw.get("http_status") == 200:
+                if not isinstance(raw.get("response"), dict):
+                    raise EvaluationError("invalid_decisions_response", fatal=True)
+                return {
+                    "key": key,
+                    "response": raw["response"],
+                    "usage": raw["response"].get("usage"),
+                    "cached": cached,
+                    "elapsed_seconds": time.perf_counter() - started,
+                    "request_id": raw.get("request_id"),
+                    "receipt": str(receipt),
+                    "attempt_receipts": receipts,
+                }
+            previous_status = raw.get("http_status")
+            rate_limited = (
+                previous_status == 429
+                and (
+                    raw.get("error_type") == "rate_limit_error"
+                    or raw.get("error_code") in {"rate_limit_exceeded", "slow_down"}
                 )
-            except subprocess.TimeoutExpired:
-                raise EvaluationError("decisions_outcome_unknown", fatal=True) from None
-            except OSError:
-                raise EvaluationError("decisions_connector_unavailable", fatal=True) from None
-        try:
-            raw = json.loads(receipt.read_text())
-        except (OSError, ValueError):
-            raise EvaluationError("decisions_receipt_missing", fatal=True) from None
-        if not raw.get("ok") or raw.get("http_status") != 200:
-            raise EvaluationError("decisions_failed_or_unknown", fatal=True)
-        return {
-            "key": key,
-            "response": raw["response"],
-            "usage": raw["response"].get("usage"),
-            "cached": cached,
-            "elapsed_seconds": time.perf_counter() - started,
-            "request_id": raw.get("request_id"),
-            "receipt": str(receipt),
-        }
+                and raw.get("error_code")
+                not in {
+                    "credit_balance_exhausted",
+                    "organization_spend_limit_exceeded",
+                    "project_spend_limit_exceeded",
+                    "organization_usage_limit_exceeded",
+                    "insufficient_quota",
+                }
+            )
+            retryable = previous_status in {500, 502, 503, 504} or rate_limited
+            retry_after = raw.get("retry_after_seconds", 0)
+            if (
+                type(retry_after) not in (int, float)
+                or not math.isfinite(retry_after)
+                or not 0 <= retry_after <= 3600
+            ):
+                retryable = False
+            if not retryable or attempt == self.max_attempts:
+                raise EvaluationError("decisions_failed_or_unknown", fatal=True)
+        raise AssertionError("unreachable")
 
     def evaluate(self, vacancy):
         value = self.request(decision_body(vacancy))

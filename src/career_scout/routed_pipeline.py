@@ -131,9 +131,13 @@ def route_jobs(store, run_id, frozen, client):
             continue
         with store.db:
             if not store.db.execute(
-                "UPDATE routing_budgets SET requests=requests+1 "
-                "WHERE run_id=? AND requests<max_requests",
-                (run_id,),
+                "UPDATE routing_budgets SET requests=requests+? "
+                "WHERE run_id=? AND requests+?<=max_requests",
+                (
+                    settings.get("native_max_attempts", 1),
+                    run_id,
+                    settings.get("native_max_attempts", 1),
+                ),
             ).rowcount:
                 raise EvaluationError("routing_request_budget_exhausted", fatal=True)
         decision = client.evaluate(store.inputs(key)[0].vacancy)
@@ -203,7 +207,7 @@ def route_screened(store, run_id, frozen, client, rows):
                     exhausted = True
                     break
                 key, requests = item
-                reservation = 3 if fit_enabled else 1
+                reservation = (3 if fit_enabled else 1) * settings.get("native_max_attempts", 1)
                 with store.db:
                     reserved = store.db.execute(
                         "UPDATE routing_budgets SET requests=requests+? "
@@ -397,7 +401,14 @@ def run_routed(store, run_id, frozen, *, worker_factory=CodexBatchWorker, client
     revalidate_saved_responses(store, run_id)
     try:
         route_jobs(
-            store, run_id, frozen, client or DecisionsClient(Path(frozen["routing"]["workspace"]))
+            store,
+            run_id,
+            frozen,
+            client
+            or DecisionsClient(
+                Path(frozen["routing"]["workspace"]),
+                max_attempts=frozen["routing"].get("native_max_attempts", 1),
+            ),
         )
     except EvaluationError as exc:
         aggregate(store, run_id)

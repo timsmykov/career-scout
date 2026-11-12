@@ -51,3 +51,7 @@ complete означает завершение всех задач; complete_wit
 изменённые параметры, дубли identity и отличие технической ошибки от отказа.
 
 Параметры20и Decisions screening: [evaluation-performance.md](evaluation-performance.md).
+
+Операционные retry/budget можно изменить при остановленном координаторе с отдельной
+квитанцией старой/новой конфигурации и причины. CV, правила, snapshot и selection_key
+сохраняются; контрольный fingerprint обновляется явно.

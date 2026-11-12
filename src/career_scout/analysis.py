@@ -39,6 +39,7 @@ class RoutingSettings(Model):
     max_batch_characters: int | None = Field(default=None, ge=100, le=2_000_000)
     prescreen_policy_hash: str | None = None
     fit_screen_policy_hash: str | None = None
+    native_max_attempts: int = Field(default=1, ge=1, le=3)
     workers: int = Field(default=4, ge=4, le=4)
 
 

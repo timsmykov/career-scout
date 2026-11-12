@@ -42,7 +42,8 @@
     "workers": 4,
     "max_batch_characters": 400000,
     "prescreen_policy_hash": null,
-    "fit_screen_policy_hash": null
+    "fit_screen_policy_hash": null,
+    "native_max_attempts": 3
   },
   "evaluation_policy": "applications-1"
 }
