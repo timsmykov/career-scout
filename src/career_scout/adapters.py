@@ -51,6 +51,11 @@ class TrudvsemClient(ReadClient):
     base = "https://opendata.trudvsem.ru/api/v1/vacancies"
     max_page_size = 20
     replan_slow_pages = True
+    supports_date_split = True
+    # Operational partition target, not an API result cap. All child windows
+    # remain queued; small pages also work for uncached date ranges.
+    partition_target = 300
+    partition_page_size = 5
 
     def envelope(self, body):
         if str(body.get("status")) != "200":

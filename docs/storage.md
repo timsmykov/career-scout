@@ -41,8 +41,11 @@ campaign_runs, campaign_items, acquisitions и detail_failures. Первое с�
 Один writer на ledger через flock, сеть вне транзакции. Cursor/discoveries и
 snapshot/current pointer/projection записываются атомарно. Replan размера страницы
 также атомарно сохраняет старый query как replanned, новый query/pinned size и
-event; старые discoveries и cursor не удаляются и не меняют шаг. Нормализация сама по себе
-не создаёт новую source content version. Экспорт читает common-1 full проекции;
+event; старые discoveries и cursor не удаляются и не меняют шаг.
+При временном split родитель также сохраняет свой cursor; дочерние queries и
+их заранее выбранные page sizes пишутся одной транзакцией. Сбой любого pin
+возвращает родителя и все дочерние строки в прежнее состояние.
+Нормализация сама по себе не создаёт новую source content version. Экспорт читает common-1 full проекции;
 старые source snapshots доступны отдельно через inspect.
 
 Read export использует один SQLite snapshot, но старый run по-прежнему читает

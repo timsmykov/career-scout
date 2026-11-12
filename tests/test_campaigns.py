@@ -13,6 +13,7 @@ from test_sources import client as source_client
 from test_sources import html_card, html_tombstone, listing, sj, trud
 
 from career_scout import cli, migrations
+from career_scout.adapters import TrudvsemClient
 from career_scout.campaigns import Campaigns
 from career_scout.common import SourceError
 from career_scout.hh import Credentials, HHClient
@@ -748,3 +749,146 @@ def test_page_size_replan_is_atomic_if_writing_new_cursor_fails(state):
     assert store.next_query(q["run_id"])["id"] == q["id"]
     assert store.db.execute("SELECT COUNT(*) FROM queries").fetchone()[0] == 1
     assert store.db.execute("SELECT COUNT(*) FROM events").fetchone()[0] == 0
+
+
+def test_dense_trud_windows_resume_without_refetching_the_full_prefix(state, tmp_path, monkeypatch):
+    store, campaigns, _ = state
+    cid = campaigns.create(load_config(CONFIG), "initial", sources=["trudvsem"], queries=["test"])
+    rid = campaigns.runs(cid)[0]["id"]
+    root = store.next_query(rid)
+    lo, hi = datetime.fromisoformat(root["start"]), datetime.fromisoformat(root["end"])
+    pool = [
+        trud(
+            str(i),
+            **{
+                "creation-date": (lo + timedelta(seconds=1)).isoformat(),
+                "date_modify": (lo + (hi - lo) / 48 * i).isoformat(),
+            },
+        )
+        for i in range(1, 49)
+    ]
+    calls = []
+
+    def handler(req):
+        assert req.url.path == "/api/v1/vacancies"  # Full objects are inline; no detail GET.
+        params = req.url.params
+        start, end = (datetime.fromisoformat(params[k]) for k in ("modifiedFrom", "modifiedTo"))
+        size, page_number = int(params["limit"]), int(params["offset"])
+        calls.append((start, end, size, page_number))
+        matches = [p for p in pool if start <= datetime.fromisoformat(p["date_modify"]) <= end]
+        return httpx.Response(
+            200,
+            json={
+                "status": "200",
+                "meta": {"total": len(matches), "limit": size},
+                "results": {
+                    "vacancies": [
+                        {"vacancy": p}
+                        for p in matches[page_number * size : (page_number + 1) * size]
+                    ]
+                },
+            },
+        )
+
+    def factory(frozen, budget):
+        return source_client("trudvsem", tmp_path, handler, max_requests=budget)
+
+    monkeypatch.setattr(TrudvsemClient, "partition_target", None)
+    first = campaigns.drive(cid, factory, chunk_requests=1, max_rounds=1)
+    assert first["totals"]["new_descriptions"] == 20
+    preserved = {r["source_id"]: tuple(r) for r in store.db.execute("SELECT * FROM vacancies")}
+    frozen = campaigns.row(cid)["plan_json"]
+    path = store.path
+    store.close()
+    reopened = Store(path)
+    try:
+        monkeypatch.setattr(TrudvsemClient, "partition_target", 10)
+        resumed = Campaigns(reopened)
+        result = resumed.drive(cid, factory, chunk_requests=4)
+        assert result["status"] == "complete"
+        assert result["totals"]["new_descriptions"] == 48
+        assert result["sources"][0]["truncated_queries"] == 0
+        assert resumed.row(cid)["plan_json"] == frozen
+        assert all((a, b) != (lo, hi) for a, b, _, _ in calls[1:])
+        parent = reopened.db.execute("SELECT * FROM queries WHERE id=?", (root["id"],)).fetchone()
+        assert parent["status"] == "split" and parent["next_page"] == parent["served"] == 1
+        leaf_sizes = reopened.db.execute(
+            "SELECT DISTINCT p.page_size FROM query_pagination p "
+            "JOIN queries q ON q.id=p.query_id WHERE q.status='complete'"
+        ).fetchall()
+        assert [r[0] for r in leaf_sizes] == [5]
+        current = {r["source_id"]: tuple(r) for r in reopened.db.execute("SELECT * FROM vacancies")}
+        assert all(current[k] == v for k, v in preserved.items())
+        assert reopened.db.execute("SELECT COUNT(*) FROM snapshots").fetchone()[0] == 48
+        assert len(resumed.export(cid, include_excluded=True)["vacancies"]) == 48
+    finally:
+        reopened.close()
+
+
+def test_trud_partition_target_is_not_a_cap_on_same_second_results(state, tmp_path, monkeypatch):
+    store, campaigns, _ = state
+    monkeypatch.setattr(TrudvsemClient, "partition_target", 1)
+    cid = campaigns.create(load_config(CONFIG), "initial", sources=["trudvsem"], queries=["test"])
+    q = store.next_query(campaigns.runs(cid)[0]["id"])
+    lo, hi = datetime.fromisoformat(q["start"]), datetime.fromisoformat(q["end"])
+    point = lo + (hi - lo) / 2
+    pool = [
+        trud(
+            str(i),
+            **{
+                "creation-date": (lo + timedelta(seconds=1)).isoformat(),
+                "date_modify": point.isoformat(),
+            },
+        )
+        for i in range(1, 4)
+    ]
+
+    def handler(req):
+        p = req.url.params
+        a, b = (datetime.fromisoformat(p[k]) for k in ("modifiedFrom", "modifiedTo"))
+        size, number = int(p["limit"]), int(p["offset"])
+        matches = pool if a <= point <= b else []
+        return httpx.Response(
+            200,
+            json={
+                "status": "200",
+                "meta": {"total": len(matches), "limit": size},
+                "results": {
+                    "vacancies": [
+                        {"vacancy": v} for v in matches[number * size : (number + 1) * size]
+                    ]
+                },
+            },
+        )
+
+    result = campaigns.drive(
+        cid,
+        lambda frozen, budget: source_client("trudvsem", tmp_path, handler, max_requests=budget),
+        chunk_requests=8,
+    )
+    assert result["status"] == "complete"
+    assert result["totals"]["new_descriptions"] == 3
+    assert result["sources"][0]["truncated_queries"] == 0
+    dense_leaves = store.db.execute(
+        "SELECT start,end FROM queries WHERE status='complete' AND total>1"
+    ).fetchall()
+    assert dense_leaves and all(
+        (datetime.fromisoformat(r[1]) - datetime.fromisoformat(r[0])).total_seconds() <= 1
+        for r in dense_leaves
+    )
+
+
+def test_partition_and_child_page_sizes_roll_back_together(state):
+    store, campaigns, _ = state
+    cid = campaigns.create(load_config(CONFIG), "initial", sources=["trudvsem"], queries=["test"])
+    root = store.next_query(campaigns.runs(cid)[0]["id"])
+    with store.db:
+        store.db.execute(
+            "CREATE TRIGGER fail_child_pin BEFORE INSERT ON query_pagination "
+            "BEGIN SELECT RAISE(ABORT,'synthetic pin failure'); END"
+        )
+    with pytest.raises(sqlite3.IntegrityError, match="synthetic pin failure"):
+        store.split(root, 900, page_size=5)
+    assert tuple(store.next_query(root["run_id"])) == tuple(root)
+    assert store.db.execute("SELECT COUNT(*) FROM queries").fetchone()[0] == 1
+    assert store.db.execute("SELECT COUNT(*) FROM query_pagination").fetchone()[0] == 0

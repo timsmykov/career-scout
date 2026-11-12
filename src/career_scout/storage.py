@@ -179,7 +179,7 @@ class Store:
             (run_id,),
         ).fetchone()
 
-    def split(self, query, total: int) -> bool:
+    def split(self, query, total: int, *, page_size: int | None = None) -> bool:
         end = datetime.fromisoformat(query["end"])
         start = datetime.fromisoformat(query["start"]) if query["start"] else None
         if start is not None:
@@ -192,17 +192,15 @@ class Store:
             self.db.execute(
                 "UPDATE queries SET status='split',total=? WHERE id=?", (total, query["id"])
             )
-            self.db.executemany(
-                "INSERT INTO queries(run_id,query,start,end) VALUES(?,?,?,?)",
-                [
-                    (query["run_id"], query["query"], a.isoformat() if a else "", b.isoformat())
-                    for a, b in (
-                        ((start, middle), (middle, end))
-                        if start
-                        else ((middle, end), (None, middle))
-                    )
-                ],
-            )
+            for a, b in (
+                ((start, middle), (middle, end)) if start else ((middle, end), (None, middle))
+            ):
+                child = self.db.execute(
+                    "INSERT INTO queries(run_id,query,start,end) VALUES(?,?,?,?)",
+                    (query["run_id"], query["query"], a.isoformat() if a else "", b.isoformat()),
+                ).lastrowid
+                if page_size is not None:
+                    self.db.execute("INSERT INTO query_pagination VALUES(?,?)", (child, page_size))
         return True
 
     def replan_page_size(self, query, old_size: int, reason: str):

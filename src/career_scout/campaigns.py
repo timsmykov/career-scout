@@ -397,6 +397,24 @@ class Campaigns:
                     )
 
             client.on_request = reserve
+
+            def partition(query, total):
+                if not self.store.split(
+                    query, total, page_size=getattr(client, "partition_page_size", None)
+                ):
+                    return False
+                if progress:
+                    progress(
+                        {
+                            "event": "window_split",
+                            "source": source,
+                            "campaign_id": cid,
+                            "query_id": query["id"],
+                            "total": total,
+                        }
+                    )
+                return True
+
             try:
                 if source != getattr(client, "source", source):
                     raise SourceError("source_adapter_mismatch")
@@ -424,6 +442,13 @@ class Campaigns:
                     query = self.store.next_query(rid)
                     if query is None:
                         break
+                    target = getattr(client, "partition_target", None)
+                    can_split = getattr(client, "supports_date_split", False)
+                    # A resumed dense query can be partitioned from its saved
+                    # total without downloading its committed prefix again.
+                    if target and can_split and query["total"] and query["total"] > target:
+                        if partition(query, query["total"]):
+                            continue
                     page_size = self.store.page_size(query["id"], frozen["per_page"])
                     native_max = getattr(client, "max_page_size", None)
                     if native_max is not None:
@@ -462,12 +487,12 @@ class Campaigns:
                             continue
                         raise
                     cap = getattr(client, "window_cap", None)
-                    if (
-                        cap
-                        and ((page.found > cap and query["next_page"] == 0) or page.truncated)
-                        and getattr(client, "supports_date_split", False)
-                    ):
-                        if self.store.split(query, page.found):
+                    over_cap = cap and (
+                        (page.found > cap and query["next_page"] == 0) or page.truncated
+                    )
+                    over_target = target and page.found > target and query["next_page"] == 0
+                    if (over_cap or over_target) and can_split:
+                        if partition(query, page.found):
                             continue
                     self.store.save_page(query, page, frozen["ttl_hours"], campaign_id=cid)
                     inline = getattr(client, "inline_detail", None)
