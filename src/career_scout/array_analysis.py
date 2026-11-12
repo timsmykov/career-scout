@@ -334,6 +334,8 @@ def execute_continuous(config, catalog, directory, state, database, *, shared_sl
         shared_worker_slots=shared_slots,
     )
     state.pop("error", None)
+    state.pop("finished_at", None)
+    state.pop("completed_catalog_count", None)
     state.setdefault("continuous_started_at", utcnow())
     save(checkpoint, state)
     store = AnalysisStore(database)

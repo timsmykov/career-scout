@@ -196,3 +196,29 @@ def test_shared_pool_keeps_source_barrier_and_exact_limit(continuous_fixture, mo
     assert state["status"] == "stopped_at_limit" and state["shared_worker_slots"] is True
     assert [source for source, _ in routed] == ["hh", "hh", "hh", "habr"]
     assert sum(len(ids) for _, _, ids in calls) == 4
+
+
+def test_resuming_a_larger_limit_clears_previous_completion_metadata(
+    continuous_fixture, monkeypatch
+):
+    config, path, output, _, _ = continuous_fixture
+    continuous_workers(monkeypatch, shared=True)
+    first = array_analysis.execute(
+        config, path, output, chunk_size=2, continuous=True, stop_after=1, shared_slots=True
+    )
+    assert first["finished_at"] and first["completed_catalog_count"] == 1
+    actual = routed_pipeline.route_jobs
+    observed = []
+
+    def observe(*args, **kwargs):
+        active = json.loads((output / "state.json").read_text())
+        observed.append(active["status"])
+        assert "finished_at" not in active and "completed_catalog_count" not in active
+        return actual(*args, **kwargs)
+
+    monkeypatch.setattr(routed_pipeline, "route_jobs", observe)
+    result = array_analysis.execute(
+        config, path, output, chunk_size=2, continuous=True, stop_after=7, shared_slots=True
+    )
+    assert observed and set(observed) == {"running"}
+    assert result["status"] == "complete" and result["completed_catalog_count"] == 7
