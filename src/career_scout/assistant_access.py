@@ -10,6 +10,7 @@ from contextlib import closing
 from datetime import UTC, datetime
 from pathlib import Path
 
+from career_scout import exclusions
 from career_scout.analysis_store import APPLICATION_ID, AnalysisStore
 from career_scout.evaluation import ResumeSnapshot, text_hash
 from career_scout.shortlist import recommendations
@@ -67,7 +68,7 @@ def events(db, source=None, source_id=None):
 
 
 def record(db, operation_id, source, source_id, kind, evidence, detail):
-    analysis_store(db)
+    exclusions.initialize(analysis_store(db))
     if not all(
         isinstance(x, str) and x.strip() for x in (operation_id, source, source_id, kind, evidence)
     ):
@@ -88,6 +89,14 @@ def record(db, operation_id, source, source_id, kind, evidence, detail):
         if old:
             if old["fingerprint"] != fingerprint:
                 raise ValueError("operation_id_conflict")
+            if kind == "reopened":
+                exclusions.restore_owner(
+                    analysis_store(db),
+                    source,
+                    source_id,
+                    operation_id=operation_id,
+                    evidence=evidence,
+                )
             return dict(old)
         db.execute(
             """INSERT INTO career_assistant_events
@@ -103,6 +112,23 @@ def record(db, operation_id, source, source_id, kind, evidence, detail):
                 datetime.now(UTC).isoformat(),
                 fingerprint,
             ),
+        )
+        if kind in {"dismissed", "withdrawn", "rejected"}:
+            store = analysis_store(db)
+            exclusions.initialize(store)
+            exclusions.record_identity(
+                store,
+                source,
+                source_id,
+                stage="owner",
+                reason=kind,
+                proof={"operation_id": operation_id, "evidence": evidence},
+            )
+            for row in db.execute("SELECT id FROM analysis_runs").fetchall():
+                exclusions.apply_run(store, row[0])
+    if kind == "reopened":
+        exclusions.restore_owner(
+            analysis_store(db), source, source_id, operation_id=operation_id, evidence=evidence
         )
     return dict(
         db.execute(
@@ -125,11 +151,25 @@ def shortlist(db, *, profile=None, limit=20, unseen=False):
         elif event["kind"] == "shown":
             shown.add(identity)
     excluded = blocked | shown if unseen else blocked
-    picked = [r for r in rows if (r["source"], r["source_id"]) not in excluded]
+    picked = [
+        r
+        for r in rows
+        if (r["source"], r["source_id"]) not in excluded
+        and not exclusions.identity_blocked(db, r["source"], r["source_id"])
+    ]
     return {"items": picked[:limit], "available": len(picked), "truncated": len(rows) == 10000}
 
 
 def card(db, source, source_id):
+    if db.execute("SELECT 1 FROM sqlite_master WHERE name='filter_decisions'").fetchone():
+        decision = db.execute(
+            "SELECT f.decision FROM filter_decisions f JOIN vacancies v "
+            "ON v.source=f.source AND v.source_id=f.source_id AND v.content_hash=f.content_hash "
+            "WHERE f.source=? AND f.source_id=? ORDER BY f.evaluated_at DESC,f.rowid DESC LIMIT 1",
+            (source, source_id),
+        ).fetchone()
+        if decision and decision[0] == "FILTERED_OUT":
+            return {"excluded": True, "source": source, "source_id": source_id}
     row = db.execute(
         """SELECT n.payload,v.detail_fetched_at,v.detail_status FROM normalized_snapshots n
       JOIN vacancies v ON v.source=n.source AND v.source_id=n.source_id
@@ -139,6 +179,8 @@ def card(db, source, source_id):
     ).fetchone()
     if not row:
         raise ValueError("unknown_full_vacancy")
+    if row["detail_status"] == "archived":
+        return {"excluded": True, "source": source, "source_id": source_id}
     return {
         "vacancy": json.loads(row["payload"]),
         "detail_fetched_at": row["detail_fetched_at"],
@@ -147,15 +189,28 @@ def card(db, source, source_id):
     }
 
 
-def catalog(db, query, source=None, limit=20, offset=0):
+def catalog(db, query, source=None, limit=20, offset=0, analysis=None):
     db.create_function("casefold", 1, lambda x: str(x or "").casefold(), deterministic=True)
     needle = "%" + query.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
     sql = """FROM vacancies v JOIN normalized_snapshots n
       ON v.source=n.source AND v.source_id=n.source_id AND v.content_hash=n.content_hash
       WHERE n.rowid=(SELECT MAX(n2.rowid) FROM normalized_snapshots n2
         WHERE n2.source=n.source AND n2.source_id=n.source_id AND n2.content_hash=n.content_hash)
+      AND COALESCE(json_extract(n.payload,'$.detail_status'),'full')!='archived'
       AND (casefold(json_extract(n.payload,'$.title')) LIKE casefold(?) ESCAPE '\\'
         OR casefold(json_extract(n.payload,'$.company')) LIKE casefold(?) ESCAPE '\\')"""
+    if analysis is not None:
+        db.create_function(
+            "is_excluded", 2, lambda s, i: int(exclusions.identity_blocked(analysis, s, i))
+        )
+        sql += " AND is_excluded(v.source,v.source_id)=0"
+    if db.execute("SELECT 1 FROM sqlite_master WHERE name='filter_decisions'").fetchone():
+        sql += (
+            " AND COALESCE((SELECT f.decision FROM filter_decisions f "
+            + "WHERE f.source=v.source AND f.source_id=v.source_id "
+            + "AND f.content_hash=v.content_hash "
+            + "ORDER BY f.evaluated_at DESC,f.rowid DESC LIMIT 1),'KEEP_UNKNOWN')!='FILTERED_OUT'"
+        )
     args = [needle, needle]
     if source:
         sql += " AND v.source=?"
@@ -326,12 +381,16 @@ def main():
         rp = (a.config.parent / cfg["profiles"][a.profile]).resolve()
         result = json.loads(rp.read_text())
     elif a.command in ("card", "catalog"):
-        with closing(connect(a.collector)) as db:
-            result = (
-                card(db, a.source, a.source_id)
-                if a.command == "card"
-                else catalog(db, a.query, a.source, a.limit, a.offset)
-            )
+        with closing(connect(a.analysis)) as analysis, closing(connect(a.collector)) as db:
+            analysis_store(analysis)
+            if a.command == "card" and exclusions.identity_blocked(analysis, a.source, a.source_id):
+                result = {"excluded": True, "source": a.source, "source_id": a.source_id}
+            else:
+                result = (
+                    card(db, a.source, a.source_id)
+                    if a.command == "card"
+                    else catalog(db, a.query, a.source, a.limit, a.offset, analysis=analysis)
+                )
     else:
         with closing(connect(a.analysis, write=a.command == "record")) as db:
             analysis_store(db)

@@ -8,6 +8,7 @@ from pathlib import Path
 
 from pydantic import ValidationError
 
+from career_scout import exclusions
 from career_scout.application import parse_result
 from career_scout.batch_worker import CodexBatchWorker, batch_size_characters
 from career_scout.common import utcnow
@@ -22,6 +23,9 @@ CREATE TABLE IF NOT EXISTS routed_selections(
  PRIMARY KEY(run_id,route_key),FOREIGN KEY(run_id,route_key) REFERENCES run_jobs(run_id,route_key));
 CREATE TABLE IF NOT EXISTS routing_budgets(run_id TEXT PRIMARY KEY,max_requests INTEGER NOT NULL,
  requests INTEGER NOT NULL DEFAULT 0);
+CREATE TABLE IF NOT EXISTS routing_reservations(
+ run_id TEXT NOT NULL,route_key TEXT NOT NULL,slots INTEGER NOT NULL,
+ PRIMARY KEY(run_id,route_key));
 CREATE TABLE IF NOT EXISTS batch_attempts(
  id TEXT PRIMARY KEY,run_id TEXT NOT NULL REFERENCES analysis_runs(id),profile TEXT NOT NULL,
  keys_json TEXT NOT NULL,generation INTEGER NOT NULL,started_at TEXT NOT NULL,finished_at TEXT,
@@ -110,7 +114,31 @@ def attempts(store, run_id, key):
     ).fetchone()[0]
 
 
+def reserve_route(store, run_id, key, slots):
+    """Reserve a vacancy's maximum HTTP attempts once, including across resume."""
+    with store.db:
+        old = store.db.execute(
+            "SELECT slots FROM routing_reservations WHERE run_id=? AND route_key=?", (run_id, key)
+        ).fetchone()
+        delta = max(0, slots - (old[0] if old else 0))
+        if (
+            delta
+            and not store.db.execute(
+                "UPDATE routing_budgets SET requests=requests+? "
+                "WHERE run_id=? AND requests+?<=max_requests",
+                (delta, run_id, delta),
+            ).rowcount
+        ):
+            raise EvaluationError("routing_request_budget_exhausted", fatal=True)
+        store.db.execute(
+            "INSERT INTO routing_reservations VALUES(?,?,?) "
+            "ON CONFLICT(run_id,route_key) DO UPDATE SET slots=MAX(slots,excluded.slots)",
+            (run_id, key, slots),
+        )
+
+
 def route_jobs(store, run_id, frozen, client):
+    exclusions.apply_run(store, run_id)
     settings = frozen["routing"]
     with store.db:
         store.db.execute(
@@ -118,7 +146,8 @@ def route_jobs(store, run_id, frozen, client):
             (run_id, settings["max_requests"]),
         )
     rows = store.db.execute(
-        "SELECT route_key FROM run_jobs WHERE run_id=? ORDER BY position", (run_id,)
+        "SELECT route_key FROM run_jobs WHERE run_id=? AND status!='EXCLUDED' ORDER BY position",
+        (run_id,),
     ).fetchall()
     if settings.get("prescreen_policy_hash"):
         route_screened(store, run_id, frozen, client, rows)
@@ -129,17 +158,7 @@ def route_jobs(store, run_id, frozen, client):
             "SELECT 1 FROM routed_selections WHERE run_id=? AND route_key=?", (run_id, key)
         ).fetchone():
             continue
-        with store.db:
-            if not store.db.execute(
-                "UPDATE routing_budgets SET requests=requests+? "
-                "WHERE run_id=? AND requests+?<=max_requests",
-                (
-                    settings.get("native_max_attempts", 1),
-                    run_id,
-                    settings.get("native_max_attempts", 1),
-                ),
-            ).rowcount:
-                raise EvaluationError("routing_request_budget_exhausted", fatal=True)
+        reserve_route(store, run_id, key, settings.get("native_max_attempts", 1))
         decision = client.evaluate(store.inputs(key)[0].vacancy)
         selected = select_profiles(decision["probabilities"], settings["margin"])
         with store.db:
@@ -208,14 +227,10 @@ def route_screened(store, run_id, frozen, client, rows):
                     break
                 key, requests = item
                 reservation = (3 if fit_enabled else 1) * settings.get("native_max_attempts", 1)
-                with store.db:
-                    reserved = store.db.execute(
-                        "UPDATE routing_budgets SET requests=requests+? "
-                        "WHERE run_id=? AND requests+?<=max_requests",
-                        (reservation, run_id, reservation),
-                    ).rowcount
-                if not reserved:
-                    error = EvaluationError("routing_request_budget_exhausted", fatal=True)
+                try:
+                    reserve_route(store, run_id, key, reservation)
+                except EvaluationError as exc:
+                    error = exc
                     break
                 active[pool.submit(screen_profile_fit, client, requests, settings)] = key
             if not active:
@@ -241,8 +256,11 @@ def route_screened(store, run_id, frozen, client, rows):
 
 
 def aggregate(store, run_id):
+    exclusions.apply_run(store, run_id)
     for row in store.db.execute(
-        "SELECT * FROM routed_selections WHERE run_id=?", (run_id,)
+        "SELECT s.* FROM routed_selections s JOIN run_jobs j ON j.run_id=s.run_id "
+        "AND j.route_key=s.route_key WHERE s.run_id=? AND j.status!='EXCLUDED'",
+        (run_id,),
     ).fetchall():
         selected = json.loads(row["selected_json"])
         requests = {r.profile_id: r for r in store.inputs(row["route_key"])}
@@ -299,10 +317,12 @@ def evaluate_queues(store, run_id, frozen, worker_factory=CodexBatchWorker):
             for row in store.db.execute(
                 "SELECT s.* FROM routed_selections s JOIN run_jobs j "
                 "ON j.run_id=s.run_id AND j.route_key=s.route_key "
-                "WHERE s.run_id=? ORDER BY j.position",
+                "WHERE s.run_id=? AND j.status!='EXCLUDED' ORDER BY j.position",
                 (run_id,),
             ):
                 by_profile = {r.profile_id: r for r in store.inputs(row["route_key"])}
+                if exclusions.blocked(store, next(iter(by_profile.values())).vacancy):
+                    continue
                 for p in json.loads(row["selected_json"]):
                     request = by_profile[p]
                     blocked = store.db.execute(

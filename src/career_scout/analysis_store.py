@@ -63,6 +63,9 @@ class AnalysisStore:
         os.chmod(path, 0o600)
         self.db.execute("PRAGMA journal_mode=WAL")
         self.db.execute("PRAGMA foreign_keys=ON")
+        from career_scout import exclusions
+
+        exclusions.initialize(self)
 
     def close(self):
         self.db.close()

@@ -95,3 +95,8 @@ Docker: `docker compose build`, `python3 scripts/check_container.py` (synthetic,
   не менять CV/model hashes ради размера батча. Native screening: отдельная
   карточка/запрос,4APIвызова одновременно; uncertain идёт оценщику.
   Контракт и ограничения: docs/evaluation-performance.md.
+
+- Отсеянные вакансии закрываются навсегда по source/source_id в vacancy_exclusions,
+  независимо от CV, scope и --reprocess. Не возвращать их в модели/каталог ассистента.
+  Ошибки и pending не считаются отсевом; один отказ не закрывает второй профиль.
+  Контракт: docs/exclusions.md.

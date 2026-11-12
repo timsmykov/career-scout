@@ -111,3 +111,5 @@ Avro-специализация, явный конфликт advanced/basic SQL 
 оценка точности. Общий quality runner также поддерживает новую политику через конфиг.
 
 Полный проход снимка по площадкам: [full-array.md](full-array.md).
+
+Постоянный отсев по ID, поверх версий admission: [exclusions.md](exclusions.md).

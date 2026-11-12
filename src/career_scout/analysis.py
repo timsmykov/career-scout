@@ -13,7 +13,7 @@ from typing import Literal
 
 from pydantic import Field, ValidationError, model_validator
 
-from career_scout import intake
+from career_scout import exclusions, intake
 from career_scout.analysis_graph import AnalysisGraph
 from career_scout.analysis_store import AnalysisStore
 from career_scout.campaigns import Campaigns
@@ -172,6 +172,9 @@ def prepare(config_path: Path, *, limit, max_calls, reprocess=False, catalog=Non
     try:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         intake.initialize(store)
+        # Synthetic/offline catalog callers may have no collector; live prepares do.
+        if resolve(settings.collector_database).exists():
+            exclusions.sync_collector(store, resolve(settings.collector_database), policies)
         frozen = {
             "model": settings.model.model_dump(mode="json"),
             "order": settings.order,
@@ -198,6 +201,7 @@ def prepare(config_path: Path, *, limit, max_calls, reprocess=False, catalog=Non
         )
         rid = store.create_run(frozen, max_calls)
         skipped = 0
+        excluded = 0
         reused_runs = set()
         for vacancy in vacancies:
             if (
@@ -208,6 +212,9 @@ def prepare(config_path: Path, *, limit, max_calls, reprocess=False, catalog=Non
             ):
                 break
             source = vacancy["source"]
+            if exclusions.identity_blocked(store.db, source, vacancy["source_id"]):
+                excluded += 1
+                continue
             policy = policies[source]
             filters = {
                 "eligibility": json.loads(policy["policy_json"]),
@@ -240,6 +247,7 @@ def prepare(config_path: Path, *, limit, max_calls, reprocess=False, catalog=Non
                 intake.record(store, frozen, key, rid)
         result = report(store, rid)
         result["previously_admitted_skipped"] = skipped
+        result["permanently_excluded_skipped"] = excluded
         result["reused_runs"] = sorted(reused_runs)
         result["pending_previous_runs"] = [
             r for r in intake.pending_runs(store, frozen) if r != rid
@@ -272,7 +280,10 @@ def report(store, run_id):
         ).fetchall()
         usages.extend(json.loads(r["usage_json"]) for r in batches if r["usage_json"])
         for selection in store.db.execute(
-            "SELECT route_key,selected_json FROM routed_selections WHERE run_id=?", (run_id,)
+            "SELECT s.route_key,s.selected_json FROM routed_selections s JOIN run_jobs j "
+            "ON j.run_id=s.run_id AND j.route_key=s.route_key "
+            "WHERE s.run_id=? AND j.status!='EXCLUDED'",
+            (run_id,),
         ):
             selected = json.loads(selection["selected_json"])
             incomplete_selected += sum(
@@ -303,6 +314,7 @@ def report(store, run_id):
 
 
 def run_pending(store, run_id, *, additional_calls=0, retry_errors=False):
+    exclusions.apply_run(store, run_id)
     if retry_errors or additional_calls:
         store.retry(run_id, additional_calls)
     frozen = json.loads(store.run(run_id)["config_json"])

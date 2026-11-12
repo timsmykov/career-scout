@@ -75,6 +75,8 @@ def publication_time(value, now):
 
 
 def recommendations(store, *, run_id=None, profile=None, limit=20, now=None):
+    from career_scout import exclusions
+
     now = now or datetime.now(UTC)
     if limit < 1:
         raise EvaluationError("invalid_shortlist_limit")
@@ -104,6 +106,8 @@ def recommendations(store, *, run_id=None, profile=None, limit=20, now=None):
             continue
         inputs = store.inputs(row["route_key"])
         vacancy = inputs[0].vacancy
+        if exclusions.blocked(store, vacancy):
+            continue
         identity = (vacancy.source, vacancy.source_id)
         if identity in seen:
             continue

@@ -7,6 +7,7 @@ from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.graph import END, START, StateGraph
 from pydantic import ValidationError
 
+from career_scout import exclusions
 from career_scout.evaluation import ORDER, EvaluationError, EvaluationResult, validate_result
 
 
@@ -31,6 +32,9 @@ class AnalysisGraph:
 
     def evaluate(self, run_id, route_key):
         requests = self.store.inputs(route_key)
+        if exclusions.blocked(self.store, requests[0].vacancy):
+            exclusions.apply_run(self.store, run_id)
+            return {"status": "EXCLUDED"}
         if tuple(r.profile_id for r in requests) != self.order:
             raise EvaluationError("job_order_mismatch", fatal=True)
         if any(r.model_config_hash != self.config.key() for r in requests):

@@ -108,3 +108,12 @@ def test_429_billing_is_never_retried(fixture, monkeypatch, code):
     monkeypatch.setattr(decisions.subprocess, "run", lambda *a, **kw: pytest.fail("billing retry"))
     with pytest.raises(EvaluationError):
         decisions.DecisionsClient(path, max_attempts=3).evaluate(vacancy)
+
+
+def test_unknown_can_use_separately_reconciled_success_without_http(fixture, monkeypatch):
+    path, vacancy, receipt = fixture
+    receipt.write_text(json.dumps({"ok": False, "state": "request_prepared"}))
+    second = path / (receipt.name.removesuffix("-receipt.json") + "-attempt-2-receipt.json")
+    second.write_text(json.dumps(success()))
+    monkeypatch.setattr(decisions.subprocess, "run", lambda *a, **kw: pytest.fail("cache only"))
+    assert decisions.DecisionsClient(path, max_attempts=3).evaluate(vacancy)["cached"] is True

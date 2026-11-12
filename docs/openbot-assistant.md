@@ -28,3 +28,8 @@ Resume publication uses complete files and atomic exclusive publication. A new r
 Legacy migration retained original Notion properties and platform observations with their evidence in the same ledger, clearly labelled historical and not independently reverified. Ambiguous identities/dates are retained as observations, not manufactured applications. Count unique applications, not raw event rows. Current intake/model behavior is unchanged.
 
 Focused checks: `pytest -q tests/test_assistant_access.py tests/test_applications.py`. Live acceptance must separately prove an actual OpenBot request, service command execution, readable output and final agent response. Creating a profile or returning `queued` does not prove that path.
+
+Permanent service exclusions also apply to shortlist/catalog/card: [exclusions.md](exclusions.md).
+Excluded cards are not returned with full text, and catalog filters before pagination.
+An explicit owner reopen can release only their own dismissal, never a code/model rejection.
+Original model evaluations are immutable; availability projections preserve displaced history.

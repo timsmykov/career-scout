@@ -15,6 +15,8 @@
 
 ## Контракты
 
+- [exclusions.md](exclusions.md) — постоянный отсев до очереди, моделей и ассистента.
+
 - [evaluation-performance.md](evaluation-performance.md) — сравнение10/20, токены и консервативный Decisions screen.
 
 - [full-array.md](full-array.md) — конечный проход всего снимка по площадкам, продолжение без повторов.

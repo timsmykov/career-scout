@@ -102,3 +102,6 @@ cache key≤64символов, вакансия находится после �
 receipt не изменён. Продолжение сохранило CV, правила, snapshot и selection_key.
 Изменены только операционные retry/budget: старая и новая конфигурации, причина и
 отпечатки записаны в приватный operational-amendment-503.json.
+
+A separately reconciled successful receipt for the identical request may be read from cache
+even after an earlier unknown outcome. This does not issue an automatic retry.

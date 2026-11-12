@@ -159,6 +159,35 @@ class DecisionsClient:
         retry_after = 0
         if request.exists() and json.loads(request.read_text()) != body:
             raise EvaluationError("decisions_request_collision", fatal=True)
+        # A separately reconciled successful receipt is authoritative even if an
+        # earlier delivery outcome was unknown. This only reads cache; it never retries.
+        for number in range(2, self.max_attempts + 1):
+            candidate = self.workspace / (key + f"-attempt-{number}-receipt.json")
+            if not candidate.exists():
+                continue
+            try:
+                reconciled = json.loads(candidate.read_text())
+            except (OSError, ValueError):
+                continue
+            if (
+                isinstance(reconciled, dict)
+                and reconciled.get("ok")
+                and reconciled.get("http_status") == 200
+                and isinstance(reconciled.get("response"), dict)
+            ):
+                return {
+                    "key": key,
+                    "response": reconciled["response"],
+                    "usage": reconciled["response"].get("usage"),
+                    "cached": True,
+                    "elapsed_seconds": time.perf_counter() - started,
+                    "request_id": reconciled.get("request_id"),
+                    "receipt": str(candidate),
+                    "attempt_receipts": [
+                        str(self.workspace / (key + "-receipt.json")),
+                        str(candidate),
+                    ],
+                }
         for attempt in range(1, self.max_attempts + 1):
             suffix = "-receipt.json" if attempt == 1 else f"-attempt-{attempt}-receipt.json"
             receipt = self.workspace / (key + suffix)
