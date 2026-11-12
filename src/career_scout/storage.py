@@ -205,6 +205,33 @@ class Store:
             )
         return True
 
+    def replan_page_size(self, query, old_size: int, reason: str):
+        """Replace one query atomically, keeping its discoveries and original cursor."""
+        if not 2 <= old_size <= 100:
+            raise SourceError("invalid_page_replan")
+        new_size = old_size // 2
+        with self.db:
+            self.db.execute("UPDATE queries SET status='replanned' WHERE id=?", (query["id"],))
+            child = self.db.execute(
+                "INSERT INTO queries(run_id,query,start,end) VALUES(?,?,?,?)",
+                (query["run_id"], query["query"], query["start"], query["end"]),
+            ).lastrowid
+            self.db.execute("INSERT INTO query_pagination VALUES(?,?)", (child, new_size))
+            self.event(
+                query["run_id"],
+                "pagination_replan",
+                json.dumps(
+                    {
+                        "parent_query_id": query["id"],
+                        "query_id": child,
+                        "old_page_size": old_size,
+                        "page_size": new_size,
+                        "reason": reason,
+                    }
+                ),
+            )
+        return child
+
     def save_page(self, query, page, ttl_hours: float, *, campaign_id: str | None = None):
         source = self.run(query["run_id"])["source"]
         cutoff = (datetime.now(UTC) - timedelta(hours=ttl_hours)).isoformat()

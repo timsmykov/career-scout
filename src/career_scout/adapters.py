@@ -49,6 +49,8 @@ def numeric_id(value):
 class TrudvsemClient(ReadClient):
     source = "trudvsem"
     base = "https://opendata.trudvsem.ru/api/v1/vacancies"
+    max_page_size = 20
+    replan_slow_pages = True
 
     def envelope(self, body):
         if str(body.get("status")) != "200":
@@ -69,7 +71,7 @@ class TrudvsemClient(ReadClient):
             "offset": page,
             # Live 100-row responses timed out; 20-row pages returned the full
             # objects in under ten seconds. This limits page size, not total IDs.
-            "limit": min(per_page, 20),
+            "limit": min(per_page, self.max_page_size),
         }
         if start or end:
             # Keep both date bounds explicit, including all available history.

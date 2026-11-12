@@ -255,6 +255,10 @@ class Campaigns:
             "truncated_queries": truncated,
             "rejected_rows": run["rejected"],
             "discovery_complete": not (pending or truncated or run["rejected"]),
+            "pagination_replans": self.db.execute(
+                "SELECT COUNT(*) FROM events WHERE run_id=? AND kind='pagination_replan'",
+                (rid,),
+            ).fetchone()[0],
             **counts,
             "filtering": filters,
         }
@@ -420,14 +424,43 @@ class Campaigns:
                     query = self.store.next_query(rid)
                     if query is None:
                         break
-                    page = client.search(
-                        query["query"],
-                        query["start"] or None,
-                        query["end"],
-                        query["next_page"],
-                        self.store.page_size(query["id"], frozen["per_page"]),
-                        area_ids=frozen.get("source_options", {}).get("area_ids", []),
-                    )
+                    page_size = self.store.page_size(query["id"], frozen["per_page"])
+                    native_max = getattr(client, "max_page_size", None)
+                    if native_max is not None:
+                        page_size = min(page_size, native_max)
+                    try:
+                        page = client.search(
+                            query["query"],
+                            query["start"] or None,
+                            query["end"],
+                            query["next_page"],
+                            page_size,
+                            area_ids=frozen.get("source_options", {}).get("area_ids", []),
+                        )
+                    except SourceError as exc:
+                        # Never translate a live cursor to a different stride.
+                        # Re-read the same query from page zero at a smaller size;
+                        # committed descriptions are still reused by identity.
+                        if (
+                            exc.code in {"transport_error", "server_error"}
+                            and getattr(client, "replan_slow_pages", False)
+                            and page_size > 1
+                        ):
+                            new_query = self.store.replan_page_size(query, page_size, exc.code)
+                            if progress:
+                                progress(
+                                    {
+                                        "event": "page_size_replan",
+                                        "source": source,
+                                        "campaign_id": cid,
+                                        "query_id": query["id"],
+                                        "new_query_id": new_query,
+                                        "page_size": page_size // 2,
+                                        "reason": exc.code,
+                                    }
+                                )
+                            continue
+                        raise
                     cap = getattr(client, "window_cap", None)
                     if (
                         cap
@@ -544,7 +577,11 @@ class Campaigns:
                     client = factory(frozen, chunk_requests)
                     client.last_request = last_requests.get(source)
                     result = self.chunk(
-                        cid, rid, client, max_details=chunk_requests, progress=progress
+                        cid,
+                        rid,
+                        client,
+                        max_details=chunk_requests,
+                        progress=progress,
                     )
                 except SourceError as exc:
                     with self.store.lock(), self.db:

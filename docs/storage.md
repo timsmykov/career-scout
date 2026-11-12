@@ -36,7 +36,9 @@ campaign_runs, campaign_items, acquisitions и detail_failures. Первое с�
 описания и acquisition коммитятся вместе; последующие initial/new его не меняют. [Контракт отбора](filtering.md). Ошибка или авария до commit оставляет старую схему целиком.
 
 Один writer на ledger через flock, сеть вне транзакции. Cursor/discoveries и
-snapshot/current pointer/projection записываются атомарно. Нормализация сама по себе
+snapshot/current pointer/projection записываются атомарно. Replan размера страницы
+также атомарно сохраняет старый query как replanned, новый query/pinned size и
+event; старые discoveries и cursor не удаляются и не меняют шаг. Нормализация сама по себе
 не создаёт новую source content version. Экспорт читает common-1 full проекции;
 старые source snapshots доступны отдельно через inspect.
 

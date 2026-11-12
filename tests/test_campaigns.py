@@ -10,7 +10,7 @@ import pytest
 from test_hh_collector import detail, page
 from test_migration import old_database, table_rows
 from test_sources import client as source_client
-from test_sources import html_card, listing, sj
+from test_sources import html_card, listing, sj, trud
 
 from career_scout import cli, migrations
 from career_scout.campaigns import Campaigns
@@ -560,3 +560,117 @@ def test_daily_does_not_backfill_old_ids_skipped_by_the_initial_window(state):
         assert campaigns.export(cid)["vacancies"] == []
     assert calls == ["/vacancies", "/vacancies"]
     assert store.db.execute("SELECT COUNT(*) FROM snapshots").fetchone()[0] == 0
+
+
+@pytest.mark.parametrize("failure", ["transport", "server"])
+def test_slow_trud_pages_replan_from_zero_without_refetching_fulls(state, tmp_path, failure):
+    store, campaigns, env = state
+    cid = campaigns.create(
+        load_config(CONFIG), "initial", sources=["trudvsem"], queries=["test"], per_page=2
+    )
+    frozen = json.loads(campaigns.runs(cid)[0]["plan_json"])
+    start = datetime.fromisoformat(frozen["start"])
+    calls = []
+
+    def handler(req):
+        size = int(req.url.params["limit"])
+        offset = int(req.url.params["offset"])
+        calls.append((size, offset, req.url.params["modifiedFrom"], req.url.params["modifiedTo"]))
+        if size == 2 and offset:
+            if failure == "transport":
+                raise httpx.ReadTimeout("synthetic slow response", request=req)
+            return httpx.Response(500)
+        ids = list(range(offset * size + 1, min((offset + 1) * size + 1, 5)))
+        raw = [
+            trud(
+                str(vid),
+                **{
+                    "creation-date": (start + timedelta(days=1)).date().isoformat(),
+                    "date_modify": (start + timedelta(days=2)).isoformat(),
+                },
+            )
+            for vid in ids
+        ]
+        return httpx.Response(
+            200,
+            json={
+                "status": "200",
+                "meta": {"total": 4, "limit": size},
+                "results": {"vacancies": [{"vacancy": r} for r in raw]},
+            },
+        )
+
+    def factory(frozen, budget):
+        return source_client("trudvsem", tmp_path, handler, max_requests=budget)
+
+    result = campaigns.drive(cid, factory, chunk_requests=2, max_rounds=1)
+    assert result["status"] == "partial"
+    assert result["sources"][0]["pagination_replans"] == 1
+    assert result["sources"][0]["pending_queries"] == 1
+    before = store.db.execute("SELECT * FROM snapshots ORDER BY source_id").fetchall()
+    reopened = Store(store.path)
+    try:
+        result = Campaigns(reopened).drive(cid, factory, chunk_requests=2)
+        assert result["status"] == "complete", result
+        assert result["totals"]["new_descriptions"] == 4
+        assert result["totals"]["requests"] == 6
+        assert len(Campaigns(reopened).export(cid)["vacancies"]) == 4
+        after = reopened.db.execute(
+            "SELECT * FROM snapshots WHERE source_id IN (?,?) ORDER BY source_id",
+            (before[0]["source_id"], before[1]["source_id"]),
+        ).fetchall()
+        assert before == after
+        assert (
+            reopened.db.execute("SELECT COUNT(*) FROM queries WHERE status='replanned'").fetchone()[
+                0
+            ]
+            == 1
+        )
+        assert [(c[0], c[1]) for c in calls] == [(2, 0), (2, 1), (1, 0), (1, 1), (1, 2), (1, 3)]
+        assert len({(c[2], c[3]) for c in calls}) == 1
+    finally:
+        reopened.close()
+
+
+@pytest.mark.parametrize("status, replans, attempts", [(None, 4, 5), (403, 0, 1)])
+def test_trud_search_replans_are_finite_and_do_not_bypass_access(
+    state, tmp_path, status, replans, attempts
+):
+    store, campaigns, env = state
+    cid = campaigns.create(load_config(CONFIG), "initial", sources=["trudvsem"], queries=["test"])
+    sizes = []
+
+    def handler(req):
+        sizes.append(int(req.url.params["limit"]))
+        if status is None:
+            raise httpx.ReadTimeout("synthetic unavailable service", request=req)
+        return httpx.Response(status)
+
+    def factory(frozen, budget):
+        return source_client("trudvsem", tmp_path, handler, max_requests=budget)
+
+    result = campaigns.drive(cid, factory, chunk_requests=100)
+    assert result["status"] == "partial"
+    assert result["sources"][0]["pagination_replans"] == replans
+    assert result["sources"][0]["requests"] == attempts
+    assert result["sources"][0]["pending_queries"] == 1
+    assert result["sources"][0]["error"] == (
+        "transport_error" if status is None else "access_denied"
+    )
+    assert sizes == ([20, 10, 5, 2, 1] if status is None else [20])
+
+
+def test_page_size_replan_is_atomic_if_writing_new_cursor_fails(state):
+    store, campaigns, env = state
+    cid = campaigns.create(load_config(CONFIG), "initial", sources=["trudvsem"], queries=["test"])
+    q = store.next_query(campaigns.runs(cid)[0]["id"])
+    with store.db:
+        store.db.execute(
+            "CREATE TRIGGER reject_test_replan BEFORE INSERT ON query_pagination "
+            "BEGIN SELECT RAISE(ABORT,'synthetic disk failure'); END"
+        )
+    with pytest.raises(sqlite3.IntegrityError):
+        store.replan_page_size(q, 20, "transport_error")
+    assert store.next_query(q["run_id"])["id"] == q["id"]
+    assert store.db.execute("SELECT COUNT(*) FROM queries").fetchone()[0] == 1
+    assert store.db.execute("SELECT COUNT(*) FROM events").fetchone()[0] == 0
