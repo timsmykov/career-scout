@@ -4,6 +4,7 @@ import json
 import math
 import os
 import subprocess
+import threading
 import time
 from pathlib import Path
 
@@ -135,11 +136,18 @@ class DecisionsClient:
         except ValueError:
             raise EvaluationError("invalid_decisions_workspace", fatal=True) from None
         self.binary = binary
+        self._request_locks = {}
+        self._locks_guard = threading.Lock()
         if not self.workspace.is_dir():
             raise EvaluationError("decisions_workspace_missing", fatal=True)
 
-    def evaluate(self, vacancy):
-        body = decision_body(vacancy)
+    def request(self, body):
+        with self._locks_guard:
+            lock = self._request_locks.setdefault(digest(body), threading.Lock())
+        with lock:
+            return self._request(body)
+
+    def _request(self, body):
         key = digest(body)
         request = self.workspace / (key + "-request.json")
         receipt = self.workspace / (key + "-receipt.json")
@@ -179,13 +187,18 @@ class DecisionsClient:
             raise EvaluationError("decisions_failed_or_unknown", fatal=True)
         return {
             "key": key,
-            "probabilities": parse_decision(raw["response"]),
+            "response": raw["response"],
             "usage": raw["response"].get("usage"),
             "cached": cached,
             "elapsed_seconds": time.perf_counter() - started,
             "request_id": raw.get("request_id"),
             "receipt": str(receipt),
         }
+
+    def evaluate(self, vacancy):
+        value = self.request(decision_body(vacancy))
+        payload = value.pop("response")
+        return {**value, "probabilities": parse_decision(payload)}
 
 
 def routing_metrics(rows, margin):

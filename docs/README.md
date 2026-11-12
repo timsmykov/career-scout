@@ -15,6 +15,10 @@
 
 ## Контракты
 
+- [evaluation-performance.md](evaluation-performance.md) — сравнение10/20, токены и консервативный Decisions screen.
+
+- [full-array.md](full-array.md) — конечный проход всего снимка по площадкам, продолжение без повторов.
+
 - [applications-first-20261112.md](applications-first-20261112.md) — первые100карточек,
   14рекомендаций, native-проверки и продвижение следующей порции.
 - [applications.md](applications.md) — текущий отбор для отклика без вопросов, следующие

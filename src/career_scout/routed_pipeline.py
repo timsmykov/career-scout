@@ -117,9 +117,13 @@ def route_jobs(store, run_id, frozen, client):
             "INSERT OR IGNORE INTO routing_budgets VALUES(?,?,0)",
             (run_id, settings["max_requests"]),
         )
-    for row in store.db.execute(
+    rows = store.db.execute(
         "SELECT route_key FROM run_jobs WHERE run_id=? ORDER BY position", (run_id,)
-    ).fetchall():
+    ).fetchall()
+    if settings.get("prescreen_policy_hash"):
+        route_screened(store, run_id, frozen, client, rows)
+        return
+    for row in rows:
         key = row["route_key"]
         if store.db.execute(
             "SELECT 1 FROM routed_selections WHERE run_id=? AND route_key=?", (run_id, key)
@@ -141,6 +145,97 @@ def route_jobs(store, run_id, frozen, client):
             )
 
 
+def screen_profile_fit(client, requests, settings):
+    from career_scout.prescreen import evaluate_single
+
+    decision = evaluate_single(client, requests[0].vacancy)
+    original = (
+        []
+        if decision["exclusion"]
+        else select_profiles(decision["probabilities"], settings["margin"])
+    )
+    decision["original_selected_profiles"] = original
+    selected = list(original)
+    if settings.get("fit_screen_policy_hash"):
+        from career_scout.fit_screen import evaluate
+
+        by_profile = {r.profile_id: r for r in requests}
+        fits = {}
+        for profile in original:
+            fits[profile] = evaluate(client, by_profile[profile])
+            if fits[profile]["excluded"]:
+                selected.remove(profile)
+        decision["fit_screen"] = fits
+        if original and not selected:
+            decision["exclusion"] = {"reason": "clear_mismatch_for_selected_profiles"}
+    decision["selected_profiles"] = selected
+    return decision
+
+
+def route_screened(store, run_id, frozen, client, rows):
+    """Four bounded native requests; only the coordinator writes SQLite."""
+    from career_scout.prescreen import POLICY_HASH
+
+    settings = frozen["routing"]
+    if settings["prescreen_policy_hash"] != POLICY_HASH:
+        raise EvaluationError("prescreen_policy_changed", fatal=True)
+    fit_enabled = bool(settings.get("fit_screen_policy_hash"))
+    if fit_enabled:
+        from career_scout.fit_screen import POLICY_HASH as FIT_HASH
+
+        if settings["fit_screen_policy_hash"] != FIT_HASH:
+            raise EvaluationError("fit_screen_policy_changed", fatal=True)
+    pending = [
+        row
+        for row in rows
+        if not store.db.execute(
+            "SELECT 1 FROM routed_selections WHERE run_id=? AND route_key=?",
+            (run_id, row["route_key"]),
+        ).fetchone()
+    ]
+    queue = iter((row["route_key"], store.inputs(row["route_key"])) for row in pending)
+    active, error, exhausted = {}, None, False
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        while active or not exhausted:
+            while error is None and not exhausted and len(active) < 4:
+                item = next(queue, None)
+                if item is None:
+                    exhausted = True
+                    break
+                key, requests = item
+                reservation = 3 if fit_enabled else 1
+                with store.db:
+                    reserved = store.db.execute(
+                        "UPDATE routing_budgets SET requests=requests+? "
+                        "WHERE run_id=? AND requests+?<=max_requests",
+                        (reservation, run_id, reservation),
+                    ).rowcount
+                if not reserved:
+                    error = EvaluationError("routing_request_budget_exhausted", fatal=True)
+                    break
+                active[pool.submit(screen_profile_fit, client, requests, settings)] = key
+            if not active:
+                break
+            done, _ = wait(active, return_when=FIRST_COMPLETED)
+            for future in done:
+                key = active.pop(future)
+                try:
+                    decision = future.result()
+                except EvaluationError as exc:
+                    error = exc
+                    continue
+                selected = decision["selected_profiles"]
+                with store.db:
+                    store.db.execute(
+                        "INSERT INTO routed_selections VALUES(?,?,?,?)",
+                        (run_id, key, json.dumps(decision), json.dumps(selected)),
+                    )
+            if error and not active:
+                break
+    if error:
+        raise error
+
+
 def aggregate(store, run_id):
     for row in store.db.execute(
         "SELECT * FROM routed_selections WHERE run_id=?", (run_id,)
@@ -156,7 +251,10 @@ def aggregate(store, run_id):
             }
         verdicts = [outcomes[p]["verdict"] for p in selected]
         accepted = next((p for p in selected if outcomes[p]["verdict"] == "PASS"), None)
-        if accepted:
+        decision = json.loads(row["decision_json"])
+        if decision.get("exclusion"):
+            status = "PRESCREENED_OUT"
+        elif accepted:
             status = "ACCEPTED"
         elif not selected:
             status = "ROUTING_REVIEW"
@@ -174,7 +272,7 @@ def aggregate(store, run_id):
                 "accepted_profile": accepted,
                 "selected_profiles": selected,
                 "outcomes": outcomes,
-                "decision": json.loads(row["decision_json"]),
+                "decision": decision,
             },
         )
 
@@ -182,6 +280,11 @@ def aggregate(store, run_id):
 def evaluate_queues(store, run_id, frozen, worker_factory=CodexBatchWorker):
     config = EvaluatorConfig.model_validate(frozen["model"])
     workers = {p: worker_factory(config) for p in ORDER}
+    batch_limit = frozen["routing"].get("max_batch_characters") or config.max_input_characters
+    batch_size = frozen["routing"].get("batch_size", 10)
+    for worker in workers.values():
+        if isinstance(worker, CodexBatchWorker):
+            worker.batch_max_input_characters = batch_limit
     pool = ThreadPoolExecutor(max_workers=4)
     active = {}
     error = None
@@ -215,8 +318,8 @@ def evaluate_queues(store, run_id, frozen, worker_factory=CodexBatchWorker):
                     if profile in busy or not queues[profile]:
                         continue
                     batch = []
-                    for request in queues[profile][:10]:
-                        if batch_size_characters([*batch, request]) > config.max_input_characters:
+                    for request in queues[profile][:batch_size]:
+                        if batch_size_characters([*batch, request]) > batch_limit:
                             if batch:
                                 break
                             with store.db:

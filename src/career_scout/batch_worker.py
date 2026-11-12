@@ -1,4 +1,4 @@
-"""One resume per Codex invocation, up to ten independently validated vacancies."""
+"""One resume per Codex invocation, up to twenty independently validated vacancies."""
 
 import copy
 import json
@@ -14,7 +14,7 @@ from career_scout.evidence import documents, hydrate_response
 
 
 def batch_payload(requests):
-    if not 1 <= len(requests) <= 10:
+    if not 1 <= len(requests) <= 20:
         raise EvaluationError("invalid_batch_size", fatal=True)
     first = requests[0]
     if len({r.evaluation_key for r in requests}) != len(requests):
@@ -103,11 +103,18 @@ class BatchReply:
 
 
 class CodexBatchWorker(CodexWorker):
+    batch_max_input_characters = None
+
     def batch(self, requests):
         if any(r.model_config_hash != self.config.key() for r in requests):
             raise EvaluationError("model_config_mismatch", fatal=True)
         prompt, schema = batch_payload(requests)
-        wire, usage = self.invoke(prompt, schema)
+        if self.batch_max_input_characters is None:
+            wire, usage = self.invoke(prompt, schema)
+        else:
+            wire, usage = self.invoke(
+                prompt, schema, max_input_characters=self.batch_max_input_characters
+            )
         items = wire.get("results", []) if isinstance(wire, dict) else []
         if not isinstance(items, list):
             items = []

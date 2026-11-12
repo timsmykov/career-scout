@@ -144,7 +144,7 @@ def test_ten_full_cards_one_cv_and_separate_source_ids(routed_setup):
     with pytest.raises(EvaluationError, match="mixed_profile_batch"):
         batch_payload([requests[0], routed_setup[2]["automation"]])
     with pytest.raises(EvaluationError, match="invalid_batch_size"):
-        batch_payload(requests + [clone(base, 11)])
+        batch_payload([clone(base, i) for i in range(21)])
 
 
 def test_native_batch_isolates_cross_case_quote_error(routed_setup):

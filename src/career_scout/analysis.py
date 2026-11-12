@@ -35,7 +35,10 @@ class RoutingSettings(Model):
     calibration_file: str
     workspace: str
     max_requests: int = Field(default=0, ge=0)
-    batch_size: int = Field(default=10, ge=10, le=10)
+    batch_size: Literal[10, 20] = 10
+    max_batch_characters: int | None = Field(default=None, ge=100, le=2_000_000)
+    prescreen_policy_hash: str | None = None
+    fit_screen_policy_hash: str | None = None
     workers: int = Field(default=4, ge=4, le=4)
 
 
@@ -64,6 +67,12 @@ class AnalysisSettings(Model):
             raise ValueError("invalid_profile_order")
         if self.evaluation_policy == "applications-1" and not self.routing:
             raise ValueError("application_policy_requires_routed_mode")
+        if (
+            self.routing
+            and self.routing.fit_screen_policy_hash
+            and not self.routing.prescreen_policy_hash
+        ):
+            raise ValueError("fit_screen_requires_prescreen")
         return self
 
 
@@ -99,7 +108,7 @@ def read_catalog(path: Path, campaign_id):
         store.db.close()
 
 
-def prepare(config_path: Path, *, limit, max_calls, reprocess=False):
+def prepare(config_path: Path, *, limit, max_calls, reprocess=False, catalog=None):
     settings = AnalysisSettings.model_validate_json(config_path.read_text())
     parent = config_path.resolve().parent
 
@@ -136,7 +145,26 @@ def prepare(config_path: Path, *, limit, max_calls, reprocess=False):
             "calibration_hash": digest(calibration),
             "policy_hash": expected,
         }
-    vacancies, policies = read_catalog(resolve(settings.collector_database), settings.campaign_id)
+    vacancies, policies = (
+        catalog
+        if catalog is not None
+        else read_catalog(resolve(settings.collector_database), settings.campaign_id)
+    )
+    if routing and routing.get("prescreen_policy_hash"):
+        from career_scout.prescreen import POLICY_HASH
+
+        if routing["prescreen_policy_hash"] != POLICY_HASH or any(
+            json.loads(p["policy_json"]).get("max_required_years") != 3
+            or set(json.loads(p["policy_json"]).get("allowed_grades", []))
+            != {"intern", "junior", "middle"}
+            for p in policies.values()
+        ):
+            raise EvaluationError("incompatible_prescreen_policy", fatal=True)
+    if routing and routing.get("fit_screen_policy_hash"):
+        from career_scout.fit_screen import POLICY_HASH
+
+        if routing["fit_screen_policy_hash"] != POLICY_HASH:
+            raise EvaluationError("incompatible_fit_screen_policy", fatal=True)
     prepared_at = datetime.now(UTC)
     store = AnalysisStore(resolve(settings.database))
     lock = Path(str(store.path) + ".lock").open("a")
@@ -169,6 +197,7 @@ def prepare(config_path: Path, *, limit, max_calls, reprocess=False):
         )
         rid = store.create_run(frozen, max_calls)
         skipped = 0
+        reused_runs = set()
         for vacancy in vacancies:
             if (
                 store.db.execute("SELECT COUNT(*) FROM run_jobs WHERE run_id=?", (rid,)).fetchone()[
@@ -203,12 +232,14 @@ def prepare(config_path: Path, *, limit, max_calls, reprocess=False):
             key = intake.route_key(requests, policy_name)
             if not reprocess and intake.admitted(store, frozen, key):
                 skipped += 1
+                reused_runs.add(intake.admission_run(store, frozen, key))
                 continue
             store.add_job(rid, requests, policy=policy_name)
             if not intake.admitted(store, frozen, key):
                 intake.record(store, frozen, key, rid)
         result = report(store, rid)
         result["previously_admitted_skipped"] = skipped
+        result["reused_runs"] = sorted(reused_runs)
         result["pending_previous_runs"] = [
             r for r in intake.pending_runs(store, frozen) if r != rid
         ]

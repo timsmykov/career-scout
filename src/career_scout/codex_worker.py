@@ -293,9 +293,16 @@ class CodexWorker:
             raise
         return WorkerReply(result=hydrated, usage=usage, wire_result=result)
 
-    def invoke(self, prompt, schema):
+    def invoke(self, prompt, schema, *, max_input_characters=None):
         schema = json.dumps(schema, ensure_ascii=False)
-        if len(prompt) + len(schema) > self.config.max_input_characters:
+        limit = (
+            self.config.max_input_characters
+            if max_input_characters is None
+            else max_input_characters
+        )
+        if type(limit) is not int or not 100 <= limit <= 2_000_000:
+            raise EvaluationError("invalid_transport_context_limit", fatal=True)
+        if len(prompt) + len(schema) > limit:
             raise EvaluationError("input_exceeds_configured_context")
         if not self._preflight_checked:
             self.preflight()

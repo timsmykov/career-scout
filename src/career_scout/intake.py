@@ -58,6 +58,13 @@ def record(store, frozen, key, run_id):
         )
 
 
+def admission_run(store, frozen, key):
+    return store.db.execute(
+        "SELECT run_id FROM analysis_admissions WHERE scope=? AND route_key=?",
+        (scope(frozen), key),
+    ).fetchone()[0]
+
+
 def pending_runs(store, frozen):
     return [
         r[0]
