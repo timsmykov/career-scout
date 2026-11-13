@@ -74,6 +74,24 @@ def publication_time(value, now):
     return stamp if stamp.tzinfo and cutoff <= stamp <= now else None
 
 
+def workflow_blocked(db):
+    """Application history suppresses another application, preserving fit/card data."""
+    if not db.execute(
+        "SELECT 1 FROM sqlite_master WHERE name='career_assistant_events'"
+    ).fetchone():
+        return set()
+    blocked = set()
+    for source, source_id, kind in db.execute(
+        "SELECT source,source_id,kind FROM career_assistant_events ORDER BY sequence"
+    ):
+        identity = (source, source_id)
+        if kind in {"applied", "dismissed", "withdrawn", "rejected"}:
+            blocked.add(identity)
+        elif kind == "reopened":
+            blocked.discard(identity)
+    return blocked
+
+
 def recommendations(store, *, run_id=None, profile=None, limit=20, now=None):
     from career_scout import exclusions
 
@@ -102,6 +120,7 @@ def recommendations(store, *, run_id=None, profile=None, limit=20, now=None):
         "ORDER BY r.created_at DESC,r.rowid DESC,j.position"
     ).fetchall()
     seen, output = set(), []
+    unavailable = workflow_blocked(store.db)
     for row in rows:
         config = json.loads(row["config_json"])
         if run_id and row["run_id"] != run_id:
@@ -115,7 +134,7 @@ def recommendations(store, *, run_id=None, profile=None, limit=20, now=None):
         if None in identity:
             inputs = store.inputs(row["route_key"])
             identity = (inputs[0].vacancy.source, inputs[0].vacancy.source_id)
-        if exclusions.identity_blocked(store.db, *identity):
+        if identity in unavailable or exclusions.identity_blocked(store.db, *identity):
             continue
         if identity in seen:
             continue

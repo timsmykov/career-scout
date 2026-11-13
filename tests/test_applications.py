@@ -212,6 +212,35 @@ def test_date_only_freshness_and_uncertain_boundary():
     assert publication_time("broken", now) is None
 
 
+def test_recorded_application_is_hidden_before_limit_without_erasing_fit(fixture):
+    from career_scout import assistant_access, exclusions
+
+    path, config, profiles = fixture
+    store = AnalysisStore(path / "application-history.sqlite3")
+    run = store.create_run({"evaluation_policy": "applications-1", "selection_key": "v1"}, 0)
+    requests = []
+    for number in range(2):
+        group = [
+            app_input(clone(profiles[p], number), config, "2026-11-12T00:00:00+00:00")
+            for p in ORDER
+        ]
+        key = store.add_job(run, group)
+        request = group[0]
+        requests.append(request)
+        store.save_result(request, ApplicationResult.model_validate(app_result(request)))
+        store.save_outcome(run, key, {"status": "ACCEPTED", "accepted_profile": "product"})
+    now = datetime.fromisoformat("2026-11-12T01:00:00+00:00")
+    assistant_access.record(store.db, "sent", "hh", "0", "applied", "hh:verified-topic", "")
+    for options in ({}, {"run_id": run}, {"profile": "product"}):
+        rows = recommendations(store, limit=1, now=now, **options)
+        assert [r["source_id"] for r in rows] == ["1"]
+    assert store.cached(requests[0]).verdict == "PASS"
+    assert not exclusions.identity_blocked(store.db, "hh", "0")
+    assistant_access.record(store.db, "restore", "hh", "0", "reopened", "owner:explicit", "")
+    assert len(recommendations(store, now=now)) == 2
+    store.close()
+
+
 def test_critical_confirmed_conflict_cannot_be_recommended(fixture):
     request = app_input(fixture[2]["product"], fixture[1])
     value = app_result(request)
