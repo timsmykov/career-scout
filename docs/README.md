@@ -15,6 +15,9 @@
 
 ## Контракты
 
+- [agent-cli.md](agent-cli.md) — установленный JSON CLI для агента: контекст,
+  планы, конечные запуски, версии/квитанции, shortlist/explain и граница legacy-анализа.
+
 - [core-contracts.md](core-contracts.md) — границы источников, качество данных,
   проверка доказательств, очередь резюме и переносимые подключения.
 - [interface-choice.md](interface-choice.md) — выбор CLI/MCP для личной установки,

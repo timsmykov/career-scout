@@ -42,6 +42,12 @@ Legacy first-PASS сохранён для прежних запусков.
 
 Нужны Python 3.12 и [uv](https://docs.astral.sh/uv/).
 
+Для настройки агентом доступен [CLI `career-scout`](docs/agent-cli.md): резюме и
+пожелания, версии контекста, поисковые планы, ограниченный сбор, status/resume,
+чтение подборки и explain. `career-scout schema` возвращает машинный контракт.
+Новый контекст пока не заменяет критерии прежнего четырёхпрофильного анализатора;
+эта граница явно указана в capabilities и ответах CLI.
+
 ```sh
 uv sync --locked --group dev
 uv run --no-sync python scripts/check_repository.py

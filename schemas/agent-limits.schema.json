@@ -1,0 +1,30 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "max_requests": {
+      "default": 200,
+      "maximum": 1000000,
+      "minimum": 1,
+      "title": "Max Requests",
+      "type": "integer"
+    },
+    "chunk_requests": {
+      "default": 50,
+      "maximum": 10000,
+      "minimum": 1,
+      "title": "Chunk Requests",
+      "type": "integer"
+    },
+    "max_rounds": {
+      "default": 1,
+      "maximum": 100,
+      "minimum": 1,
+      "title": "Max Rounds",
+      "type": "integer"
+    }
+  },
+  "title": "RunLimits",
+  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://career-scout.local/schemas/agent-limits.schema.json"
+}

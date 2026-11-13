@@ -90,11 +90,23 @@ class Campaigns:
             if runtime:
                 frozen["runtime"].update(runtime)
             plans.append(frozen)
-        cid = str(uuid.uuid4())
+        return self.create_frozen(plans, mode)
+
+    def create_frozen(self, plans, mode, *, campaign_id=None):
+        """Reconcile a previously persisted CLI intent without creating another campaign."""
+        cid = campaign_id or str(uuid.uuid4())
+        serialized = json.dumps({"plans": plans}, ensure_ascii=False)
         with self.store.lock(), self.db:
+            old = self.db.execute(
+                "SELECT mode,plan_json FROM campaigns WHERE id=?", (cid,)
+            ).fetchone()
+            if old:
+                if old["mode"] != mode or json.loads(old["plan_json"]) != {"plans": plans}:
+                    raise SourceError("campaign_intent_conflict")
+                return cid
             self.db.execute(
                 "INSERT INTO campaigns(id,mode,created_at,plan_json) VALUES(?,?,?,?)",
-                (cid, mode, utcnow(), json.dumps({"plans": plans}, ensure_ascii=False)),
+                (cid, mode, utcnow(), serialized),
             )
             for frozen in plans:
                 source = frozen["source"]

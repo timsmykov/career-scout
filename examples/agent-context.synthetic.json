@@ -1,0 +1,22 @@
+{
+  "resumes": [
+    {
+      "id": "clinical",
+      "title": "Врач-кардиолог — вымышленный пример",
+      "text": "Вымышленный кандидат: 15 лет клинической практики и ведения пациентов.",
+      "provenance": {
+        "synthetic": true
+      }
+    }
+  ],
+  "goals": "Клиническая работа с пациентами",
+  "preferences": [
+    {
+      "statement": "Удалённая работа или офис в Москве",
+      "priority": "required",
+      "provenance": {
+        "synthetic": true
+      }
+    }
+  ]
+}

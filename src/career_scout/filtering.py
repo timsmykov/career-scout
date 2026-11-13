@@ -127,6 +127,19 @@ REQUIRED = [
 
 
 def experience(vacancy, policy):
+    if policy.max_required_years is None:
+        category = (vacancy.get("attributes", {}).get("experience") or {}).get("category")
+        all_categories = {"no_experience", "one_to_three", "three_to_six", "over_six"}
+        if set(policy.allowed_experience) == all_categories:
+            return Criterion(status="allowed", reasons=["experience.unrestricted"])
+        if category not in all_categories:
+            return Criterion(status="unknown", reasons=["experience.not_stated"])
+        allowed = category in policy.allowed_experience
+        return Criterion(
+            status="allowed" if allowed else "excluded",
+            reasons=["experience.allowed" if allowed else "experience.outside_allowed"],
+            evidence=[Evidence(field="attributes.experience.category", quote=category)],
+        )
     category = (vacancy.get("attributes", {}).get("experience") or {}).get("category")
     base = (
         category in policy.allowed_experience
@@ -178,6 +191,8 @@ def experience(vacancy, policy):
 
 
 def domain(vacancy, policy):
+    if not policy.domain_terms and not policy.outside_role_names:
+        return Criterion(status="allowed", reasons=["domain.unrestricted"])
     raw = vacancy.get("source_payload", {})
     employer = raw.get("employer") if isinstance(raw.get("employer"), dict) else {}
     fields = [("title", vacancy["title"]), ("description", vacancy["description"])]

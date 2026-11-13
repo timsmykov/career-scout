@@ -69,6 +69,16 @@ Legacy collect сохраняется для прежних run IDs и имее�
 
 ## Структура и проверки
 
+Agent-facing CLI: установленный `career-scout` или `python -m career_scout.agent_cli`.
+Новые входы agent_models допускают произвольные resume IDs и свободные пожелания;
+контрольный ledger отдельно в --workspace/control.sqlite3, collector.sqlite3 там же.
+Без скрытого IT/стажевого ограничения. Общие операции: agent_service/agent_results.
+Не считать сохранённый контекст уже применённой модельной политикой:
+generic_context_evaluation=false; analysis-команды — явный мост прежнего четырёхпрофильного
+режима. Новый контекст не меняет рабочие Decisions/Codex правила и старые выгрузки.
+Контракт: docs/agent-cli.md; входы проверяются schema и примерами, изменения требуют
+request-id, context update — if-version, execute/resume — конечный сохранённый бюджет.
+
 Python 3.12, uv.lock, src-layout, httpx/Pydantic, SQLite.
 Legacy first-PASS управляется LangGraph. routed_pipeline.py — координатор четырёх
 очередей на Python/ThreadPoolExecutor; все SQLite-записи делает основной поток.

@@ -45,6 +45,9 @@ def check_schemas() -> int:
         "collection-report.synthetic.json": "collection-report.schema.json",
         "worker-input-applications.synthetic.json": "worker-input.schema.json",
         "application-pass.synthetic.json": "application-result.schema.json",
+        "agent-context.synthetic.json": "agent-context.schema.json",
+        "agent-plan.synthetic.json": "agent-plan.schema.json",
+        "agent-limits.synthetic.json": "agent-limits.schema.json",
     }
     for example, schema in pairs.items():
         validators[schema].validate(read_json("examples/" + example))

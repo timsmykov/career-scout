@@ -5,7 +5,7 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Literal
 
-from pydantic import Field, ValidationError, field_validator
+from pydantic import Field, ValidationError, field_validator, model_validator
 
 from career_scout.common import SourceError, digest
 from career_scout.models import Model, Source
@@ -20,10 +20,10 @@ class FilterPolicy(Model):
     allowed_experience: list[
         Literal["no_experience", "one_to_three", "three_to_six", "over_six"]
     ] = Field(min_length=1)
-    max_required_years: float = Field(default=3, ge=0, le=50, allow_inf_nan=False)
+    max_required_years: float | None = Field(default=3, ge=0, le=50, allow_inf_nan=False)
     keep_unknown: Literal[True] = True
     salary_optional: Literal[True] = True
-    domain_terms: list[str] = Field(min_length=1)
+    domain_terms: list[str]
     outside_role_names: list[str] = Field(default_factory=list)
     outside_industry_names: list[str] = Field(default_factory=list)
 
@@ -44,7 +44,13 @@ class SearchSettings(Model):
     refresh_hours: float = Field(default=24, ge=0, le=87600, allow_inf_nan=False)
     area_ids: list[str] = Field(default_factory=list)
     focused_queries: bool = True
-    focus_terms: list[str] = Field(min_length=1)
+    focus_terms: list[str]
+
+    @model_validator(mode="after")
+    def focused_terms_required(self):
+        if self.focused_queries and not self.focus_terms:
+            raise ValueError("focus_terms_required")
+        return self
 
     @field_validator("focus_terms")
     @classmethod
@@ -86,15 +92,13 @@ class SearchConfig(Model):
             name: SourceSettings() for name in ("hh", "habr", "trudvsem", "superjob")
         }
     )
-    families: dict[
-        Literal["product", "business_analyst", "business_assistant", "automation"], list[str]
-    ]
+    families: dict[str, list[str]]
     filters: FilterPolicy
 
     @field_validator("families")
     @classmethod
     def queries(cls, value):
-        if not value or any(not items for items in value.values()):
+        if not value or any(not key.strip() or not items for key, items in value.items()):
             raise ValueError("empty_query_family")
         for items in value.values():
             if any(not q.strip() or len(q) > 2000 for q in items):

@@ -17,6 +17,9 @@ dependencies = [
   "langchain-openai>=1,<2",
 ]
 
+[project.scripts]
+career-scout = "career_scout.agent_cli:main"
+
 [dependency-groups]
 dev = [
   "jsonschema>=4.23,<5",

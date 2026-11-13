@@ -1,0 +1,237 @@
+{
+  "$defs": {
+    "FilterPolicy": {
+      "additionalProperties": false,
+      "properties": {
+        "allowed_grades": {
+          "items": {
+            "enum": [
+              "intern",
+              "junior",
+              "middle",
+              "senior",
+              "lead",
+              "head"
+            ],
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Allowed Grades",
+          "type": "array"
+        },
+        "allowed_experience": {
+          "items": {
+            "enum": [
+              "no_experience",
+              "one_to_three",
+              "three_to_six",
+              "over_six"
+            ],
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Allowed Experience",
+          "type": "array"
+        },
+        "max_required_years": {
+          "anyOf": [
+            {
+              "maximum": 50,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": 3,
+          "title": "Max Required Years"
+        },
+        "keep_unknown": {
+          "const": true,
+          "default": true,
+          "title": "Keep Unknown",
+          "type": "boolean"
+        },
+        "salary_optional": {
+          "const": true,
+          "default": true,
+          "title": "Salary Optional",
+          "type": "boolean"
+        },
+        "domain_terms": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Domain Terms",
+          "type": "array"
+        },
+        "outside_role_names": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Outside Role Names",
+          "type": "array"
+        },
+        "outside_industry_names": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Outside Industry Names",
+          "type": "array"
+        }
+      },
+      "required": [
+        "allowed_grades",
+        "allowed_experience",
+        "domain_terms"
+      ],
+      "title": "FilterPolicy",
+      "type": "object"
+    },
+    "SourceSettings": {
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "default": true,
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "region_code": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Region Code"
+        },
+        "town_id": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Town Id"
+        },
+        "city_id": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "City Id"
+        },
+        "storage_allowed": {
+          "default": false,
+          "title": "Storage Allowed",
+          "type": "boolean"
+        },
+        "interval": {
+          "anyOf": [
+            {
+              "maximum": 60,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Interval"
+        }
+      },
+      "title": "SourceSettings",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "sources": {
+      "items": {
+        "enum": [
+          "hh",
+          "habr",
+          "superjob",
+          "trudvsem"
+        ],
+        "type": "string"
+      },
+      "maxItems": 4,
+      "minItems": 1,
+      "title": "Sources",
+      "type": "array"
+    },
+    "queries": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 1000,
+      "minItems": 1,
+      "title": "Queries",
+      "type": "array"
+    },
+    "days": {
+      "default": 14,
+      "maximum": 3650,
+      "minimum": 1,
+      "title": "Days",
+      "type": "integer"
+    },
+    "per_page": {
+      "default": 100,
+      "maximum": 100,
+      "minimum": 1,
+      "title": "Per Page",
+      "type": "integer"
+    },
+    "source_options": {
+      "additionalProperties": {
+        "$ref": "#/$defs/SourceSettings"
+      },
+      "propertyNames": {
+        "enum": [
+          "hh",
+          "habr",
+          "superjob",
+          "trudvsem"
+        ]
+      },
+      "title": "Source Options",
+      "type": "object"
+    },
+    "area_ids": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Area Ids",
+      "type": "array"
+    },
+    "collection_policy": {
+      "$ref": "#/$defs/FilterPolicy"
+    }
+  },
+  "required": [
+    "sources",
+    "queries"
+  ],
+  "title": "SearchPlanInput",
+  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://career-scout.local/schemas/agent-plan.schema.json"
+}

@@ -4,6 +4,7 @@ Creates an isolated synthetic volume; never opens the production volume or job A
 """
 
 import argparse
+import json
 import subprocess
 import uuid
 
@@ -170,6 +171,24 @@ def main():
 
     command("docker", "volume", "create", volume)
     try:
+        schema = json.loads(
+            command(
+                "docker",
+                "run",
+                "--rm",
+                "--network",
+                "none",
+                "--read-only",
+                "--entrypoint",
+                "/app/.venv/bin/career-scout",
+                args.image,
+                "schema",
+                "--name",
+                "context",
+            )
+        )
+        assert schema["status"] == "ok" and schema["result"]["capabilities"]["context_versions"]
+        print("Agent CLI executable/schema OK; network disabled.")
         for phase in ("first", "recreated", "campaign-first", "campaign-recreated"):
             result = command(
                 "docker",
