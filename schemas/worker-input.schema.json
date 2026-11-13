@@ -160,14 +160,9 @@
       "additionalProperties": false,
       "properties": {
         "profile_id": {
-          "enum": [
-            "product",
-            "automation",
-            "business_assistant",
-            "business_analyst"
-          ],
           "title": "Profile Id",
-          "type": "string"
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,63}$"
         },
         "resume_id": {
           "minLength": 1,
@@ -516,14 +511,9 @@
       "type": "string"
     },
     "profile_id": {
-      "enum": [
-        "product",
-        "automation",
-        "business_assistant",
-        "business_analyst"
-      ],
       "title": "Profile Id",
-      "type": "string"
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,63}$"
     },
     "vacancy": {
       "$ref": "#/$defs/Vacancy"

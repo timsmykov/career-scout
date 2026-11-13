@@ -316,7 +316,7 @@ def apply_stop_limit(state):
 
 def execute_continuous(config, catalog, directory, state, database, *, shared_slots=False):
     """Refill one shared profile pool, retaining source barriers and persisted runs."""
-    from career_scout.decisions import DecisionsClient
+    from career_scout.decisions import DecisionsClient, connection_options
     from career_scout.routed_pipeline import (
         aggregate,
         evaluate_queues,
@@ -419,6 +419,7 @@ def execute_continuous(config, catalog, directory, state, database, *, shared_sl
                                 DecisionsClient(
                                     Path(value["routing"]["workspace"]),
                                     max_attempts=value["routing"].get("native_max_attempts", 1),
+                                    **connection_options(value["routing"]),
                                 ),
                             )
                         finally:

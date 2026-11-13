@@ -1,4 +1,4 @@
-"""Four profile queues. Model threads never share a SQLite connection."""
+"""Resume queues with a bounded shared pool; only the coordinator writes SQLite."""
 
 import json
 import uuid
@@ -12,7 +12,7 @@ from career_scout import exclusions
 from career_scout.application import parse_result
 from career_scout.batch_worker import CodexBatchWorker, batch_size_characters
 from career_scout.common import utcnow
-from career_scout.decisions import DecisionsClient, select_profiles
+from career_scout.decisions import DecisionsClient, connection_options, select_profiles
 from career_scout.evaluation import ORDER, EvaluationError, EvaluatorConfig, validate_result
 from career_scout.evidence import hydrate_response
 
@@ -279,7 +279,7 @@ def aggregate(store, run_id):
     ).fetchall():
         selected = json.loads(row["selected_json"])
         requests = {r.profile_id: r for r in store.inputs(row["route_key"])}
-        outcomes = {p: {"verdict": "NOT_ROUTED"} for p in ORDER if p not in selected}
+        outcomes = {p: {"verdict": "NOT_ROUTED"} for p in requests if p not in selected}
         for p in selected:
             value = store.cached(requests[p])
             outcomes[p] = {
@@ -332,19 +332,30 @@ def evaluate_queues(
     run_ids = [run_id] if isinstance(run_id, str) else list(run_id)
     exhausted = refill is None
     config = EvaluatorConfig.model_validate(frozen["model"])
-    workers = {p: worker_factory(config) for p in ORDER}
+    order = frozen.get("order", list(ORDER))
+    slot_count = frozen["routing"].get("workers", 4)
+    if (
+        not isinstance(order, list)
+        or not order
+        or any(not isinstance(p, str) or not p for p in order)
+        or len(set(order)) != len(order)
+        or type(slot_count) is not int
+        or not 1 <= slot_count <= 4
+    ):
+        raise EvaluationError("invalid_queue_configuration", fatal=True)
+    workers = {slot: worker_factory(config) for slot in range(slot_count)}
     batch_limit = frozen["routing"].get("max_batch_characters") or config.max_input_characters
     batch_size = frozen["routing"].get("batch_size", 10)
     for worker in workers.values():
         if isinstance(worker, CodexBatchWorker):
             worker.batch_max_input_characters = batch_limit
-    pool = ThreadPoolExecutor(max_workers=4)
+    pool = ThreadPoolExecutor(max_workers=slot_count)
     active = {}
     error = None
     try:
         while True:
             blocked_progress = False
-            queues = {p: [] for p in ORDER}
+            queues = {p: [] for p in order}
             in_flight = {r.evaluation_key for _, _, batch, _, _ in active.values() for r in batch}
             for current_run in run_ids:
                 for row in store.db.execute(
@@ -358,6 +369,8 @@ def evaluate_queues(
                     if exclusions.blocked(store, next(iter(by_profile.values())).vacancy):
                         continue
                     for p in json.loads(row["selected_json"]):
+                        if p not in queues or p not in by_profile:
+                            raise EvaluationError("unknown_selected_resume", fatal=True)
                         request = by_profile[p]
                         blocked = store.db.execute(
                             "SELECT 1 FROM routed_input_errors WHERE run_id=? AND key=?",
@@ -371,9 +384,9 @@ def evaluate_queues(
                             < config.max_attempts_per_profile
                         ):
                             queues[p].append((current_run, request))
-            while error is None and len(active) < 4:
+            while error is None and len(active) < slot_count:
                 busy = {p for p, _, _, _, _ in active.values()}
-                available = [p for p in ORDER if queues[p] and (shared_slots or p not in busy)]
+                available = [p for p in order if queues[p] and (shared_slots or p not in busy)]
                 if not available:
                     break
                 # Give each waiting profile a slot before lending spare slots to
@@ -412,7 +425,7 @@ def evaluate_queues(
                     error = exc.code
                     break
                 used_slots = {slot for _, _, _, _, slot in active.values()}
-                slot = next(p for p in ORDER if p not in used_slots) if shared_slots else profile
+                slot = next(slot for slot in workers if slot not in used_slots)
                 active[pool.submit(workers[slot].batch, batch)] = (
                     profile,
                     ident,
@@ -423,7 +436,7 @@ def evaluate_queues(
             # A small look-ahead keeps fast profile queues fed while slow batches
             # are in flight. No extra model pool or SQLite writer is created.
             refilled = False
-            if error is None and not exhausted and any(len(queues[p]) <= batch_size for p in ORDER):
+            if error is None and not exhausted and any(len(queues[p]) <= batch_size for p in order):
                 try:
                     more = refill()
                     if more is None:
@@ -453,13 +466,23 @@ def evaluate_queues(
                     for request in batch:
                         saved = reply.replies.get(request.evaluation_key)
                         if saved:
-                            store.save_result(request, parse_result(saved.result))
+                            try:
+                                store.save_result(request, parse_result(saved.result))
+                            except (EvaluationError, ValidationError):
+                                errors[request.evaluation_key] = "invalid_evaluation_result"
+                        elif request.evaluation_key not in errors:
+                            errors[request.evaluation_key] = "missing_batch_result"
                 except EvaluationError as exc:
                     errors = {r.evaluation_key: exc.code for r in batch}
                     usage = exc.usage
                     response = getattr(exc, "response", None)
                     if exc.fatal:
                         error = exc.code
+                except Exception:
+                    # Unknown worker failure is technical, never a candidate rejection
+                    # or permission to silently retry an operation with unknown outcome.
+                    error = "worker_execution_error"
+                    errors = {r.evaluation_key: error for r in batch}
                 with store.db:
                     store.db.execute(
                         "UPDATE batch_attempts SET finished_at=?,usage_json=?,"
@@ -503,6 +526,7 @@ def run_routed(store, run_id, frozen, *, worker_factory=CodexBatchWorker, client
             or DecisionsClient(
                 Path(frozen["routing"]["workspace"]),
                 max_attempts=frozen["routing"].get("native_max_attempts", 1),
+                **connection_options(frozen["routing"]),
             ),
         )
     except EvaluationError as exc:

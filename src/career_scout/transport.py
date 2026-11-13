@@ -6,7 +6,7 @@ from email.utils import parsedate_to_datetime
 
 import httpx
 
-from career_scout.common import SourceError
+from career_scout.common import SourceError, strict_json
 
 
 class ReadClient:
@@ -94,7 +94,7 @@ class ReadClient:
     def get(self, url, params=None):
         response = self.request(url, params)
         try:
-            result = response.json()
+            result = strict_json(response.text)
             if not isinstance(result, dict):
                 raise ValueError
         except (ValueError, TypeError):

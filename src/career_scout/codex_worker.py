@@ -248,9 +248,9 @@ def provider_error(events, stderr):
 
 
 class CodexWorker:
-    def __init__(self, config: EvaluatorConfig, *, binary="codex"):
+    def __init__(self, config: EvaluatorConfig, *, binary=None):
         self.config = config
-        self.binary = binary
+        self.binary = binary or config.executable or "codex"
         self._preflight_checked = False
         self._processes = set()
         self._process_lock = threading.Lock()
@@ -376,7 +376,9 @@ class CodexWorker:
                 error.usage = usage
                 raise error
             try:
-                result = json.loads((directory / "result.json").read_text())
+                from career_scout.common import strict_json
+
+                result = strict_json((directory / "result.json").read_text())
             except (OSError, ValueError):
                 raise EvaluationError("codex_invalid_json", usage=usage) from None
             return result, usage

@@ -157,6 +157,11 @@ def probe(plans, args):
                     source_id=card["source_id"],
                     description_chars=len(card["description"]),
                 )
+                from career_scout.data_quality import inspect_quality
+
+                result["data_quality"] = {
+                    k: v for k, v in inspect_quality(card).items() if k != "field_sources"
+                }
             result["status"] = "ok"
         except SourceError as exc:
             result["error"] = exc.code

@@ -11,7 +11,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Literal
 
-from pydantic import Field, ValidationError, model_validator
+from pydantic import Field, ValidationError, model_serializer, model_validator
 
 from career_scout import exclusions, intake
 from career_scout.analysis_graph import AnalysisGraph
@@ -40,7 +40,17 @@ class RoutingSettings(Model):
     prescreen_policy_hash: str | None = None
     fit_screen_policy_hash: str | None = None
     native_max_attempts: int = Field(default=1, ge=1, le=3)
-    workers: int = Field(default=4, ge=4, le=4)
+    workers: int = Field(default=4, ge=1, le=4, strict=True)
+    native_binary: str | None = Field(default=None, min_length=1)
+    workspace_root: str | None = None
+
+    @model_serializer(mode="wrap")
+    def compatible_settings(self, handler):
+        values = handler(self)
+        for key in ("native_binary", "workspace_root"):
+            if values.get(key) is None:
+                values.pop(key, None)
+        return values
 
 
 class AnalysisSettings(Model):

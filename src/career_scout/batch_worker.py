@@ -115,9 +115,19 @@ class CodexBatchWorker(CodexWorker):
             wire, usage = self.invoke(
                 prompt, schema, max_input_characters=self.batch_max_input_characters
             )
-        items = wire.get("results", []) if isinstance(wire, dict) else []
+        if not isinstance(wire, dict) or set(wire) != {"results"}:
+            raise EvaluationError("invalid_batch_envelope", usage=usage)
+        items = wire["results"]
         if not isinstance(items, list):
-            items = []
+            raise EvaluationError("invalid_batch_envelope", usage=usage)
+        requested = {r.evaluation_key for r in requests}
+        if any(
+            isinstance(item, dict)
+            and isinstance(item.get("evaluation_key"), str)
+            and item["evaluation_key"] not in requested
+            for item in items
+        ):
+            raise EvaluationError("unexpected_batch_result", usage=usage)
         items = [
             x for x in items if isinstance(x, dict) and isinstance(x.get("evaluation_key"), str)
         ]

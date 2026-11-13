@@ -11,7 +11,7 @@ from pydantic import ValidationError
 from career_scout.common import SourceError
 from career_scout.models import source_identity
 from career_scout.source_normalization import habr_record, superjob_record, trudvsem_record
-from career_scout.source_types import Page
+from career_scout.source_types import Page, contract_boundary
 from career_scout.transport import ReadClient
 
 
@@ -70,6 +70,7 @@ class TrudvsemClient(ReadClient):
             raise SourceError("search_schema_drift")
         return [item["vacancy"] for item in items], total, meta
 
+    @contract_boundary("search")
     def search(self, query, start, end, page, per_page, *, area_ids=None):
         params = {
             "text": query,
@@ -112,6 +113,7 @@ class TrudvsemClient(ReadClient):
             window_cap=None,
         )
 
+    @contract_boundary("detail")
     def detail(self, vacancy_id):
         try:
             company, vid = json.loads(vacancy_id)
@@ -148,6 +150,7 @@ class SuperJobClient(ReadClient):
             raise SourceError("missing_application_credentials")
         super().__init__(headers={"X-Api-App-Id": key}, **kwargs)
 
+    @contract_boundary("search")
     def search(self, query, start, end, page, per_page, *, area_ids=None):
         # Native search clamps large requests to 40 and can insert promoted rows
         # above the requested count. Their count must not change the page stride.
@@ -192,6 +195,7 @@ class SuperJobClient(ReadClient):
             truncated=more and at_cap or total > self.window_cap,
         )
 
+    @contract_boundary("detail")
     def detail(self, vacancy_id):
         numeric_id(vacancy_id)
         return superjob_record(self.get(self.base + vacancy_id + "/"), vacancy_id)
@@ -262,6 +266,7 @@ class HabrClient(ReadClient):
     source = "habr"
     base = "https://career.habr.com"
 
+    @contract_boundary("search")
     def search(self, query, start, end, page, per_page, *, area_ids=None):
         params = {"q": query, "type": "all", "sort": "date", "page": page + 1, "per_page": per_page}
         if self.options.get("city_id"):
@@ -290,6 +295,7 @@ class HabrClient(ReadClient):
             truncated=pages * size < total,
         )
 
+    @contract_boundary("detail")
     def detail(self, vacancy_id):
         numeric_id(vacancy_id)
         return habr_detail(self.request(self.base + "/vacancies/" + vacancy_id).text, vacancy_id)

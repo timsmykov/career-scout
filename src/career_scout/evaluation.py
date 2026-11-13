@@ -5,14 +5,14 @@ import json
 import re
 import unicodedata
 from datetime import datetime
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import Field, StrictBool, model_validator
+from pydantic import Field, StrictBool, model_serializer, model_validator
 
 from career_scout.common import digest
 from career_scout.models import Hash, Model, Vacancy
 
-ProfileID = Literal["product", "automation", "business_assistant", "business_analyst"]
+ProfileID = Annotated[str, Field(strict=True, pattern=r"^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,63}$")]
 ORDER: tuple[ProfileID, ...] = ("product", "automation", "business_assistant", "business_analyst")
 EVALUATOR_VERSION = "evaluation-1"
 
@@ -63,6 +63,14 @@ class EvaluatorConfig(Model):
     timeout_seconds: int = Field(default=300, ge=1, le=3600)
     max_input_characters: int = Field(default=100_000, ge=100, le=2_000_000)
     max_attempts_per_profile: int = Field(default=2, ge=1, le=3)
+    executable: str | None = Field(default=None, min_length=1)
+
+    @model_serializer(mode="wrap")
+    def compatible_settings(self, handler):
+        values = handler(self)
+        if values.get("executable") is None:
+            values.pop("executable", None)
+        return values
 
     def key(self):
         return digest(self.model_dump(mode="json"))

@@ -15,6 +15,11 @@
 
 ## Контракты
 
+- [core-contracts.md](core-contracts.md) — границы источников, качество данных,
+  проверка доказательств, очередь резюме и переносимые подключения.
+- [interface-choice.md](interface-choice.md) — выбор CLI/MCP для личной установки,
+  подготовительный блок и план измерения качества.
+
 - [exclusions.md](exclusions.md) — постоянный отсев до очереди, моделей и ассистента.
 
 - [evaluation-performance.md](evaluation-performance.md) — сравнение10/20, токены и консервативный Decisions screen.

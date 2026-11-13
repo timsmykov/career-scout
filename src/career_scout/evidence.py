@@ -48,6 +48,8 @@ class EvidenceDocument:
     def resolve(self, reference):
         if not isinstance(reference, dict) or set(reference) != {"from", "to"}:
             raise EvaluationError("invalid_evidence_reference")
+        if not all(isinstance(value, str) for value in reference.values()):
+            raise EvaluationError("invalid_evidence_reference")
         try:
             start = self.positions[reference["from"]]
             end = self.positions[reference["to"]]

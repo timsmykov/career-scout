@@ -15,9 +15,9 @@ from pathlib import Path
 import httpx
 from pydantic import ValidationError
 
-from career_scout.common import SourceError, digest, utcnow
+from career_scout.common import SourceError, digest, strict_json, utcnow
 from career_scout.html import description_text
-from career_scout.source_types import Page
+from career_scout.source_types import Page, contract_boundary
 
 
 class Credentials:
@@ -294,13 +294,14 @@ class HHClient:
             if status != 200:
                 raise SourceError("unexpected_http_status")
             try:
-                body = response.json()
+                body = strict_json(response.text)
                 if not isinstance(body, dict):
                     raise ValueError
                 return body
             except (ValueError, TypeError):
                 raise SourceError("invalid_json") from None
 
+    @contract_boundary("search")
     def search(
         self,
         query: str,
@@ -345,5 +346,6 @@ class HHClient:
             raise SourceError("unexpected_empty_page")
         return result
 
+    @contract_boundary("detail")
     def detail(self, vacancy_id: str) -> dict:
         return normalize(self.get("/vacancies/" + vacancy_id), vacancy_id)

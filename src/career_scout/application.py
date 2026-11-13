@@ -4,7 +4,7 @@ from typing import Literal
 
 from pydantic import Field, StrictBool, model_validator
 
-from career_scout.evaluation import Assessment, EvaluationResult
+from career_scout.evaluation import Assessment, EvaluationResult, ProfileID
 from career_scout.models import Hash, Model
 
 POLICY = "applications-1"
@@ -18,7 +18,7 @@ class ApplicationResult(Model):
     schema_version: Literal[3]
     policy: Literal["applications-1"]
     evaluation_key: Hash
-    profile_id: Literal["product", "automation", "business_assistant", "business_analyst"]
+    profile_id: ProfileID
     verdict: Literal["PASS", "REJECT"]
     reason: str = Field(min_length=1, max_length=1200)
     assessments: list[ApplicationAssessment] = Field(min_length=1, max_length=12)
