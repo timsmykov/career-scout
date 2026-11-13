@@ -132,6 +132,7 @@ def action(state, op, parameters, request_id):
                         additional_calls=params["additional_calls"],
                         additional_decisions=params["additional_decisions"],
                         retry_errors=params.get("retry_errors", False),
+                        enable_calls=params.get("enable_calls", False),
                     )
                 result = context_engine.status(dbpath, params["run_id"])
                 result["execution_error"] = failure

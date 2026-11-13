@@ -600,3 +600,38 @@ def test_existing_context_without_new_default_fields_keeps_noop_version_and_rece
     assert update["result"]["version"] == 1 and update["result"]["unchanged"]
     assert "fact_rules" not in state.context(cid)["document"]
     state.close()
+
+
+def test_prepared_offline_run_can_be_explicitly_enabled_without_readmitting_inputs(tmp_path):
+    from career_scout.agent_cli import parser
+
+    state, p, _ = prepared(tmp_path, count=1)
+    parsed = parser().parse_args(
+        [
+            "evaluation",
+            "resume",
+            p["run_id"],
+            "--db",
+            p["database"],
+            "--enable-calls",
+            "--request-id",
+            "enable",
+        ]
+    )
+    assert parsed.enable_calls
+    with closing(AnalysisStore(Path(p["database"]))) as store:
+        frozen = json.loads(store.run(p["run_id"])["config_json"])
+        frozen["connection"]["external_calls_enabled"] = False
+        store.db.execute(
+            "UPDATE analysis_runs SET config_json=? WHERE id=?", (json.dumps(frozen), p["run_id"])
+        )
+        store.db.commit()
+        with pytest.raises(EvaluationError, match="model_calls_disabled"):
+            context_engine.execute(store, p["run_id"], worker_factory=Worker)
+        assert (
+            context_engine.execute(store, p["run_id"], worker_factory=Worker, enable_calls=True)
+            is None
+        )
+        assert len(Worker.calls) == 1
+    assert context_engine.status(p["database"], p["run_id"])["external_calls_enabled"]
+    state.close()

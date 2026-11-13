@@ -367,14 +367,26 @@ def execute(
     additional_calls=0,
     additional_decisions=0,
     retry_errors=False,
+    enable_calls=False,
 ):
     from career_scout.batch_worker import CodexBatchWorker
     from career_scout.routed_pipeline import evaluate_queues, reserve_route
 
     frozen = json.loads(store.run(run_id)["config_json"])
-    config = EvaluationConnection.model_validate(frozen["connection"])
-    if any(type(v) is not int or v < 0 for v in (additional_calls, additional_decisions)):
+    if (
+        any(type(v) is not int or v < 0 for v in (additional_calls, additional_decisions))
+        or type(enable_calls) is not bool
+        or type(retry_errors) is not bool
+    ):
         raise EvaluationError("invalid_evaluation_budget", fatal=True)
+    if enable_calls:
+        frozen["connection"]["external_calls_enabled"] = True
+        frozen["external_calls_enabled"] = True
+        with store.db:
+            store.db.execute(
+                "UPDATE analysis_runs SET config_json=? WHERE id=?", (json.dumps(frozen), run_id)
+            )
+    config = EvaluationConnection.model_validate(frozen["connection"])
     if not config.external_calls_enabled:
         raise EvaluationError("model_calls_disabled", fatal=True)
     # Reject unknown batch delivery BEFORE consuming another Decisions request or budget.
@@ -500,6 +512,7 @@ def status(database, run_id):
             context_id=frozen["context"]["context_id"],
             context_version=frozen["context"]["version"],
             agent_context_applied=True,
+            external_calls_enabled=frozen["connection"]["external_calls_enabled"],
             catalog=counts,
             decisions_requests_reserved=budget[0],
             max_decisions_requests=budget[1],

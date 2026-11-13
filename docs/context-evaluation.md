@@ -62,6 +62,13 @@ career-scout --workspace private/me evaluation resume RUN_ID --db DATABASE \
   --additional-calls 2 --additional-decisions 20 --request-id resume-1
 ```
 
+Prepare не вызывает модели. Если запуск подготовлен с external_calls_enabled=false,
+его можно явно активировать `evaluation run/resume ... --enable-calls` с новым
+request-id. Меняется только разрешение выполнения этого run; контекст, модель,
+входы и конечные бюджеты сохраняются, новые карточки не принимаются повторно.
+Без этого флага разрешение не повышается. Профиль подключения для будущих запусков
+сам по себе не меняется.
+
 Prepare не вызывает модели. Закрепляются контекст, версия, полный текст карточек,
 параметры подключения и отдельные бюджеты Decisions/Codex. БД анализа находится в
 `WORKSPACE/evaluations/CONTEXT_ID/CONTEXT_HASH.sqlite3`. Файловый lock сериализует

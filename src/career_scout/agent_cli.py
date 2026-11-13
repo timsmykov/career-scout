@@ -230,6 +230,7 @@ def parser():
             p.add_argument("--additional-calls", type=nonnegative, default=0)
             p.add_argument("--additional-decisions", type=nonnegative, default=0)
             p.add_argument("--retry-errors", action="store_true")
+            p.add_argument("--enable-calls", action="store_true")
         elif name == "shortlist":
             paging(p)
             p.add_argument("--include-uncertain", action="store_true")
@@ -354,6 +355,7 @@ def dispatch(args):
                     "additional_calls": args.additional_calls,
                     "additional_decisions": args.additional_decisions,
                     "retry_errors": args.retry_errors,
+                    "enable_calls": args.enable_calls,
                 },
                 args.request_id,
             )
