@@ -84,4 +84,14 @@ def hydrate_response(request, wire, vacancy_prefix="V"):
         item["vacancy_quote"] = vacancy.resolve(item.pop("vacancy_reference"))
         reference = item.pop("resume_reference")
         item["resume_quote"] = None if reference is None else resume.resolve(reference)
+    if request.filters.get("evaluation_policy") == "context-1":
+        if not isinstance(value.get("preference_checks"), list):
+            raise EvaluationError("missing_preference_checks")
+        for item in value["preference_checks"]:
+            if not isinstance(item, dict) or "vacancy_quote" in item:
+                raise EvaluationError("invalid_wire_response")
+            if "vacancy_reference" not in item:
+                raise EvaluationError("missing_evidence_reference")
+            ref = item.pop("vacancy_reference")
+            item["vacancy_quote"] = vacancy.resolve(ref) if ref is not None else None
     return value

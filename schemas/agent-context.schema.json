@@ -1,5 +1,76 @@
 {
   "$defs": {
+    "FactRule": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[a-zA-Z0-9_.-]{1,64}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "field": {
+          "pattern": "^[a-zA-Z][a-zA-Z0-9_.]{0,150}$",
+          "title": "Field",
+          "type": "string"
+        },
+        "operator": {
+          "enum": [
+            "eq",
+            "in",
+            "not_in",
+            "gte",
+            "lte"
+          ],
+          "title": "Operator",
+          "type": "string"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ],
+          "title": "Value"
+        },
+        "guards": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "title": "Guards",
+          "type": "object"
+        }
+      },
+      "required": [
+        "id",
+        "field",
+        "operator",
+        "value"
+      ],
+      "title": "FactRule",
+      "type": "object"
+    },
     "Preference": {
       "additionalProperties": false,
       "properties": {
@@ -113,6 +184,14 @@
       "default": "unattended",
       "title": "Interaction Mode",
       "type": "string"
+    },
+    "fact_rules": {
+      "items": {
+        "$ref": "#/$defs/FactRule"
+      },
+      "maxItems": 100,
+      "title": "Fact Rules",
+      "type": "array"
     }
   },
   "required": [

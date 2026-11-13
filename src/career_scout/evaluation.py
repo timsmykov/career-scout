@@ -250,7 +250,9 @@ def evidence_spans(text):
 
 
 def validate_result(request: WorkerInput, result: EvaluationResult):
-    expected_schema = 3 if request.filters.get("evaluation_policy") == "applications-1" else 2
+    expected_schema = {"applications-1": 3, "context-1": 4}.get(
+        request.filters.get("evaluation_policy"), 2
+    )
     if result.schema_version != expected_schema:
         raise EvaluationError("result_policy_mismatch")
     if result.evaluation_key != request.evaluation_key or result.profile_id != request.profile_id:
@@ -265,4 +267,8 @@ def validate_result(request: WorkerInput, result: EvaluationResult):
             quote = canonical_quote(item.resume_quote)
             if not quote or quote not in resume_text:
                 raise EvaluationError("resume_quote_not_found")
+    if expected_schema == 4:
+        from career_scout.context_policy import validate_preferences
+
+        validate_preferences(request, result)
     return result

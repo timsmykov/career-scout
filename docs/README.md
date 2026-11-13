@@ -15,6 +15,9 @@
 
 ## Контракты
 
+- [context-evaluation.md](context-evaluation.md) — персональная маршрутизация Decisions,
+  семантическая оценка с неопределённостью, подключения/doctor, история и метрики.
+
 - [agent-cli.md](agent-cli.md) — установленный JSON CLI для агента: контекст,
   планы, конечные запуски, версии/квитанции, shortlist/explain и граница legacy-анализа.
 

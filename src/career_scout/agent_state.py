@@ -91,6 +91,11 @@ class AgentState:
         if write:
             os.chmod(self.path, 0o600)
             self.db.execute("PRAGMA journal_mode=WAL")
+            self.db.execute(
+                "CREATE TABLE IF NOT EXISTS agent_connections("
+                "name TEXT PRIMARY KEY,payload TEXT NOT NULL)"
+            )
+            self.db.commit()
 
     def close(self):
         self.db.close()

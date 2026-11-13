@@ -35,7 +35,8 @@ def context_create(state: AgentState, document, request_id):
         )
         return context_metadata(state.context(cid))
 
-    return state.mutate(request_id, "context.create", value, create)
+    identity = {k: v for k, v in value.items() if k != "fact_rules" or v}
+    return state.mutate(request_id, "context.create", identity, create)
 
 
 def context_update(state, context_id, patch, expected_version, request_id):
@@ -49,7 +50,10 @@ def context_update(state, context_id, patch, expected_version, request_id):
         value = ContextInput.model_validate({**current["document"], **patch}).model_dump(
             mode="json"
         )
-        if digest(value) == current["content_hash"]:
+        normalized_current = ContextInput.model_validate(current["document"]).model_dump(
+            mode="json"
+        )
+        if value == normalized_current:
             return {**context_metadata(current), "unchanged": True}
         version = expected_version + 1
         state.db.execute("UPDATE contexts SET version=? WHERE id=?", (version, context_id))

@@ -154,6 +154,60 @@ s.close()
 """
 
 
+CONTEXT = r"""
+import json,sys
+from pathlib import Path
+from datetime import UTC,datetime
+from contextlib import closing
+from career_scout.agent_state import AgentState
+from career_scout.agent_service import context_create
+from career_scout import context_engine
+from career_scout.context_models import EvaluationConnection
+from career_scout.analysis_store import AnalysisStore
+from career_scout.batch_worker import BatchReply
+from career_scout.codex_worker import WorkerReply
+from career_scout.context_policy import ContextResult
+from career_scout.hh import normalize
+from career_scout.normalization import project_snapshot
+root=Path('/data/agent')
+phase=sys.argv[1]
+if phase=='agent-first':
+    state=AgentState(root,write=True)
+    ctx=context_create(state,{'resumes':[{'id':'clinical','title':'Synthetic clinician',
+      'text':'Лечил пациентов.'}]},'ctx')['result']
+    raw={'id':'fake','name':'Врач','description':'<p>Лечить пациентов.</p>',
+         'published_at':datetime.now(UTC).isoformat()}
+    cfg=EvaluationConnection(external_calls_enabled=True)
+    run=context_engine.prepare(state,ctx['context_id'],None,
+         [project_snapshot(normalize(raw,'fake'))],cfg.model_dump(mode='json'),10,1,0)
+    class Worker:
+        def __init__(self,config): pass
+        def cancel(self): pass
+        def batch(self,requests):
+            replies={}
+            for r in requests:
+                value=ContextResult(schema_version=4,policy='context-1',
+                 evaluation_key=r.evaluation_key,profile_id=r.profile_id,verdict='PASS',
+                 reason='Synthetic match',assessments=[dict(kind='responsibility',
+                 requirement='Лечить пациентов',mandatory=True,critical=True,
+                 vacancy_quote='Лечить пациентов.',resume_quote='Лечил пациентов.',
+                 status='confirmed',explanation='Synthetic evidence')],
+                 preference_checks=[],uncertainties=[],questions=[])
+                replies[r.evaluation_key]=WorkerReply(value.model_dump(mode='json'))
+            return BatchReply(replies,{},None,{})
+    with closing(AnalysisStore(Path(run['database']))) as store:
+        assert context_engine.execute(store,run['run_id'],worker_factory=Worker) is None
+    (root/'run.json').write_text(json.dumps(run))
+    state.close()
+else:
+    run=json.loads((root/'run.json').read_text())
+    result=context_engine.status(run['database'],run['run_id'])
+    assert result['status']=='complete' and result['outcomes']=={'ACCEPTED':1}
+    assert len(context_engine.recommendations(run['database']))==1
+print(json.dumps({'phase':phase,'context_analysis':'persisted','real_model_calls':0}))
+"""
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--image", default="career-scout:local")
@@ -189,7 +243,14 @@ def main():
         )
         assert schema["status"] == "ok" and schema["result"]["capabilities"]["context_versions"]
         print("Agent CLI executable/schema OK; network disabled.")
-        for phase in ("first", "recreated", "campaign-first", "campaign-recreated"):
+        for phase in (
+            "first",
+            "recreated",
+            "campaign-first",
+            "campaign-recreated",
+            "agent-first",
+            "agent-recreated",
+        ):
             result = command(
                 "docker",
                 "run",
@@ -205,7 +266,11 @@ def main():
                 "/app/.venv/bin/python",
                 args.image,
                 "-c",
-                CAMPAIGN if phase.startswith("campaign") else FIRST,
+                CONTEXT
+                if phase.startswith("agent")
+                else CAMPAIGN
+                if phase.startswith("campaign")
+                else FIRST,
                 phase,
             )
             print(result)

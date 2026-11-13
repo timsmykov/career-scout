@@ -1,5 +1,6 @@
 """A data-only evaluator using the owner's existing ChatGPT/Codex CLI login."""
 
+import copy
 import json
 import os
 import signal
@@ -104,6 +105,19 @@ def output_schema(request, vacancy_prefix="V"):
     del fields["vacancy_quote"], fields["resume_quote"]
     fields["vacancy_reference"] = vacancy.reference_schema()
     fields["resume_reference"] = {"anyOf": [resume.reference_schema(), {"type": "null"}]}
+    if request.filters.get("evaluation_policy") == "context-1":
+        fields = schema["$defs"]["PreferenceCheck"]["properties"]
+        del fields["vacancy_quote"]
+        fields["vacancy_reference"] = {"anyOf": [vacancy.reference_schema(), {"type": "null"}]}
+        known, missing = copy.deepcopy(assessment), copy.deepcopy(assessment)
+        known["properties"]["status"] = {"type": "string", "enum": ["confirmed", "conflict"]}
+        known["properties"]["resume_reference"] = resume.reference_schema()
+        missing["properties"]["status"] = {
+            "type": "string",
+            "enum": ["unconfirmed", "outside_profile"],
+        }
+        missing["properties"]["resume_reference"] = {"type": "null"}
+        schema["$defs"][name] = {"anyOf": [known, missing]}
 
     def strict(node):
         if isinstance(node, dict):
@@ -163,6 +177,12 @@ def build_command(config: EvaluatorConfig, directory: Path, binary="codex"):
 
 def build_prompt(request: WorkerInput):
     from career_scout.application import POLICY, TRANSPORT_INSTRUCTIONS
+
+    if request.filters.get("evaluation_policy") == "context-1":
+        from career_scout.context_policy import INSTRUCTIONS
+
+        TRANSPORT_INSTRUCTIONS = INSTRUCTIONS
+        POLICY = "context-1"
 
     vacancy, resume = documents(request)
     values = {

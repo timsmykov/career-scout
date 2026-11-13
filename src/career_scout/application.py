@@ -46,6 +46,10 @@ class ApplicationResult(Model):
 
 
 def result_model(request):
+    if request.filters.get("evaluation_policy") == "context-1":
+        from career_scout.context_policy import ContextResult
+
+        return ContextResult
     return (
         ApplicationResult
         if request.filters.get("evaluation_policy") == POLICY
@@ -54,6 +58,10 @@ def result_model(request):
 
 
 def parse_result(value):
+    if value.get("schema_version") == 4:
+        from career_scout.context_policy import ContextResult
+
+        return ContextResult.model_validate(value)
     cls = ApplicationResult if value.get("schema_version") == 3 else EvaluationResult
     return cls.model_validate(value)
 

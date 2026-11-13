@@ -1,0 +1,175 @@
+{
+  "$defs": {
+    "EvaluatorConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "provider": {
+          "const": "codex_subscription",
+          "default": "codex_subscription",
+          "title": "Provider",
+          "type": "string"
+        },
+        "model": {
+          "default": "gpt-6-luna",
+          "title": "Model",
+          "type": "string"
+        },
+        "reasoning_effort": {
+          "default": "max",
+          "enum": [
+            "low",
+            "medium",
+            "high",
+            "xhigh",
+            "max"
+          ],
+          "title": "Reasoning Effort",
+          "type": "string"
+        },
+        "timeout_seconds": {
+          "default": 300,
+          "maximum": 3600,
+          "minimum": 1,
+          "title": "Timeout Seconds",
+          "type": "integer"
+        },
+        "max_input_characters": {
+          "default": 100000,
+          "maximum": 2000000,
+          "minimum": 100,
+          "title": "Max Input Characters",
+          "type": "integer"
+        },
+        "max_attempts_per_profile": {
+          "default": 2,
+          "maximum": 3,
+          "minimum": 1,
+          "title": "Max Attempts Per Profile",
+          "type": "integer"
+        },
+        "executable": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Executable"
+        }
+      },
+      "title": "EvaluatorConfig",
+      "type": "object"
+    },
+    "NativeConnection": {
+      "additionalProperties": false,
+      "properties": {
+        "binary": {
+          "default": "/usr/local/bin/openbot-openai-api",
+          "minLength": 1,
+          "title": "Binary",
+          "type": "string"
+        },
+        "workspace": {
+          "minLength": 1,
+          "title": "Workspace",
+          "type": "string"
+        },
+        "workspace_root": {
+          "minLength": 1,
+          "title": "Workspace Root",
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspace",
+        "workspace_root"
+      ],
+      "title": "NativeConnection",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "model": {
+      "$ref": "#/$defs/EvaluatorConfig"
+    },
+    "decisions": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/NativeConnection"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "external_calls_enabled": {
+      "default": false,
+      "title": "External Calls Enabled",
+      "type": "boolean"
+    },
+    "batch_size": {
+      "default": 20,
+      "maximum": 20,
+      "minimum": 1,
+      "title": "Batch Size",
+      "type": "integer"
+    },
+    "workers": {
+      "default": 4,
+      "maximum": 4,
+      "minimum": 1,
+      "title": "Workers",
+      "type": "integer"
+    },
+    "freshness_days": {
+      "default": 14,
+      "maximum": 3650,
+      "minimum": 1,
+      "title": "Freshness Days",
+      "type": "integer"
+    },
+    "max_batch_characters": {
+      "default": 200000,
+      "maximum": 2000000,
+      "minimum": 1000,
+      "title": "Max Batch Characters",
+      "type": "integer"
+    },
+    "max_decision_characters": {
+      "default": 200000,
+      "maximum": 2000000,
+      "minimum": 1000,
+      "title": "Max Decision Characters",
+      "type": "integer"
+    },
+    "routing_margin": {
+      "default": 0.1,
+      "maximum": 1,
+      "minimum": 0,
+      "title": "Routing Margin",
+      "type": "number"
+    },
+    "allow_decisions_exclusion": {
+      "default": false,
+      "title": "Allow Decisions Exclusion",
+      "type": "boolean"
+    },
+    "exclusion_threshold": {
+      "default": 0.995,
+      "maximum": 1,
+      "minimum": 0.99,
+      "title": "Exclusion Threshold",
+      "type": "number"
+    }
+  },
+  "title": "EvaluationConnection",
+  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://career-scout.local/schemas/agent-connection.schema.json"
+}

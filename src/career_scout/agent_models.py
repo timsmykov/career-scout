@@ -5,6 +5,7 @@ from typing import Literal
 
 from pydantic import Field, field_validator, model_validator
 
+from career_scout.context_models import FactRule
 from career_scout.models import Model, Source
 from career_scout.search_config import (
     FilterPolicy,
@@ -50,11 +51,14 @@ class ContextInput(Model):
     preferences: list[Preference | str] = Field(default_factory=list, max_length=1000)
     attributes: dict = Field(default_factory=dict)
     interaction_mode: Literal["unattended"] = "unattended"
+    fact_rules: list[FactRule] = Field(default_factory=list, max_length=100)
 
     @model_validator(mode="after")
     def unique_resumes(self):
         if len({r.id for r in self.resumes}) != len(self.resumes):
             raise ValueError("duplicate_resume_id")
+        if len({r.id for r in self.fact_rules}) != len(self.fact_rules):
+            raise ValueError("duplicate_rule_id")
         if any(isinstance(p, str) and not p.strip() for p in self.preferences):
             raise ValueError("empty_preference")
         return self

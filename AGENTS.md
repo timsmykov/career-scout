@@ -73,9 +73,14 @@ Agent-facing CLI: установленный `career-scout` или `python -m ca
 Новые входы agent_models допускают произвольные resume IDs и свободные пожелания;
 контрольный ledger отдельно в --workspace/control.sqlite3, collector.sqlite3 там же.
 Без скрытого IT/стажевого ограничения. Общие операции: agent_service/agent_results.
-Не считать сохранённый контекст уже применённой модельной политикой:
-generic_context_evaluation=false; analysis-команды — явный мост прежнего четырёхпрофильного
-режима. Новый контекст не меняет рабочие Decisions/Codex правила и старые выгрузки.
+Новый evaluation-путь context-1 применяет полный контекст в динамических Decisions choices
+и Codex; PASS/UNCERTAIN/REJECT без вопросов. generic_context_evaluation=true.
+analysis-команды сохраняют явный мост прежнего четырёхпрофильного режима и его данные.
+Контракт: docs/context-evaluation.md. Не путать программную приёмку и рыночную точность;
+без контрольной разметки quality.measured=false. Автоотсев Decisions по умолчанию выключен.
+БД context-1 отдельная на context_id/content_hash, admission без повторных source ID;
+общая история личного workspace не переносит опыт между резюме. Новые реальные вызовы
+проверять только конечным явно ограниченным запуском, не менять старые рабочие оценки.
 Контракт: docs/agent-cli.md; входы проверяются schema и примерами, изменения требуют
 request-id, context update — if-version, execute/resume — конечный сохранённый бюджет.
 

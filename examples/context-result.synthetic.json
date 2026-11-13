@@ -1,0 +1,25 @@
+{
+  "schema_version": 4,
+  "policy": "context-1",
+  "evaluation_key": "0000000000000000000000000000000000000000000000000000000000000000",
+  "profile_id": "clinical",
+  "verdict": "PASS",
+  "reason": "Основная работа подтверждена.",
+  "assessments": [
+    {
+      "kind": "responsibility",
+      "requirement": "Лечить пациентов",
+      "mandatory": true,
+      "vacancy_quote": "Лечить пациентов.",
+      "resume_quote": "Лечил пациентов.",
+      "status": "confirmed",
+      "explanation": "Совпадает основная работа.",
+      "critical": true
+    }
+  ],
+  "preference_checks": [],
+  "uncertainties": [
+    "Зарплата не указана."
+  ],
+  "questions": []
+}

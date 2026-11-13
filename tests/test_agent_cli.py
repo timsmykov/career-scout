@@ -320,7 +320,7 @@ def test_interrupted_operation_requires_new_request_but_preserves_campaign(
 
 def test_schema_errors_and_read_commands_do_not_initialize_workspace(tmp_path, capsys):
     schema = invoke(tmp_path, capsys, "schema", "--name", "context")
-    assert schema["result"]["capabilities"]["generic_context_evaluation"] is False
+    assert schema["result"]["capabilities"]["generic_context_evaluation"] is True
     assert not (tmp_path / "workspace").exists()
     missing = invoke(tmp_path, capsys, "context", "list")
     assert missing["error"]["code"] == "workspace_not_initialized"

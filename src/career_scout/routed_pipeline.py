@@ -299,6 +299,8 @@ def aggregate(store, run_id):
             status = "PENDING"
         elif "BORDERLINE" in verdicts:
             status = "NEEDS_CLARIFICATION"
+        elif "UNCERTAIN" in verdicts:
+            status = "UNCERTAIN"
         else:
             status = "REJECTED_BY_SELECTED"
         store.save_outcome(

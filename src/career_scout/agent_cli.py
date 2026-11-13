@@ -10,10 +10,11 @@ from pathlib import Path
 
 from pydantic import ValidationError
 
-from career_scout import agent_results, agent_service
+from career_scout import agent_results, agent_service, context_commands
 from career_scout.agent_models import ContextInput, RunLimits, SearchPlanInput
 from career_scout.agent_state import AgentState, CommandError, envelope
 from career_scout.common import SourceError, strict_json
+from career_scout.context_models import EvaluationConnection, QualityLabels
 from career_scout.evaluation import EvaluationError
 from career_scout.models import Source
 
@@ -24,11 +25,24 @@ CAPABILITIES = {
     "agent_search_plans": True,
     "bounded_collection": True,
     "legacy_analysis": True,
-    "generic_context_evaluation": False,
+    "generic_context_evaluation": True,
+    "explicit_uncertainty": True,
+    "portable_connections": True,
     "automatic_applications": False,
     "model_billing": "codex_subscription_for_legacy_evaluators",
 }
 OPERATIONS = (
+    "history.import",
+    "history.list",
+    "connection.put",
+    "connection.show",
+    "doctor",
+    "evaluation.prepare",
+    "evaluation.run",
+    "evaluation.resume",
+    "evaluation.status",
+    "evaluation.shortlist",
+    "evaluation.metrics",
     "context.create",
     "context.show",
     "context.update",
@@ -54,6 +68,11 @@ OPERATIONS = (
     "version",
 )
 MUTATIONS = {
+    "history.import",
+    "connection.put",
+    "evaluation.prepare",
+    "evaluation.run",
+    "evaluation.resume",
     "context.create",
     "context.update",
     "plan.put",
@@ -180,8 +199,44 @@ def parser():
     p.add_argument("--analysis-db", type=Path, required=True)
     p.add_argument("--source", choices=Source.__args__, required=True)
     p.add_argument("--id", required=True)
+    connections = groups.add_parser("connection", parents=[common]).add_subparsers(required=True)
+    history = groups.add_parser("history", parents=[common]).add_subparsers(required=True)
+    p = leaf(history, "import", "history.import")
+    p.add_argument("--input", required=True)
+    paging(leaf(history, "list", "history.list"))
+    p = leaf(connections, "put", "connection.put")
+    p.add_argument("name")
+    p.add_argument("--input", required=True)
+    p = leaf(connections, "show", "connection.show")
+    p.add_argument("name")
+    p = leaf(groups, "doctor", "doctor")
+    p.add_argument("--connection", default="default")
+    evaluation = groups.add_parser("evaluation", parents=[common]).add_subparsers(required=True)
+    p = leaf(evaluation, "prepare", "evaluation.prepare")
+    p.add_argument("--context", required=True)
+    p.add_argument("--connection", default="default")
+    source = p.add_mutually_exclusive_group(required=True)
+    source.add_argument("--catalog", type=Path)
+    source.add_argument("--collection-run")
+    p.add_argument("--limit", type=positive, default=100)
+    p.add_argument("--max-calls", type=nonnegative, required=True)
+    p.add_argument("--max-decisions", type=nonnegative, required=True)
+    for name in ("run", "resume", "status", "metrics", "shortlist"):
+        p = leaf(evaluation, name, "evaluation." + name)
+        p.add_argument("--db", type=Path, required=True)
+        if name != "shortlist":
+            p.add_argument("run_id")
+        if name in {"run", "resume"}:
+            p.add_argument("--additional-calls", type=nonnegative, default=0)
+            p.add_argument("--additional-decisions", type=nonnegative, default=0)
+            p.add_argument("--retry-errors", action="store_true")
+        elif name == "shortlist":
+            paging(p)
+            p.add_argument("--include-uncertain", action="store_true")
+        elif name == "metrics":
+            p.add_argument("--labels", type=Path)
     p = leaf(groups, "schema", "schema")
-    p.add_argument("--name", choices=("context", "plan", "limits"))
+    p.add_argument("--name", choices=("context", "plan", "limits", "connection", "labels"))
     leaf(groups, "version", "version")
     return root
 
@@ -209,7 +264,13 @@ def summary(value):
 def dispatch(args):
     op = args.operation
     if op == "schema":
-        schemas = {"context": ContextInput, "plan": SearchPlanInput, "limits": RunLimits}
+        schemas = {
+            "context": ContextInput,
+            "plan": SearchPlanInput,
+            "limits": RunLimits,
+            "connection": EvaluationConnection,
+            "labels": QualityLabels,
+        }
         return envelope(
             {
                 "operations": OPERATIONS,
@@ -241,11 +302,61 @@ def dispatch(args):
         return envelope(agent_results.explain(args.analysis_db, args.source, args.id))
     if op == "analysis.status":
         return envelope(agent_results.analysis_status(args.db, args.run_id))
+    if op == "evaluation.status":
+        return envelope(context_commands.context_engine.status(args.db, args.run_id))
+    if op == "evaluation.shortlist":
+        return envelope(
+            context_commands.shortlist(args.db, args.limit, args.cursor, args.include_uncertain)
+        )
+    if op == "evaluation.metrics":
+        return envelope(context_commands.metrics(args.db, args.run_id, args.labels))
     default = (
         Path(os.environ.get("XDG_DATA_HOME", str(Path.home() / ".local" / "share")))
         / "career-scout"
     )
     with closing(AgentState(getattr(args, "workspace", default), write=op in MUTATIONS)) as state:
+        if op == "history.import":
+            return context_commands.history_import(state, read_input(args.input), args.request_id)
+        if op == "history.list":
+            return envelope(context_commands.history_list(state, args.limit, args.cursor))
+        if op == "connection.put":
+            return context_commands.put_connection(
+                state, args.name, read_input(args.input), args.request_id
+            )
+        if op == "connection.show":
+            return envelope(context_commands.connection(state, args.name))
+        if op == "doctor":
+            return envelope(
+                context_commands.doctor(state, args.connection, getattr(args, "env", None))
+            )
+        if op == "evaluation.prepare":
+            return context_commands.action(
+                state,
+                "prepare",
+                {
+                    "context": args.context,
+                    "connection": args.connection,
+                    "catalog": str(args.catalog) if args.catalog else None,
+                    "collection_run": args.collection_run,
+                    "limit": args.limit,
+                    "max_calls": args.max_calls,
+                    "max_decisions": args.max_decisions,
+                },
+                args.request_id,
+            )
+        if op in {"evaluation.run", "evaluation.resume"}:
+            return context_commands.action(
+                state,
+                "run",
+                {
+                    "database": str(args.db),
+                    "run_id": args.run_id,
+                    "additional_calls": args.additional_calls,
+                    "additional_decisions": args.additional_decisions,
+                    "retry_errors": args.retry_errors,
+                },
+                args.request_id,
+            )
         if op == "context.create":
             return agent_service.context_create(state, read_input(args.input), args.request_id)
         if op == "context.update":
@@ -378,6 +489,8 @@ def main(argv=None):
         response = envelope(error=CommandError("storage_or_input_error"))
     except KeyboardInterrupt:
         response = envelope(error=CommandError("operation_interrupted", outcome="unknown"))
+    except Exception:
+        response = envelope(error=CommandError("internal_error", outcome="unknown"))
     print(json.dumps(response, ensure_ascii=False))
     return 0 if response["status"] == "ok" else 2
 

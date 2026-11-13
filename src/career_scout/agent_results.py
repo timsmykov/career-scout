@@ -34,6 +34,17 @@ def shortlist(database, *, limit=20, cursor=None, profile=None):
     from career_scout.shortlist import recommendations
 
     with closing(connect(database)) as db:
+        if db.execute("SELECT 1 FROM sqlite_master WHERE name='context_catalog'").fetchone():
+            from career_scout.context_engine import recommendations as context_recommendations
+
+            rows = context_recommendations(database)
+            if profile:
+                rows = [r for r in rows if r["profile"] == profile]
+            return {
+                **page(rows, limit=limit, cursor=cursor),
+                "agent_context_applied": True,
+                "mode": "context_analysis",
+            }
         rows = recommendations(analysis_store(db), profile=profile, limit=10000)
     return {
         **page(rows, limit=limit, cursor=cursor),
@@ -68,7 +79,15 @@ def explain(database, source, source_id):
             "ORDER BY r.created_at DESC,r.rowid DESC LIMIT 1",
             (source, source_id),
         ).fetchone()
-        if not row and not history and not exclusion:
+        prefilter = None
+        if db.execute("SELECT 1 FROM sqlite_master WHERE name='context_catalog'").fetchone():
+            item = db.execute(
+                "SELECT status,checks_json FROM context_catalog WHERE source=? AND source_id=?",
+                (source, source_id),
+            ).fetchone()
+            if item:
+                prefilter = {"status": item[0], "checks": json.loads(item[1])}
+        if not row and not history and not exclusion and not prefilter:
             raise CommandError("unknown_vacancy")
         evaluations = []
         if row:
@@ -82,6 +101,16 @@ def explain(database, source, source_id):
                             "verdict": result.verdict,
                             "reason": result.reason,
                             "assessments": [a.model_dump(mode="json") for a in result.assessments],
+                            **(
+                                {
+                                    "uncertainties": result.uncertainties,
+                                    "preference_checks": [
+                                        p.model_dump(mode="json") for p in result.preference_checks
+                                    ],
+                                }
+                                if result.schema_version == 4
+                                else {}
+                            ),
                         }
                     )
         return {
@@ -89,6 +118,7 @@ def explain(database, source, source_id):
             "source_id": source_id,
             "excluded": blocked,
             "exclusion": exclusion,
+            "prefilter": prefilter,
             "evaluations": evaluations,
             "latest_analysis": {
                 "run_id": row["run_id"],
