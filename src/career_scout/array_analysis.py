@@ -13,7 +13,7 @@ from career_scout.analysis import AnalysisSettings, prepare, read_catalog, repor
 from career_scout.analysis_store import AnalysisStore
 from career_scout.common import digest, utcnow
 from career_scout.evaluation import EvaluationError
-from career_scout.shortlist import recommendations, render
+from career_scout.shortlist import recommendations, render_grouped
 
 SOURCE_ORDER = ("hh", "habr", "superjob", "trudvsem")
 
@@ -134,7 +134,7 @@ def publish(store, directory, state):
                 stream.write("Подборка пополняется: обработка ещё продолжается.\n\n")
             else:
                 stream.write("Подборка неполная: часть вакансий пока не обработана.\n\n")
-            stream.write(render(rows))
+            stream.write(render_grouped(rows))
         os.replace(temporary, output)
     finally:
         if os.path.exists(temporary):

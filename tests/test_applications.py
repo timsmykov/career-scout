@@ -16,7 +16,7 @@ from career_scout.application import ApplicationResult, parse_result
 from career_scout.batch_worker import CodexBatchWorker
 from career_scout.common import digest
 from career_scout.evaluation import ORDER, make_input
-from career_scout.shortlist import recommendations, render
+from career_scout.shortlist import recommendations, render, render_grouped
 
 
 @pytest.fixture
@@ -198,6 +198,48 @@ def test_shortlist_only_recommends_current_version_and_never_outputs_questions(f
     assert recommendations(store, now=published + timedelta(hours=1)) == []
     assert store.cached(request).verdict == "PASS"  # historical evidence preserved
     store.close()
+
+
+def test_grouped_shortlist_keeps_each_assignment_and_source_order():
+    rows = [
+        {
+            "source": source,
+            "source_id": str(index),
+            "profile": profile,
+            "title": f"Role {index}",
+            "company": "Example",
+            "url": f"https://example.org/{index}",
+            "reason": "Matches the saved resume.",
+        }
+        for index, (profile, source) in enumerate(
+            [
+                ("business_analyst", "trudvsem"),
+                ("business_assistant", "hh"),
+                ("product", "superjob"),
+                ("automation", "habr"),
+                ("product", "hh"),
+                ("product", "hh"),
+            ]
+        )
+    ]
+    rows[4]["geography"] = {"decision": "KEEP_UNCERTAIN", "reason": "Workplace unspecified."}
+    rows[4]["salary_review"] = {"note": "Upper bound unspecified."}
+    original = json.dumps(rows)
+    text = render_grouped(rows)
+    assert text.index("## Product") < text.index("## Автоматизация")
+    assert text.index("## Автоматизация") < text.index("## Бизнес-ассистент")
+    assert text.index("## Бизнес-ассистент") < text.index("## Бизнес-аналитик")
+    assert text.index("https://example.org/4") < text.index("https://example.org/5")
+    assert text.index("https://example.org/5") < text.index("https://example.org/2")
+    assert "## Product — 3" in text and "### HH — 2" in text
+    assert "### Работа России — 1" in text
+    assert "Workplace unspecified." in text and "Upper bound unspecified." in text
+    assert all(text.count(r["url"]) == 1 for r in rows)
+    assert json.dumps(rows) == original
+
+
+def test_empty_grouped_shortlist_has_no_empty_categories():
+    assert render_grouped([]) == render([])
 
 
 def test_date_only_freshness_and_uncertain_boundary():

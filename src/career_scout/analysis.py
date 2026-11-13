@@ -470,9 +470,9 @@ def main(argv=None):
         else:
             store = AnalysisStore(args.db)
             if args.command == "shortlist":
-                from career_scout.shortlist import recommendations, render
+                from career_scout.shortlist import recommendations, render_grouped
 
-                content = render(
+                content = render_grouped(
                     recommendations(
                         store, run_id=args.run_id, profile=args.profile, limit=args.limit
                     )

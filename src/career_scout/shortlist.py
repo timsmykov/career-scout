@@ -19,6 +19,7 @@ WORK_FORMATS = {
     "field_work": "разъездная работа",
     "rotation": "вахта",
 }
+SOURCES = {"hh": "HH", "habr": "Хабр", "superjob": "SuperJob", "trudvsem": "Работа России"}
 
 
 def terms(vacancy):
@@ -188,4 +189,28 @@ def render(rows):
             + (f"   {r['terms']}.\n" if r.get("terms") else "")
             + f"   Резюме: {NAMES[r['profile']]}. {r['reason']}\n"
         )
+        geography = r.get("geography", {})
+        if geography.get("decision") == "KEEP_UNCERTAIN":
+            lines[-1] += (
+                "   **Формат/место присутствия не подтверждены:** " + geography["reason"] + "\n"
+            )
+        if note := r.get("salary_review", {}).get("note"):
+            lines[-1] += "   Зарплата: " + note + "\n"
     return "\n".join(lines)
+
+
+def render_grouped(rows):
+    """Display existing profile assignments; preserve source and within-source order."""
+    if not rows:
+        return render([])
+    sections = []
+    for profile, label in NAMES.items():
+        selected = [r for r in rows if r["profile"] == profile]
+        if not selected:
+            continue
+        sections.append(f"## {label} — {len(selected)}\n")
+        for source, name in SOURCES.items():
+            group = [r for r in selected if r["source"] == source]
+            if group:
+                sections.append(f"### {name} — {len(group)}\n\n" + render(group))
+    return "\n".join(sections)
