@@ -68,7 +68,7 @@
       "additionalProperties": false,
       "properties": {
         "binary": {
-          "default": "/usr/local/bin/openbot-openai-api",
+          "default": "career-scout-decisions",
           "minLength": 1,
           "title": "Binary",
           "type": "string"

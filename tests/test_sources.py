@@ -18,7 +18,7 @@ from career_scout.search_config import load_config, plan
 from career_scout.source_normalization import superjob_record, trudvsem_record
 from career_scout.storage import Store
 
-CONFIG = Path(__file__).parents[1] / "configs/search.toml"
+CONFIG = Path(__file__).parent / "fixtures/search.technology-junior.toml"
 START = "2026-11-01T00:00:00+00:00"
 END = "2026-11-11T00:00:00+00:00"
 
@@ -356,7 +356,20 @@ def test_superjob_storage_block_is_explicit_and_no_http_occurs(tmp_path):
 
 
 def test_plan_all_offline_uses_source_specific_search_language_and_geo(tmp_path, capsys):
-    assert cli.main(["--db", str(tmp_path / "unused.sqlite3"), "plan", "--source", "all"]) == 0
+    assert (
+        cli.main(
+            [
+                "--config",
+                str(CONFIG),
+                "--db",
+                str(tmp_path / "unused.sqlite3"),
+                "plan",
+                "--source",
+                "all",
+            ]
+        )
+        == 0
+    )
     plans = json.loads(capsys.readouterr().out)["plans"]
     assert len(plans) == 4
     assert all(len(p["queries"]) == (16 if p["source"] == "hh" else 12) for p in plans)

@@ -14,8 +14,8 @@ from career_scout.evaluation import ORDER, EvaluationError
 
 MODEL = "gpt-6-luna"
 ENDPOINT = "https://api.openai.com/v1/decisions"
-CLI = "/usr/local/bin/openbot-openai-api"
-NATIVE_ROOT = Path("/var/lib/docker/volumes/openbot-tim_openbot-data/_data/OpenBot")
+CLI = "career-scout-decisions"
+NATIVE_ROOT = Path.home() / ".local/share/career-scout/decisions"
 PROFILES = {
     "product": "Ответственность за цифровой продукт, IT-сервис или финтех: исследование "
     "пользователей и рынка, выбор решений, "

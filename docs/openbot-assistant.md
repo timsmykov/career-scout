@@ -21,7 +21,12 @@ Both databases are opened in SQLite read-only mode for reads. Interaction writes
 
 The module does not access credentials, call models, send applications or schedule work. Actual platform submission/editing remains with the authorized browser/connector and must be verified before recording a factual outcome. A stored card is not a live availability check.
 
-For OpenBot, the deployed `/usr/local/bin/openbot-career` wrapper pins the current paths and uses the existing `server_admin` MCP. Since that MCP suppresses stdout, global `--output PATH` writes an exclusive 0600 JSON result under the Career Assistant workspace, owned by UID1000. Existing output files are not overwritten. This is an integration guard and output transport, not a replacement for native agent permissions or a security sandbox. No new MCP, daemon, credentials or scheduler is added.
+An optional agent wrapper can invoke this CLI using its own paths and transport.
+No wrapper or host MCP is required or bundled. Global --output PATH requires an
+explicit existing --output-root DIRECTORY. The destination must remain inside
+that directory, is created exclusively with0600 and stays owned by the calling
+OS user. No fixed agent directory or UID is assumed. Existing files are not overwritten.
+This output constraint is not a replacement for OS isolation or native agent permissions.
 
 Resume publication uses complete files and atomic exclusive publication. A new revision is verified with the same `ResumeSnapshot` schema and content hash. The active analysis configuration is not silently updated: the result identifies a next-run configuration for an explicit future run. Consecutive profile revisions should build on the prior returned configuration. Small resume edits never trigger a mass retrospective evaluation.
 

@@ -1,6 +1,6 @@
 # Разработка и multi-source CLI
 
-Python 3.12, uv, Git; Linux/macOS (процессная блокировка через `fcntl.flock`). Из корня:
+Python 3.12, uv, Git; Linux (процессная блокировка через `fcntl.flock`). Из корня:
 
 ```sh
 uv sync --locked --group dev
@@ -41,10 +41,11 @@ HH/Trudvsem/Habr/SuperJob подключены; evaluate и doctor пока не
 | `inspect VACANCY_ID [--source hh]` | Состояние, source snapshots, общие проекции и происхождение; default HH |
 | `export RUN_ID --output PATH` | Локальный JSON выбранных карточек; `--include-excluded` — все full, решения сохранены |
 
-Без `--query` берётся union четырёх семейств из TOML. `--query` заменяет их;
+Без `--query` используются ваши families из TOML; публичный placeholder
+запускать нельзя. `--query` заменяет их;
 можно повторять, одинаковые строки объединяются. Настройки ниже — defaults TOML;
 CLI их переопределяет. `plan/collect`:
-`--days` (7 по умолчанию, положительное целое), `--per-page` (100, диапазон 1–100),
+`--days` (14 по умолчанию, положительное целое), `--per-page` (100, диапазон 1–100),
 `--refresh-hours` (24, конечное неотрицательное число). На момент создания run
 фиксируется UTC-окно `[now-days, now]`. Это lookback, а не расписание.
 

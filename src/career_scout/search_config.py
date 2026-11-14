@@ -20,7 +20,7 @@ class FilterPolicy(Model):
     allowed_experience: list[
         Literal["no_experience", "one_to_three", "three_to_six", "over_six"]
     ] = Field(min_length=1)
-    max_required_years: float | None = Field(default=3, ge=0, le=50, allow_inf_nan=False)
+    max_required_years: float | None = Field(default=None, ge=0, le=50, allow_inf_nan=False)
     keep_unknown: Literal[True] = True
     salary_optional: Literal[True] = True
     domain_terms: list[str]
@@ -151,6 +151,8 @@ def plan(
         queries = list(origins)
     else:
         origins = {q: ["manual"] for q in queries}
+    if queries and "REPLACE_WITH_SEARCH_QUERY" in queries:
+        raise SourceError("search_queries_not_configured")
     if not queries or any(not q.strip() or len(q) > 2000 for q in queries):
         raise SourceError("invalid_query")
     end = (now or datetime.now(UTC)).replace(microsecond=0)

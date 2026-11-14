@@ -10,7 +10,7 @@ from career_scout.normalization import project_snapshot
 from career_scout.search_config import load_config
 from career_scout.storage import Store
 
-CONFIG = Path(__file__).parents[1] / "configs/search.toml"
+CONFIG = Path(__file__).parent / "fixtures/search.technology-junior.toml"
 
 
 @pytest.fixture

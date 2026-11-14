@@ -20,7 +20,7 @@ services:
           create_host_path: false
     secrets:
       - career_env
-    # The host's canonical .env is root-owned 0600. No secrets in image/env vars.
+    # Credentials stay in the user-owned host .env; never in the image.
     user: "0:0"
     command: ["--help"]
 secrets:
@@ -28,5 +28,5 @@ secrets:
     file: .env
 volumes:
   data:
-    name: career-scout-data
+    name: ${CAREER_SCOUT_VOLUME:-career-scout-data}
     external: true

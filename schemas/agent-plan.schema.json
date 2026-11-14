@@ -44,7 +44,7 @@
               "type": "null"
             }
           ],
-          "default": 3,
+          "default": null,
           "title": "Max Required Years"
         },
         "keep_unknown": {

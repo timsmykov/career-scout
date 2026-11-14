@@ -9,7 +9,7 @@ from career_scout.models import Hash, Identity, Model
 
 
 class NativeConnection(Model):
-    binary: str = Field(default="/usr/local/bin/openbot-openai-api", min_length=1)
+    binary: str = Field(default="career-scout-decisions", min_length=1)
     workspace: str = Field(min_length=1)
     workspace_root: str = Field(min_length=1)
 

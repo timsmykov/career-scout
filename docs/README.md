@@ -1,6 +1,6 @@
 # Документация Career Scout
 
-**0.1.0 alpha · MIT.** Актуальная реализация — `feat/evaluation-workers`.
+**0.1.0 alpha · MIT.** Публичная реализация — `main`.
 Основной интерфейс — `career-scout`, личный JSON CLI. Документы о ранних четырёх
 профилях и рабочих запусках собраны отдельно от инструкций для нового пользователя.
 
@@ -15,6 +15,9 @@
 | Выполнить анализ и прочитать результат | [Анализ и подборка](guides/evaluation.md) |
 | Продолжить после остановки | [Эксплуатация](operations.md), [диагностика](troubleshooting.md) |
 | Внести изменение | [CONTRIBUTING](../CONTRIBUTING.md), [исходники](../src/career_scout/README.md) |
+
+- [personalization.md](personalization.md) — настройка своей установки и граница с приватным deployment.
+- [public-release.md](public-release.md) — обезличивание и проверка публичной поставки.
 
 ## Руководства и объяснения
 

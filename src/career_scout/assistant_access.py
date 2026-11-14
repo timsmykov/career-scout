@@ -321,6 +321,7 @@ def main():
     p.add_argument("--collector", type=Path, required=True)
     p.add_argument("--analysis", type=Path, required=True)
     p.add_argument("--output", type=Path)
+    p.add_argument("--output-root", type=Path, help="Explicit allowed directory for file export")
     p.add_argument("--config", type=Path)
     sub = p.add_subparsers(dest="command", required=True)
     s = sub.add_parser("shortlist")
@@ -365,13 +366,12 @@ def main():
     a = p.parse_args()
     if not 1 <= getattr(a, "limit", 20) <= 200 or getattr(a, "offset", 0) < 0:
         p.error("limit 1..200 and nonnegative offset required")
-    # Existing root MCP suppresses stdout; output goes to the requesting agent's workspace.
+    # File export is opt-in and constrained by the caller's explicit directory.
     if a.output:
-        allowed = Path(
-            "/var/lib/docker/volumes/openbot-tim_openbot-data/_data/OpenBot/Agents/agent-850d27ce-ea19-4208-b3bd-24a22645cb7a"
-        )
-        if not a.output.resolve().is_relative_to(allowed.resolve()):
-            p.error("output must be inside Career Assistant workspace")
+        if a.output_root is None or not a.output_root.is_dir():
+            p.error("output requires an existing --output-root directory")
+        if not a.output.resolve().is_relative_to(a.output_root.resolve()):
+            p.error("output must be inside --output-root")
         if a.output.exists():
             p.error("output exists; read it to reconcile before retrying")
     if a.command == "stage-resume":
@@ -452,13 +452,10 @@ def main():
                 }
     data = json.dumps(result, ensure_ascii=False, indent=2) + "\n"
     if a.output:
-        a.output.parent.mkdir(parents=True, exist_ok=True)
+        a.output.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
         with a.output.open("x", encoding="utf-8") as f:
             os.chmod(a.output, 0o600)
             f.write(data)
-        if os.geteuid() == 0:
-            os.chown(a.output, 1000, 1000)
-            os.chown(a.output.parent, 1000, 1000)
         print(json.dumps({"ok": True, "output": str(a.output)}))
     else:
         print(data)

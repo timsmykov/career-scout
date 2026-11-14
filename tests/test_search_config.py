@@ -11,7 +11,7 @@ from career_scout.hh import HHClient
 from career_scout.search_config import load_config, plan
 from career_scout.storage import Store
 
-CONFIG = Path(__file__).parents[1] / "configs/search.toml"
+CONFIG = Path(__file__).parent / "fixtures/search.technology-junior.toml"
 
 
 def test_default_plan_has_focused_and_broad_queries_for_all_four_roles():
@@ -68,7 +68,7 @@ def test_invalid_configuration_fails_before_network_or_database(
 def test_plan_does_not_open_credentials_or_database(tmp_path, capsys, monkeypatch):
     monkeypatch.setattr(cli, "Credentials", lambda *a, **kw: pytest.fail("no credentials"))
     database = tmp_path / "unused" / "db.sqlite3"
-    assert cli.main(["--db", str(database), "plan"]) == 0
+    assert cli.main(["--config", str(CONFIG), "--db", str(database), "plan"]) == 0
     assert len(json.loads(capsys.readouterr().out)["queries"]) == 16
     assert not database.parent.exists()
 

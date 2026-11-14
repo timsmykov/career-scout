@@ -76,11 +76,11 @@ else:
     assert report['requests']==303, report
     exported=s.export(rid)
     assert exported['schema_version']==2
-    assert len(exported['vacancies'])==200
-    assert len({x['source_id'] for x in exported['vacancies']})==200
+    assert len(exported['vacancies'])==300
+    assert len({x['source_id'] for x in exported['vacancies']})==300
     assert len(s.export(rid,include_excluded=True)['vacancies'])==300
-    assert report['filtering']['KEEP']==200
-    assert report['filtering']['FILTERED_OUT']==100
+    assert report['filtering']['KEEP']==300
+    assert report['filtering']['FILTERED_OUT']==0
     assert report['filtering']['pending']==0
     assert s.db.execute('PRAGMA quick_check').fetchone()[0]=='ok'
     assert not s.db.execute('PRAGMA foreign_key_check').fetchall()

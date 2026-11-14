@@ -14,7 +14,7 @@ HH/Trudvsem/Habr/SuperJob сохраняют карточки; разрешен�
 | Площадка | Поиск | Detail | Основание |
 |---|---|---|---|
 | HH | 200, 2 карточки | 200, 1542 символа HTML description | /me: is_application=true; ID совпадает |
-| SuperJob | 200, 2 карточки | 200, 3786 символов текстовых полей | Собственный app key 5273; ID совпадает |
+| SuperJob | 200, 2 карточки | 200, 3786 символов текстовых полей | Собственный app key; ID совпадает |
 | Работа России | 200, 2 карточки | 200, 251 символ duty/qualification | Body status 200, identity совпадает |
 | Habr Career | 200, 25 карточек | 200, 2796 символов description | JSON-LD JobPosting и SSR присутствуют |
 
