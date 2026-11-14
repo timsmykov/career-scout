@@ -1,118 +1,127 @@
 # Career Scout
 
-Сервис сбора, систематизации и хранения вакансий для последующего анализа.
+**От поисковой выдачи к подборке вакансий под ваши резюме.**
 
-**Статус: включён сбор четырёх источников.** HH, «Работа России», Habr и SuperJob
-сохраняют полные карточки в общую SQLite с пагинацией, версиями и продолжением после сбоя.
-Владелец подтвердил наличие разрешений на хранение вакансий 11.11.2026. [Точный статус, запуск и ограничения](docs/multi-source.md).
+![Версия](https://img.shields.io/badge/version-0.1.0_alpha-d99c28)
+![Python](https://img.shields.io/badge/Python-3.12-3776AB)
+![Лицензия](https://img.shields.io/badge/license-MIT-238636)
 
-Общий формат vacancy/export v2; SQLite schema5 мигрирует прежнюю базу с backup.
-Поиск и фильтры — [configs/search.toml](configs/search.toml): IT/финтех/ИИ/ML,
-стажёр/junior/middle, без опыта/1–3 года. Unknown/conflict сохраняются, зарплата
-не ограничивает отбор. LangGraph и анализ по резюме отложены, отклики не отправляются.
+[Первый запуск](https://github.com/timsmykov/career-scout/blob/feat/evaluation-workers/docs/quickstart.md) · [Документация](https://github.com/timsmykov/career-scout/blob/feat/evaluation-workers/docs/README.md) ·
+[Архитектура](https://github.com/timsmykov/career-scout/blob/feat/evaluation-workers/docs/architecture.md) · [Кейс](https://github.com/timsmykov/career-scout/blob/feat/evaluation-workers/docs/case-study.md) · [English](https://github.com/timsmykov/career-scout/blob/feat/evaluation-workers/README.en.md)
 
-## Что строим
+Career Scout собирает полные вакансии из HH, Habr, SuperJob и «Работы России»,
+сохраняет их в SQLite и сопоставляет с полными резюме и пожеланиями кандидата.
+Результат — ссылки для самостоятельных откликов, подходящее резюме и основания
+оценки. Настраивать сервис может человек или агент через JSON CLI.
 
-Текущий этап: сбор HH, Хабр Карьеры, «Работы России» и SuperJob, полные описания,
-нормализация условий, версии и дедупликация, надёжное хранение и продолжение после
-сбоев. Выход — готовый набор вакансий с происхождением и локальным экспортом.
-LangGraph, анализ по резюме и настройка моделей отложены до приёмки коллектора.
+**0.1.0 — личная alpha-версия для Linux/Python 3.12.** Рабочая реализация находится
+в ветке `feat/evaluation-workers`; стабильный релиз 1.x не заявлен.
+[Что проверено и что осталось](https://github.com/timsmykov/career-scout/blob/feat/evaluation-workers/docs/product-audit-0.1.md).
 
-Четыре выбранных источника имеют разный статус доступа. У Хабра проверен
-недокументированный frontend JSON и HTML, а официальная API-справка относится к CRM
-работодателей. SuperJob зарегистрирован; поиск/detail и постоянное сохранение включены.
+> На main пока сохранён bootstrap. Для запуска используйте ветку
+> `feat/evaluation-workers`, как в команде установки ниже. Все ссылки ведут к её документации.
 
-## Основа сборщика
+## Как это работает
 
-Основной референс — [ru-it-jobs-radar](https://github.com/alekseevpavel04/ru-it-jobs-radar)
-(MIT): отдельные адаптеры, контракт входных данных, окна выдачи, повторные запросы,
-контроль недочитанных карточек. Берём ограниченные механизмы, без переноса
-аналитического стека. HH-клиент проектируется по официальному OpenAPI.
+```mermaid
+flowchart LR
+    C[Резюме и пожелания] --> P[Поисковый план]
+    P --> S[Сбор с четырёх площадок]
+    S --> D[(SQLite: полные карточки)]
+    D --> F[Очередь и явные ограничения]
+    C --> R[Выбор резюме]
+    F --> R
+    R --> E[Оценка Codex]
+    E --> V[Проверка доказательств]
+    V --> L[Подборка для откликов]
+```
 
-В этом bootstrap чужой исполняемый код не скопирован.
-[Решение и точные исходники](docs/reuse.md).
+Сбор, страницы, дедупликация, бюджеты, сохранение и очередь выполняет код.
+При нескольких резюме внешний Decisions-коннектор выбирает одно или два; при
+одном резюме и выключенном автоотсеве классификация не нужна. Codex оценивает
+каждую вакансию независимо, до 20 карточек одного резюме в батче, до 4 слотов.
+
+## Что можно делать
+
+| Задача | Поведение |
+|---|---|
+| Настроить поиск под себя | Произвольные резюме, цели, свободные пожелания и обязательные условия |
+| Собрать вакансии | Полные описания, источник и ID, страницы, окно публикации, продолжение после сбоя |
+| Добавить новые | Новый ручной проход перечитывает выдачу, скачивает описания только новых ID |
+| Получить рекомендации | PASS отдельно от UNCERTAIN, категории по резюме, ссылки и explain |
+| Сохранить прогресс | Версии контекста, квитанции request-id, кэш оценок, конечные бюджеты |
+| Учесть отклики | Импорт истории скрывает уже откликнутые вакансии |
+| Проверить качество | Метрики по своей контрольной разметке; без неё качество отмечено как неизмеренное |
+
+Профессия и отрасль не зашиты в новый CLI. Отсутствие зарплаты или другого
+необязательного поля само по себе не становится отказом.
 
 ## Начать
 
-Нужны Python 3.12 и [uv](https://docs.astral.sh/uv/).
-
 ```sh
-uv sync --locked --group dev
-uv run --no-sync python scripts/check_repository.py
-uv run --no-sync ruff check .
-uv run --no-sync ruff format --check .
-uv run --no-sync pytest -m "not live"
+git clone --branch feat/evaluation-workers https://github.com/timsmykov/career-scout.git
+cd career-scout
+uv sync --locked
+uv run --no-sync career-scout version
+uv run --no-sync career-scout schema
 ```
 
-Проверки выполняются без сети к job-площадкам и LLM. Для HH заполните локальный
-`.env` по `.env.example` (application token и контактный User-Agent; client ID/secret
-нужны для получения нового токена). Команды из корня репозитория:
+Используйте [пошаговую инструкцию](https://github.com/timsmykov/career-scout/blob/feat/evaluation-workers/docs/quickstart.md): она проводит от одного
+резюме до первой подборки с конечными HTTP- и модельными бюджетами.
 
-```sh
-# План без сети и без открытия БД
-uv run --no-sync python -m career_scout plan --source all --days 14
-uv run --no-sync python -m career_scout plan --query "бизнес аналитик" --days 7
-# Первичный обход вакансий за14дней; сохраняет общий campaign_id
-uv run --no-sync python -m career_scout initial --source all --days 14 --progress
-# Следующий ручной проход: поиск всех ID, описания только новых
-uv run --no-sync python -m career_scout new --source all --days 14 --progress
-# Без сохранения вакансий, включая SuperJob:
-uv run --no-sync python -m career_scout probe --source all --query аналитик --requests 3
-# CAMPAIGN_ID берётся из результата initial/new; resume продолжает все площадки
-uv run --no-sync python -m career_scout resume CAMPAIGN_ID --progress
-uv run --no-sync python -m career_scout status CAMPAIGN_ID
-uv run --no-sync python -m career_scout inspect VACANCY_ID
-uv run --no-sync python -m career_scout export CAMPAIGN_ID --output data/exports/run.json
-```
+- **Для сбора** нужны собственные доступы к выбранным источникам; env-файл — по
+  [.env.example](https://github.com/timsmykov/career-scout/blob/feat/evaluation-workers/.env.example). Права на хранение данных оформляются отдельно.
+- **Для оценки** нужен установленный на хосте Codex с действующим входом через
+  ChatGPT и доступной вам моделью. Ключ model API оценщикам не требуется.
+- **Для нескольких резюме** нужен совместимый внешний Decisions-коннектор.
+  Он пока не поставляется с пакетом. [Подключения](https://github.com/timsmykov/career-scout/blob/feat/evaluation-workers/docs/context-evaluation.md).
+- **Docker** содержит коллектор и CLI; Codex и авторизация в образ не входят.
+  SQLite вынесена в постоянный volume. [Docker и данные](https://github.com/timsmykov/career-scout/blob/feat/evaluation-workers/docs/docker.md).
 
-`initial` и ручной `new` используют последние 14 дней по дате публикации.
-Каждый новый проход фиксирует своё окно; resume продолжает прежнее. Читаются все доступные
-страницы настроенных запросов; даты обновления не подменяют публикацию. Записи
-старше окна и с неизвестной датой видны отдельно и не входят в свежую выгрузку. Уже сохранённые описания не обновляются; каждый источник проходит свою
-выдачу целиком без квот на число карточек. `new` экспортирует только новые описания,
-включая отдельно учтённый дочитанный хвост. Запуски ручные, расписания нет.
+## Четыре источника
 
-`partial` и exit code 2 означают незавершённый сбор; остаток виден в отчёте.
-Полный справочник аргументов и восстановление: [development.md](docs/development.md).
-CLI читает `.env`, [рабочий TOML](configs/search.toml) и аргументы. Без `--query`
-используются четыре поисковых семейства. [Правила отбора и refilter](docs/filtering.md).
-[Проверенный HH-срез и ограничения](docs/collector-readiness.md).
+| Источник | Транспорт | Особенность |
+|---|---|---|
+| HH | Официальный API | Авторизация приложения, полные карточки, разбиение больших окон выдачи |
+| Habr | Frontend JSON + HTML | Нет подтверждённого публичного API поиска; интеграция зависит от frontend |
+| SuperJob | Официальный API | Ключ приложения и явное разрешение постоянного хранения |
+| «Работа России» | Официальный REST | Своя пагинация, география и составной идентификатор |
 
-## Docker
+[Контракты площадок](https://github.com/timsmykov/career-scout/blob/feat/evaluation-workers/docs/sources/README.md). Успешный probe подтверждает доступ
+в момент проверки; он не гарантирует полный охват рынка или будущую доступность.
 
-Рабочий контейнер с постоянным volume `career-scout-data`:
+## Проверка и ограничения
 
-```sh
-docker volume create career-scout-data
-docker compose build
-docker compose run --rm collector status CAMPAIGN_ID
-docker compose run --rm collector resume CAMPAIGN_ID --progress
-```
+При приёмке 0.1 прошли **484 offline-теста**, сборка wheel/sdist, сохранение данных
+после пересоздания контейнера и полный сценарий установленного пакета с эмуляторами
+HTTP/Codex. Отдельные живые поиск и detail проверены у всех четырёх площадок.
+[Полный протокол и границы выводов](https://github.com/timsmykov/career-scout/blob/feat/evaluation-workers/docs/product-audit-0.1.md).
 
-SQLite сохраняется в `/data/ledger.sqlite3`, `.env` монтируется read-only;
-контейнер можно пересоздать. [Устройство, миграция и проверки](docs/docker.md).
+Смысловая точность нового персонального отбора ещё требует широкой разметки.
+Проверка цитат не гарантирует правильного вывода модели. Автоотсев Decisions по
+вероятности по умолчанию выключен. Приложение не отправляет отклики, не правит
+резюме и не запускает расписание. Сохранённые старые описания автоматически не
+обновляются; перед откликом проверьте оригинал вакансии.
 
-## Читать по порядку
+## Навигация
 
-1. [Задача и границы](docs/product.md).
-2. [Архитектура](docs/architecture.md).
-3. [Сбор и полнота](docs/collector.md), [контракты площадок](docs/sources/README.md).
-4. [Фильтры](docs/filtering.md), [хранение](docs/storage.md).
-5. [Хранение](docs/storage.md), [эксплуатация](docs/operations.md).
-6. [Разработка](docs/development.md), [критерии приёмки](docs/acceptance.md).
+- Пользователю: [резюме и условия](https://github.com/timsmykov/career-scout/blob/feat/evaluation-workers/docs/guides/candidate.md), [сбор](https://github.com/timsmykov/career-scout/blob/feat/evaluation-workers/docs/guides/collection.md),
+  [анализ и подборка](https://github.com/timsmykov/career-scout/blob/feat/evaluation-workers/docs/guides/evaluation.md), [решение проблем](https://github.com/timsmykov/career-scout/blob/feat/evaluation-workers/docs/troubleshooting.md).
+- Разработчику: [CONTRIBUTING](https://github.com/timsmykov/career-scout/blob/feat/evaluation-workers/CONTRIBUTING.md), [модули](https://github.com/timsmykov/career-scout/blob/feat/evaluation-workers/src/career_scout/README.md),
+  [CLI-контракт](https://github.com/timsmykov/career-scout/blob/feat/evaluation-workers/docs/agent-cli.md), [схемы](https://github.com/timsmykov/career-scout/blob/feat/evaluation-workers/schemas/agent-context.schema.json),
+  [вымышленные примеры](https://github.com/timsmykov/career-scout/blob/feat/evaluation-workers/examples/README.md).
+- О продукте: [кейс и решения](https://github.com/timsmykov/career-scout/blob/feat/evaluation-workers/docs/case-study.md), [аудит 0.1](https://github.com/timsmykov/career-scout/blob/feat/evaluation-workers/docs/product-audit-0.1.md),
+  [история изменений](https://github.com/timsmykov/career-scout/blob/feat/evaluation-workers/CHANGELOG.md), [границы продукта](https://github.com/timsmykov/career-scout/blob/feat/evaluation-workers/docs/product.md).
 
-[Полный указатель](docs/README.md). Старая [схема будущего анализа](docs/assets/funnel.png)
-сохранена как отложенный материал; текущий поток показан в архитектуре.
+Прежний `python -m career_scout` и четыре профиля владельца сохранены отдельным
+совместимым режимом. Их [TOML-фильтры](https://github.com/timsmykov/career-scout/blob/feat/evaluation-workers/docs/filtering.md) не являются настройками
+нового персонального CLI. [Указатель всей документации](https://github.com/timsmykov/career-scout/blob/feat/evaluation-workers/docs/README.md).
 
-## Данные
+## Участие и лицензия
 
-Реальные резюме, тексты вакансий, ключи, cookies и рабочие БД не коммитятся.
-В examples/ только вымышленные примеры. Пример проекта выключает все внешние
-вызовы. Модели и резюме не требуются для приёмки текущего коллектора.
+Сообщения об ошибках и небольшие проверяемые PR приветствуются.
+[Как внести вклад](https://github.com/timsmykov/career-scout/blob/feat/evaluation-workers/CONTRIBUTING.md) · [Безопасное сообщение об ошибке](https://github.com/timsmykov/career-scout/blob/feat/evaluation-workers/SECURITY.md).
+Реальные резюме, вакансии, ключи, cookies и рабочие базы не включаются в Git.
 
-Лицензия для собственного кода проекта пока не выбрана. Права третьих сторон
-фиксируются отдельно в [NOTICE](NOTICE.md).
-
-[Проверка четырёх площадок и остаток реализации](docs/collector-readiness.md).
-
-Разработка: [полный roadmap](docs/roadmap.md) · [что переносим из radar](docs/component-adaptation.md) · [backlog](docs/backlog.json).
+Собственный код распространяется по [MIT](https://github.com/timsmykov/career-scout/blob/feat/evaluation-workers/LICENSE). Сторонние права и использованные
+референсы описаны в [NOTICE](https://github.com/timsmykov/career-scout/blob/feat/evaluation-workers/NOTICE.md) и [reuse](https://github.com/timsmykov/career-scout/blob/feat/evaluation-workers/docs/reuse.md).
