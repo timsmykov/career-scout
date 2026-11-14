@@ -2,8 +2,8 @@
 
 **Turn job listings into a shortlist grounded in your resumes.**
 
-[Русский](README.md) · [Getting started](docs/quickstart.md) ·
-[Architecture](docs/architecture.md) · [0.1 audit](docs/product-audit-0.1.md)
+[Русский](https://github.com/timsmykov/career-scout/blob/feat/evaluation-workers/README.md) · [Getting started](https://github.com/timsmykov/career-scout/blob/feat/evaluation-workers/docs/quickstart.md) ·
+[Architecture](https://github.com/timsmykov/career-scout/blob/feat/evaluation-workers/docs/architecture.md) · [0.1 audit](https://github.com/timsmykov/career-scout/blob/feat/evaluation-workers/docs/product-audit-0.1.md)
 
 Career Scout collects complete vacancies from four Russian job platforms, stores
 source records in SQLite and matches them against full resumes and candidate
@@ -38,7 +38,7 @@ uv run --no-sync career-scout version
 uv run --no-sync career-scout schema
 ```
 
-Follow the [first-run tutorial](docs/quickstart.md), currently in Russian. Use your
+Follow the [first-run tutorial](https://github.com/timsmykov/career-scout/blob/feat/evaluation-workers/docs/quickstart.md), currently in Russian. Use your
 own platform credentials and check the relevant data-use permissions. Install and
 authenticate Codex on the host; neither Codex nor its login is bundled in Docker.
 Multi-resume routing requires a separately configured compatible Decisions
@@ -56,5 +56,5 @@ bounded live probes checked search and full details on all four sources. These
 checks establish execution, not broad semantic accuracy. Automatic probability-based
 Decisions exclusion is disabled by default until quality is calibrated.
 
-[Detailed audit](docs/product-audit-0.1.md) · [Documentation](docs/README.md) ·
-[Contributing](CONTRIBUTING.md) · [Security](SECURITY.md) · [MIT license](LICENSE)
+[Detailed audit](https://github.com/timsmykov/career-scout/blob/feat/evaluation-workers/docs/product-audit-0.1.md) · [Documentation](https://github.com/timsmykov/career-scout/blob/feat/evaluation-workers/docs/README.md) ·
+[Contributing](https://github.com/timsmykov/career-scout/blob/feat/evaluation-workers/CONTRIBUTING.md) · [Security](https://github.com/timsmykov/career-scout/blob/feat/evaluation-workers/SECURITY.md) · [MIT license](https://github.com/timsmykov/career-scout/blob/feat/evaluation-workers/LICENSE)

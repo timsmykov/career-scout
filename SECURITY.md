@@ -2,7 +2,7 @@
 
 В репозитории и публичном Issue не должно быть реальных резюме, вакансий,
 ключей, cookies, OAuth-кодов, подписочной авторизации и рабочих баз данных.
-Подробный контракт данных — [docs/security.md](docs/security.md).
+Подробный контракт данных — [docs/security.md](https://github.com/timsmykov/career-scout/blob/feat/evaluation-workers/docs/security.md).
 
 Для обычного бага укажите версию, безопасную команду с заменёнными значениями,
 error.code и воспроизведение на вымышленных данных. Не загружайте raw model

@@ -17,14 +17,14 @@
 - Подборка показывает PASS, отдельно включает UNCERTAIN, группирует по резюме,
   учитывает импортированную историю и раскрывает основания через explain.
 - Метрики по контрольной разметке доступны через CLI; без меток качество отмечается
-  как неизмеренное. [Начать](docs/quickstart.md).
+  как неизмеренное. [Начать](https://github.com/timsmykov/career-scout/blob/feat/evaluation-workers/docs/quickstart.md).
 
 ### Надёжность и исправления
 
 - Исправлена повторная SQLite-транзакция при передаче collection-run в evaluation.
 - Конфликты event operation_id во всём пакете истории проверяются до первой записи.
 - Полный offline-сценарий установленного пакета добавлен в CI вместе с проверкой
-  данных после пересоздания Docker-контейнера. [Протокол 0.1](docs/product-audit-0.1.md).
+  данных после пересоздания Docker-контейнера. [Протокол 0.1](https://github.com/timsmykov/career-scout/blob/feat/evaluation-workers/docs/product-audit-0.1.md).
 
 ### Упаковка и ограничения
 
