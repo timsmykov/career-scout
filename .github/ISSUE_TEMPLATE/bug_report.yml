@@ -1,0 +1,34 @@
+name: Bug report
+description: Report a reproducible problem without personal data.
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not attach resumes, vacancy text, credentials, cookies, model prompts or working databases.
+        Use synthetic examples and redact personal paths and IDs.
+  - type: input
+    id: version
+    attributes:
+      label: Version and environment
+      description: Output of career-scout version, OS, Python and relevant commit.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Safe command and minimal synthetic inputs. State whether external calls were disabled.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected and actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: error
+    attributes:
+      label: Safe error code and checks
+      description: error.code and relevant run status; no raw credentials or private payloads.
