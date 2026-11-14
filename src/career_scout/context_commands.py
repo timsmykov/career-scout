@@ -108,7 +108,6 @@ def action(state, op, parameters, request_id):
 
                 run = state.run(params["collection_run"])
                 with closing(connect(Path(run["collector"]))) as db:
-                    db.execute("BEGIN")
                     collector = Store.__new__(Store)
                     collector.db = db
                     catalog = Campaigns(collector).export(run["campaign_id"])["vacancies"]
@@ -249,6 +248,27 @@ def history_import(state, document, request_id):
 
     def save():
         with closing(AnalysisStore(state.root / "history.sqlite3")) as store:
+            existing = {}
+            if store.db.execute(
+                "SELECT 1 FROM sqlite_master WHERE name='career_assistant_events'"
+            ).fetchone():
+                existing = dict(
+                    store.db.execute("SELECT operation_id,fingerprint FROM career_assistant_events")
+                )
+            # Validate the entire batch before record() commits any individual event.
+            for item in document:
+                detail = json.dumps(item["detail"], ensure_ascii=False)
+                payload = json.dumps(
+                    [item[k] for k in ("source", "source_id", "kind", "evidence")] + [detail],
+                    ensure_ascii=False,
+                )
+                fingerprint = hashlib.sha256(payload.encode()).hexdigest()
+                if (
+                    item["operation_id"] in existing
+                    and existing[item["operation_id"]] != fingerprint
+                ):
+                    raise CommandError("history_operation_conflict")
+                existing[item["operation_id"]] = fingerprint
             for item in document:
                 record(
                     store.db, **{**item, "detail": json.dumps(item["detail"], ensure_ascii=False)}

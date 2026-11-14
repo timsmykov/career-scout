@@ -635,3 +635,60 @@ def test_prepared_offline_run_can_be_explicitly_enabled_without_readmitting_inpu
         assert len(Worker.calls) == 1
     assert context_engine.status(p["database"], p["run_id"])["external_calls_enabled"]
     state.close()
+
+
+def test_history_conflicting_later_event_does_not_apply_earlier_events(tmp_path):
+    from career_scout.context_commands import history_import, history_list
+
+    state = AgentState(tmp_path / "ws", write=True)
+    event = {
+        "operation_id": "original",
+        "source": "hh",
+        "source_id": "1",
+        "kind": "applied",
+        "evidence": "synthetic evidence",
+        "detail": {},
+    }
+    history_import(state, [event], "first")
+    batch = [
+        {**event, "operation_id": "new", "source_id": "2"},
+        {**event, "evidence": "different meaning"},
+    ]
+    from career_scout.agent_state import CommandError
+
+    with pytest.raises(CommandError, match="history_operation_conflict"):
+        history_import(state, batch, "conflicting-batch")
+    assert history_list(state)["total"] == 1
+    assert history_list(state)["items"][0]["source_id"] == "1"
+    state.close()
+
+
+def test_cli_prepares_evaluation_from_completed_collection_without_nested_transaction(
+    tmp_path, capsys, monkeypatch
+):
+    from test_agent_cli import fake_source, setup_run
+
+    monkeypatch.setattr(agent_service, "source_factory", fake_source(tmp_path, []))
+    rid = setup_run(tmp_path, capsys, budget=10)
+    collected = invoke(tmp_path, capsys, "run", "execute", rid, "--request-id", "collect")
+    cid = collected["result"]["context_id"]
+    assert collected["result"]["run_status"] == "complete"
+    invoke(tmp_path, capsys, "connection", "put", "default", "--request-id", "conn", data={})
+    evaluation = invoke(
+        tmp_path,
+        capsys,
+        "evaluation",
+        "prepare",
+        "--context",
+        cid,
+        "--collection-run",
+        rid,
+        "--max-calls",
+        "0",
+        "--max-decisions",
+        "0",
+        "--request-id",
+        "from-collection",
+    )
+    assert evaluation["status"] == "ok", evaluation
+    assert evaluation["result"]["admitted"] == 2

@@ -24,7 +24,8 @@
 
 ## Единый файл доступа
 
-Локальный .env в корне checkout — актуальный единый файл job API credentials:
+Legacy CLI использует локальный .env в корне checkout; agent CLI принимает ссылку
+`--env /absolute/path/jobs.env` либо .env внутри личного workspace. Набор job API credentials:
 HH_CLIENT_ID, HH_CLIENT_SECRET, HH_ACCESS_TOKEN, HH_USER_AGENT,
 SUPERJOB_APP_ID и SUPERJOB_APP_KEY. Права 0600; Git игнорирует файл.
 Trudvsem и проверенный Habr frontend не требуют ключей в текущем read-only сценарии.

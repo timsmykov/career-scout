@@ -4,7 +4,7 @@ FROM python:3.12-slim-bookworm@sha256:935c3c5b12357a7e10caa9c1e6ca5692344d97cf22
 COPY --from=uv /uv /usr/local/bin/uv
 WORKDIR /app
 ENV UV_PYTHON_DOWNLOADS=never UV_LINK_MODE=copy
-COPY pyproject.toml uv.lock README.md ./
+COPY pyproject.toml uv.lock README.md LICENSE NOTICE.md ./
 COPY src/ ./src/
 COPY configs/search.toml ./configs/search.toml
 RUN uv sync --locked --no-dev --no-editable

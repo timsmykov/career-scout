@@ -96,6 +96,8 @@ Offline-тесты используют подставной executable, без 
 `uv run --no-sync pytest -m "not live"`.
 
 Docker: `docker compose build`, `python3 scripts/check_container.py` (synthetic, без сети).
+При изменении основного потока также `python3 scripts/check_product.py`:
+установленный пакет, полный CLI-путь, эмуляторы HTTP/Codex; не проверка качества модели.
 Для поведения писать тесты по docs/acceptance.md; сетевые проверки явно отделять.
 Не запускать реальный сбор/модели для проверки изменения Markdown.
 Обычный CI не получает секретов и не ходит к job API/LLM.

@@ -8,6 +8,8 @@
 !pyproject.toml
 !uv.lock
 !README.md
+!LICENSE
+!NOTICE.md
 !src/
 !src/career_scout/
 !src/career_scout/*.py
