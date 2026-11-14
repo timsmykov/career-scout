@@ -369,7 +369,7 @@ def execute(
     retry_errors=False,
     enable_calls=False,
 ):
-    from career_scout.batch_worker import CodexBatchWorker
+    from career_scout.model_providers import batch_worker
     from career_scout.routed_pipeline import evaluate_queues, reserve_route
 
     frozen = json.loads(store.run(run_id)["config_json"])
@@ -472,7 +472,7 @@ def execute(
         store,
         run_id,
         frozen,
-        worker_factory or CodexBatchWorker,
+        worker_factory or batch_worker,
         shared_slots=True,
         on_progress=lambda: apply_history(store, run_id, frozen),
     )

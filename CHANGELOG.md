@@ -2,6 +2,16 @@
 
 ## 0.1.0 alpha — Unreleased
 
+- Bundled installable Career Scout Agent Skill for Codex and Claude Code, with
+  JSON discovery and non-destructive installer.
+- Ten evaluator API providers and official Claude Code subscription transport;
+  keys remain environment references, validation/queue budgets are shared.
+- Unknown native/API delivery now blocks both current and legacy resume before
+  increasing budgets; unclassified Codex failures no longer trigger blind retries.
+- Context-aware doctor no longer requires Decisions for the single-CV path or
+  platform credentials for evaluating an existing catalog.
+
+
 Публичная версия находится в main. Запись описывает alpha, а не стабильный1.x
 или опубликованный PyPI-релиз.
 

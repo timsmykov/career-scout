@@ -5,9 +5,9 @@
 
 ## Исполнитель и одно резюме
 
-Codex должен быть установлен на хосте с действующим входом через ChatGPT.
-Вызовы проходят через подписку, а не ключ model API. Выберите модель, доступную
-вашей учётной записи; шаблон не гарантирует её доступность каждому пользователю.
+Выберите Codex/ChatGPT, Claude Code через подписку либо API оценщика.
+[Подключения и ключи](../model-providers.md). Модель должна быть доступна вашей
+учётной записи; шаблон не гарантирует доступность конкретного model ID.
 
 Скопируйте [пример](../../examples/agent-connection.synthetic.json) в
 `private/connection.json` и измените нужные поля. Для одного CV оставьте decisions=null
@@ -17,13 +17,13 @@ Codex должен быть установлен на хосте с действ
 ```sh
 career-scout --workspace private/me connection put default   --input private/connection.json --request-id model-connection-1
 career-scout --workspace private/me connection show default
-career-scout --workspace private/me doctor --connection default --env /absolute/path/jobs.env
+career-scout --workspace private/me doctor --context CONTEXT_ID --connection default --env /absolute/path/jobs.env
 ```
 
-Doctor — локальная проверка, auth_live_verified=false. В0.1 он проверяет полный
-набор подключений и может сообщить ready=false без Decisions даже при допустимом
-одном CV. Смотрите checks. Для нескольких CV нужен внешний совместимый native
-коннектор; его контракт и workspace/root описаны в [справочнике](../context-evaluation.md).
+Doctor — локальная проверка, auth_live_verified=false. Передайте `--context
+CONTEXT_ID`, чтобы проверить необходимость маршрутизатора: одному CV без автоотсева
+Decisions не нужен. Для нескольких CV нужен внешний совместимый native-коннектор;
+его контракт описан в [справочнике](../context-evaluation.md).
 
 ## Prepare фиксирует входы, run выполняет
 
@@ -35,7 +35,7 @@ career-scout --workspace private/me evaluation status EVALUATION_RUN_ID --db DAT
 
 DATABASE и EVALUATION_RUN_ID возвращает prepare. Одному CV при выключенном
 Decisions-отсеве достаточно max-decisions0; при нескольких CV задайте конечный
-бюджет маршрутизации и подключение. max-calls — число Codex-батчей с учётом попыток,
+бюджет маршрутизации и подключение. max-calls — число модельных батчей с учётом попыток,
 а не количество карточек. Фактические токены сохраняются, цена подписки не
 превращается программой в автоматически рассчитанный API-счёт.
 

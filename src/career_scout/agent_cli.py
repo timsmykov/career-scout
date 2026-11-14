@@ -29,9 +29,13 @@ CAPABILITIES = {
     "explicit_uncertainty": True,
     "portable_connections": True,
     "automatic_applications": False,
-    "model_billing": "codex_subscription_for_legacy_evaluators",
+    "model_billing": "configured_subscription_or_api",
+    "installable_agent_skill": True,
 }
 OPERATIONS = (
+    "skill.install",
+    "skill.show",
+    "provider.list",
     "history.import",
     "history.list",
     "connection.put",
@@ -211,6 +215,14 @@ def parser():
     p.add_argument("name")
     p = leaf(groups, "doctor", "doctor")
     p.add_argument("--connection", default="default")
+    p.add_argument("--context")
+    providers = groups.add_parser("provider", parents=[common]).add_subparsers(required=True)
+    leaf(providers, "list", "provider.list")
+    skills = groups.add_parser("skill", parents=[common]).add_subparsers(required=True)
+    leaf(skills, "show", "skill.show")
+    p = leaf(skills, "install", "skill.install")
+    p.add_argument("--agent", choices=("codex", "claude"), required=True)
+    p.add_argument("--directory", type=Path, help="Override the agent's skills parent directory")
     evaluation = groups.add_parser("evaluation", parents=[common]).add_subparsers(required=True)
     p = leaf(evaluation, "prepare", "evaluation.prepare")
     p.add_argument("--context", required=True)
@@ -264,6 +276,14 @@ def summary(value):
 
 def dispatch(args):
     op = args.operation
+    if op == "provider.list":
+        from career_scout.model_providers import provider_catalog
+
+        return envelope(provider_catalog())
+    if op.startswith("skill."):
+        from career_scout.agent_skill import install, show
+
+        return envelope(show() if op == "skill.show" else install(args.agent, args.directory))
     if op == "schema":
         schemas = {
             "context": ContextInput,
@@ -328,7 +348,9 @@ def dispatch(args):
             return envelope(context_commands.connection(state, args.name))
         if op == "doctor":
             return envelope(
-                context_commands.doctor(state, args.connection, getattr(args, "env", None))
+                context_commands.doctor(
+                    state, args.connection, getattr(args, "env", None), args.context
+                )
             )
         if op == "evaluation.prepare":
             return context_commands.action(
@@ -358,6 +380,7 @@ def dispatch(args):
                     "enable_calls": args.enable_calls,
                 },
                 args.request_id,
+                env=getattr(args, "env", None),
             )
         if op == "context.create":
             return agent_service.context_create(state, read_input(args.input), args.request_id)

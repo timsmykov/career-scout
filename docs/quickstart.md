@@ -2,8 +2,9 @@
 
 Инструкция относится к публичной ветке main. Требуются Linux,
 Python3.12, uv, собственный доступ к выбранной площадке и установленный на хосте
-Codex с рабочим входом через ChatGPT. Career Scout не устанавливает Codex и не
-копирует авторизацию. [Ограничения и результаты приёмки](product-audit-0.1.md).
+Codex с входом через ChatGPT, либо Claude Code/свой API
+по [инструкции подключений](model-providers.md). Career Scout не устанавливает
+подписочные CLI и не копирует авторизацию. [Навык для агента](agent-skill.md). [Ограничения и результаты приёмки](product-audit-0.1.md).
 
 Начните с одного резюме: Decisions для этого сценария не нужен. Все изменяющие
 команды требуют уникальный request-id; тот же ID с теми же аргументами возвращает
@@ -98,7 +99,7 @@ career-scout --workspace private/me evaluation shortlist --db DATABASE
 career-scout --workspace private/me evaluation metrics EVALUATION_RUN_ID --db DATABASE
 ```
 
-EVALUATION_RUN_ID и DATABASE вернёт prepare. Бюджет2 — максимум Codex-батчей,
+EVALUATION_RUN_ID и DATABASE вернёт prepare. Бюджет2 — максимум модельных батчей,
 не цена и не число вакансий; ошибка ответа может занять попытку. Prepare не
 вызывает модели. При одном CV и выключенном автоотсеве Decisions-бюджет0 допустим.
 Предварительно доступная модель и авторизация должны быть проверены владельцем.

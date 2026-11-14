@@ -184,6 +184,21 @@ class AnalysisStore:
                 (outcome["status"], json.dumps(outcome, ensure_ascii=False), run_id, route_key),
             )
 
+    def ensure_known_delivery(self, run_id):
+        tables = ["attempts"]
+        if self.db.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='batch_attempts'"
+        ).fetchone():
+            tables.append("batch_attempts")
+        for table in tables:
+            # Table names are internal constants, never user/model values.
+            if self.db.execute(
+                f"SELECT 1 FROM {table} WHERE run_id=? AND (finished_at IS NULL "
+                "OR error LIKE '%unknown%' OR error='worker_execution_error') LIMIT 1",
+                (run_id,),
+            ).fetchone():
+                raise EvaluationError("model_outcome_unknown", fatal=True)
+
     def retry(self, run_id, additional_calls):
         if type(additional_calls) is not int or additional_calls < 0:
             raise EvaluationError("invalid_call_budget", fatal=True)

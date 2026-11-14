@@ -56,20 +56,59 @@ class ResumeSnapshot(Model):
         return self
 
 
+class APISettings(Model):
+    # References only. Key values never belong in frozen settings or receipts.
+    key_env: str | None = Field(default=None, pattern=r"^[A-Z][A-Z0-9_]{0,127}$")
+    max_output_tokens: int = Field(default=16000, ge=256, le=128000)
+    output_mode: Literal["json", "schema"] = "json"
+    reasoning_effort: Literal["low", "medium", "high"] | None = None
+
+
 class EvaluatorConfig(Model):
-    provider: Literal["codex_subscription"] = "codex_subscription"
+    provider: Literal[
+        "codex_subscription",
+        "claude_subscription",
+        "openai",
+        "anthropic",
+        "gemini",
+        "openrouter",
+        "deepseek",
+        "mistral",
+        "xai",
+        "groq",
+        "together",
+        "fireworks",
+    ] = "codex_subscription"
     model: str = "gpt-6-luna"
     reasoning_effort: Literal["low", "medium", "high", "xhigh", "max"] = "max"
     timeout_seconds: int = Field(default=300, ge=1, le=3600)
     max_input_characters: int = Field(default=100_000, ge=100, le=2_000_000)
     max_attempts_per_profile: int = Field(default=2, ge=1, le=3)
     executable: str | None = Field(default=None, min_length=1)
+    api: APISettings | None = None
+
+    @model_validator(mode="after")
+    def provider_settings(self):
+        subscription = self.provider.endswith("_subscription")
+        if subscription and self.api is not None:
+            raise ValueError("subscription_cannot_use_api_settings")
+        if not subscription and self.executable is not None:
+            raise ValueError("api_cannot_use_executable")
+        if self.provider != "codex_subscription" and "model" not in self.model_fields_set:
+            raise ValueError("provider_requires_explicit_model")
+        if self.api and self.api.reasoning_effort and self.provider not in {"openai", "openrouter"}:
+            raise ValueError("reasoning_option_not_supported")
+        if self.api and self.api.output_mode == "schema" and self.provider == "anthropic":
+            raise ValueError("use_json_mode_for_anthropic")
+        return self
 
     @model_serializer(mode="wrap")
     def compatible_settings(self, handler):
         values = handler(self)
         if values.get("executable") is None:
             values.pop("executable", None)
+        if values.get("api") is None:
+            values.pop("api", None)
         return values
 
     def key(self):

@@ -15,6 +15,7 @@ from career_scout.common import utcnow
 from career_scout.decisions import DecisionsClient, connection_options, select_profiles
 from career_scout.evaluation import ORDER, EvaluationError, EvaluatorConfig, validate_result
 from career_scout.evidence import hydrate_response
+from career_scout.model_providers import batch_worker
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS routed_selections(
@@ -320,7 +321,7 @@ def evaluate_queues(
     store,
     run_id,
     frozen,
-    worker_factory=CodexBatchWorker,
+    worker_factory=batch_worker,
     *,
     refill=None,
     on_progress=None,
@@ -332,6 +333,8 @@ def evaluate_queues(
     IDs, or None at the source/limit boundary. Each batch retains its own run budget.
     """
     run_ids = [run_id] if isinstance(run_id, str) else list(run_id)
+    for ident in run_ids:
+        store.ensure_known_delivery(ident)
     exhausted = refill is None
     config = EvaluatorConfig.model_validate(frozen["model"])
     order = frozen.get("order", list(ORDER))
@@ -516,7 +519,7 @@ def evaluate_queues(
     return error
 
 
-def run_routed(store, run_id, frozen, *, worker_factory=CodexBatchWorker, client=None):
+def run_routed(store, run_id, frozen, *, worker_factory=batch_worker, client=None):
     initialize(store)
     revalidate_saved_responses(store, run_id)
     try:

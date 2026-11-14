@@ -6,6 +6,7 @@ import json
 import os
 import shutil
 from contextlib import closing
+from functools import partial
 from pathlib import Path
 
 from career_scout import context_engine
@@ -44,15 +45,32 @@ def connection(state, name):
     return json.loads(row[0])
 
 
-def doctor(state, name, env=None):
+def doctor(state, name, env=None, context_id=None):
     config = EvaluationConnection.model_validate(connection(state, name))
-    binary = config.model.executable or "codex"
+    from career_scout.model_providers import credential
+
     checks = [
-        {"component": "codex_executable", "ok": bool(shutil.which(binary))},
         {"component": "workspace", "ok": os.access(state.root, os.W_OK)},
-        {"component": "credential_reference", "ok": Path(env or state.root / ".env").is_file()},
     ]
-    if config.decisions:
+    if config.model.provider.endswith("_subscription"):
+        binary = config.model.executable or (
+            "codex" if config.model.provider == "codex_subscription" else "claude"
+        )
+        checks.append(
+            {"component": config.model.provider + "_executable", "ok": bool(shutil.which(binary))}
+        )
+    else:
+        try:
+            credential(config.model, env or state.root / ".env")
+            present = True
+        except (EvaluationError, OSError):
+            present = False
+        checks.append({"component": "model_api_key", "ok": present})
+    needs_decisions = None
+    if context_id:
+        document = state.context(context_id)["document"]
+        needs_decisions = len(document["resumes"]) > 1 or config.allow_decisions_exclusion
+    if config.decisions and needs_decisions is not False:
         native = config.decisions
         path, root = Path(native.workspace).resolve(), Path(native.workspace_root).resolve()
         checks += [
@@ -62,7 +80,7 @@ def doctor(state, name, env=None):
                 "ok": path.is_dir() and path.is_relative_to(root) and os.access(path, os.W_OK),
             },
         ]
-    else:
+    elif needs_decisions:
         checks.append({"component": "decisions_connection", "ok": False})
     return {
         "checks": checks,
@@ -70,12 +88,16 @@ def doctor(state, name, env=None):
         "external_calls_enabled": config.external_calls_enabled,
         "auth_live_verified": False,
         "network_calls": 0,
+        "decisions_required": needs_decisions,
+        "scope": "evaluation_setup_only",
+        "notes": [] if context_id else ["Pass --context to check routing requirements"],
         "next": [c["component"] for c in checks if not c["ok"]],
     }
 
 
-def action(state, op, parameters, request_id):
+def action(state, op, parameters, request_id, env=None):
     from career_scout.analysis_store import AnalysisStore
+    from career_scout.model_providers import batch_worker
 
     params = dict(parameters)
     if op == "prepare":
@@ -132,6 +154,10 @@ def action(state, op, parameters, request_id):
                         additional_decisions=params["additional_decisions"],
                         retry_errors=params.get("retry_errors", False),
                         enable_calls=params.get("enable_calls", False),
+                        worker_factory=partial(
+                            batch_worker,
+                            env_path=env or state.root / ".env",
+                        ),
                     )
                 result = context_engine.status(dbpath, params["run_id"])
                 result["execution_error"] = failure
