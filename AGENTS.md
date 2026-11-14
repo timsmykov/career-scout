@@ -23,7 +23,7 @@ Trudvsem offset=page0, Habr page1. Не переносить HH geography/Boolea
 собственные inputs/results/attempts/checkpoints в отдельной SQLite.
 Контракт и ручной запуск: docs/evaluation.md; entrypoint: career_scout.analysis.
 
-Основной путь — campaigns.py: initial/new/resume CAMPAIGN_ID. Append-only: все
+Прежний collector CLI использует campaigns.py: initial/new/resume CAMPAIGN_ID. Append-only: все
 видимые ID, full descriptions только неизвестных, без TTL refresh. Initial и manual new —
 14дней по published_at, frozen start/end; modified_at не доказывает свежесть.
 Old/date-unknown хранить отдельно от свежей выгрузки, прежние записи не удалять. Конечный HTTP
@@ -38,7 +38,7 @@ Legacy collect сохраняется для прежних run IDs и имее�
   Общая память не добавляет кандидату навыков.
 - Подтверждённый порядок: product → automation → business_assistant → business_analyst.
   Универсальное и исследовательское резюме не подключать.
-- Текущий routed mode: native OpenAI Decisions выбирает один или два профиля по
+- Прежний routed mode: native OpenAI Decisions выбирает один или два профиля по
   разности вероятностей choice. Четыре профильные очереди/четыре параллельных воркера,
   до20вакансий на вызов; обе назначенные оценки завершаются даже после PASS.
   Отказ выбранных профилей — REJECTED_BY_SELECTED, не глобальный отказ всех четырёх.
@@ -59,13 +59,21 @@ Legacy collect сохраняется для прежних run IDs и имее�
 - Новые зависимости добавлять только по реализации этапа. Проверять лицензии до копирования.
 
 - По уточнению владельца12.11: анализировать уже собранное, не ждать конца initial.
-  Пользователь не отвечает на вопросы. Текущий режим applications-1: ApplicationResult v3,
+  Пользователь не отвечает на вопросы. Прежний режим applications-1: ApplicationResult v3,
   PASS/REJECT, questions=[]. Critical gaps отделять от второстепенных неизвестных;
   не приписывать навыки. Legacy v2 остаётся историей. Контракт: docs/applications.md.
 - prepare выбирает следующие ранее не переданные входы; analysis_admissions и
   selection_key сохраняют продвижение и pending runs. Не удалять прежние оценки.
 - Пользовательская выдача shortlist — только конкретные вакансии для отклика;
   диагностика/вопросы/отказы в неё не включаются. Автоотклики не разрешены.
+
+## Документация
+
+Главные входы: [README](README.md), [указатель](docs/README.md),
+[первый запуск](docs/quickstart.md), [архитектура](docs/architecture.md).
+Новый пользовательский путь — career-scout/context-1; личные четыре роли выше
+описывают совместимость старых запусков, не глобальные настройки продукта.
+При изменениях сверять справочник с parser/schema и практическими руководствами.
 
 ## Структура и проверки
 

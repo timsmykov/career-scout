@@ -1,29 +1,29 @@
-# Тесты
+# Проверки
 
-`test_hh_collector.py` проверяет HH transport, нормализацию, транзакции, версии,
-пагинацию, date split, budgets/429/auth, CLI и аварийный выход отдельного процесса.
-Запуск: `uv run --no-sync pytest -m "not live"`. Сети, реальных токенов и LLM нет.
-test_normalization.py проверяет typed условия, null/conflicts/provenance и identity;
-test_migration.py — v1 backup/rollback/process death/idempotence, пересечение ID и
-продолжение старого run. Docker test дополнительно переносит legacy запись.
-Ограниченная реальная проверка HH фиксируется отдельно в docs/collector-readiness.md.
-Общий оставшийся план: docs/acceptance.md.
+Тесты находятся непосредственно в tests/test_*.py; инструкции ниже не требуют
+несуществующих каталогов unit/collectors/evaluation.
 
-`test_analysis.py` проверяет четыре позиции первого PASS, остальные исходы,
-кэш/порядок/версии, восстановление после записи результата до checkpoint,
-постоянный бюджет, изоляцию SQLite и подставной Codex executable. Проверки CLI
-transport включают ChatGPT login, запрет API login/tools, usage, timeout собственной
-процессной группы, Ctrl+C родителя и сохранение ошибочного ответа. Source ranges проверяются на
-полное сохранение текста, источник, порядок и длину восстанавливаемой цитаты.
-Реальные модельные пилоты хранятся приватно в data/; offline suite их не запускает.
-Корректный JSON и дословная цитата не доказывают семантическое качество вердикта.
+```sh
+uv run --no-sync pytest -m "not live"
+```
 
-Добавлять тесты в одном изменении с реализацией:
-unit/ — фильтры, версии, агрегирование;
-collectors/ — HTTP через respx и вымышленные фикстуры;
-storage/ — реальные временные SQLite, транзакции и leases;
-evaluation/ — fake model adapter, порядок вызовов, ошибки, цитаты;
-live/ — только отдельный явный запуск.
+| Область | Файлы |
+|---|---|
+| CLI, квитанции, версии и budgets | test_agent_cli.py |
+| Персональный context-1 | test_context_engine.py |
+| Источники, миграции и нормализация | test_hh_collector.py, test_migration.py, test_normalization.py |
+| Ранний анализ, routed queues | test_analysis.py, test_routed_analysis.py |
+| Технические контракты | test_core_contracts.py |
 
-Текущие JSON/TOML/Markdown-контракты проверяет scripts/check_repository.py.
-Не проверять бизнес-логику тестом, который только повторяет её исходник.
+Это навигация, не полный список: дополнительные test_*.py покрывают кампании,
+выдачу, исключения, performance и другие сценарии. Используются временные SQLite,
+контролируемый HTTP и fake model executable. Сети, реальных ключей и модельных
+вызовов в обычном CI нет.
+
+После Docker-сборки scripts/check_container.py проверяет перенос/пересоздание и
+сохранение данных; scripts/check_product.py — весь поток установленного пакета
+с эмуляторами. check_repository.py валидирует схемы/примеры и локальные ссылки.
+
+Живые проверки авторизации, API и Codex — отдельные конечные сценарии. Корректная
+схема и цитата не доказывают смысловую точность. [Аудит0.1](../docs/product-audit-0.1.md),
+[критерии](../docs/acceptance.md), [CONTRIBUTING](../CONTRIBUTING.md).

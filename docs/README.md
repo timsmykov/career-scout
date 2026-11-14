@@ -1,75 +1,76 @@
-# Документация
+# Документация Career Scout
 
-Текущая версия: 0.1.0 alpha, MIT. Личный сбор и анализ через подписку Codex.
+**0.1.0 alpha · MIT.** Актуальная реализация — `feat/evaluation-workers`.
+Основной интерфейс — `career-scout`, личный JSON CLI. Документы о ранних четырёх
+профилях и рабочих запусках собраны отдельно от инструкций для нового пользователя.
 
-- [quickstart.md](quickstart.md) — первый запуск с одним резюме, сбором и подборкой.
-- [product-audit-0.1.md](product-audit-0.1.md) — итоговая приёмка, подтверждения и ограничения.
+## Начать с результата
 
-## Задача и решения
+| Мне нужно | Читать |
+|---|---|
+| Понять, что это и подходит ли мне | [Задача и границы](product.md), [аудит 0.1](product-audit-0.1.md) |
+| Получить первую подборку | [Первый запуск с одним резюме](quickstart.md) |
+| Настроить резюме и условия | [Контекст кандидата](guides/candidate.md) |
+| Собрать и затем добавлять новые вакансии | [Поиск и сбор](guides/collection.md) |
+| Выполнить анализ и прочитать результат | [Анализ и подборка](guides/evaluation.md) |
+| Продолжить после остановки | [Эксплуатация](operations.md), [диагностика](troubleshooting.md) |
+| Внести изменение | [CONTRIBUTING](../CONTRIBUTING.md), [исходники](../src/career_scout/README.md) |
 
-- [product.md](product.md) — результат, границы, открытые вопросы.
-- [architecture.md](architecture.md) — компоненты и путь вакансии.
-- [component-adaptation.md](component-adaptation.md) — перенос по файлам, зависимости и замены.
-- [reuse.md](reuse.md) — выбор сборщика и точные донорские исходники.
-- [adr/0004-collector-first.md](adr/0004-collector-first.md) — текущий приоритет: самостоятельный коллектор.
-- [adr/0001-stack.md](adr/0001-stack.md) — Python, LangGraph, SQLite.
-- [adr/0002-routing.md](adr/0002-routing.md) — native Decisions, четыре очереди и legacy first-PASS.
-- [adr/0003-source-boundaries.md](adr/0003-source-boundaries.md) — транспорт и права источников.
+## Руководства и объяснения
 
-## Контракты
+- [quickstart.md](quickstart.md) — установка, минимальные входы, ограниченный сбор и первая оценка.
+- [guides/candidate.md](guides/candidate.md) — резюме, приоритеты, fact_rules, версии.
+- [guides/collection.md](guides/collection.md) — четыре источника, планы, initial/new/resume и бюджеты.
+- [guides/evaluation.md](guides/evaluation.md) — один/несколько CV, подключение, статусы, история и метрики.
+- [operations.md](operations.md) — личные каталоги, восстановление и перенос данных.
+- [troubleshooting.md](troubleshooting.md) — коды ошибок и конкретные действия.
+- [docker.md](docker.md) — контейнер коллектора, persistent volume и пересоздание.
+- [architecture.md](architecture.md) — актуальная схема, компоненты и ответственность кода/моделей.
+- [product.md](product.md) — результат, поддерживаемый сценарий и границы 0.1.
+- [case-study.md](case-study.md) — задача, инженерные решения, наблюдаемый результат и ограничения.
+- [interface-choice.md](interface-choice.md) — почему личный CLI, а не обязательный общий сервер.
 
-- [context-evaluation.md](context-evaluation.md) — персональная маршрутизация Decisions,
-  семантическая оценка с неопределённостью, подключения/doctor, история и метрики.
+## Справочник и контракты
 
-- [agent-cli.md](agent-cli.md) — установленный JSON CLI для агента: контекст,
-  планы, конечные запуски, версии/квитанции, shortlist/explain и граница legacy-анализа.
+- [agent-cli.md](agent-cli.md) — команды, JSON-ответы, request-id, версии и пагинация выдачи.
+- [context-evaluation.md](context-evaluation.md) — context-1, Decisions/Codex, доказательства и допустимые выводы.
+- [core-contracts.md](core-contracts.md) — данные, очередь и переносимые исполнители.
+- [normalization.md](normalization.md), [storage.md](storage.md) — vacancy v2, SQLite v5, исходники и миграции.
+- [collector.md](collector.md), [multi-source.md](multi-source.md) — страницы, полнота и адаптеры.
+- [sources/README.md](sources/README.md) — отдельные контракты HH/Habr/SuperJob/Trudvsem.
+- [security.md](security.md), [SECURITY](../SECURITY.md) — данные, подключения и безопасные отчёты.
+- [Схемы](../schemas/agent-context.schema.json), [примеры](../examples/README.md) — проверяемые входы; `career-scout schema` возвращает полный текущий контракт.
+- [reuse.md](reuse.md), [component-adaptation.md](component-adaptation.md), [NOTICE](../NOTICE.md) — референсы, происхождение и права.
 
-- [core-contracts.md](core-contracts.md) — границы источников, качество данных,
-  проверка доказательств, очередь резюме и переносимые подключения.
-- [interface-choice.md](interface-choice.md) — выбор CLI/MCP для личной установки,
-  подготовительный блок и план измерения качества.
+## Проверки, развитие и история
 
-- [exclusions.md](exclusions.md) — постоянный отсев до очереди, моделей и ассистента.
+- [product-audit-0.1.md](product-audit-0.1.md) — продуктовая приёмка; где тест, эмулятор, live и историческое свидетельство.
+- [documentation-audit.md](documentation-audit.md) — покрытие документацией, проверка примеров и оставшийся долг.
+- [acceptance.md](acceptance.md), [тесты](../tests/README.md) — критерии и воспроизводимые проверки.
+- [CHANGELOG](../CHANGELOG.md) — изменения текущей alpha; опубликованный релиз не подразумевается.
+- [roadmap.md](roadmap.md), [backlog.json](backlog.json) — датированный план и критерии; старые статусы не заменяют текущий аудит.
+- [references/README.md](references/README.md) — источники API-документации и XERJ.
+- [research/README.md](research/README.md) — исследование аналогов.
+- [context-acceptance-20261113.json](context-acceptance-20261113.json) — ограниченная живая модельная приёмка на вымышленных данных.
 
-- [evaluation-performance.md](evaluation-performance.md) — сравнение10/20, токены и консервативный Decisions screen.
+## Прежние режимы и датированные результаты
 
-- [full-array.md](full-array.md) — конечный проход всего снимка по площадкам, продолжение без повторов.
+Эти материалы сохраняют воспроизводимость старых запусков. Их четыре профессии,
+фильтры и результаты не становятся настройками нового пользователя автоматически.
 
-- [applications-first-20261112.md](applications-first-20261112.md) — первые100карточек,
-  14рекомендаций, native-проверки и продвижение следующей порции.
-- [applications.md](applications.md) — текущий отбор для отклика без вопросов, следующие
-  порции и выдача конкретных рекомендованных вакансий.
+- [development.md](development.md) — прежний CLI `python -m career_scout`, initial/new и legacy collect.
+- [filtering.md](filtering.md) — TOML и прежние IT/grade/experience-фильтры.
+- [evaluation.md](evaluation.md) — старые prepare/run/resume/export и результат v2.
+- [applications.md](applications.md) — applications-1, следующий остаток, результат v3.
+- [routing-batches.md](routing-batches.md) — native routing, один/два профиля и очереди.
+- [evaluation-performance.md](evaluation-performance.md) — сравнение батчей 10/20 и Decisions screen.
+- [exclusions.md](exclusions.md) — постоянные исключения старого режима.
+- [full-array.md](full-array.md) — фиксированный проход по площадкам и восстановление.
+- [openbot-assistant.md](openbot-assistant.md) — прежний доступ ассистента по запросу.
+- [collector-readiness.md](collector-readiness.md), [hh-volume-acceptance.md](hh-volume-acceptance.md) — ранние probe и объёмные проверки.
+- [applications-first-20261112.md](applications-first-20261112.md), [quality-first-20261112.md](quality-first-20261112.md) — первые пользовательские оценки.
+- [decisions-routing100-20261112.md](decisions-routing100-20261112.md) — разметка и калибровка конкретного router.
 
-- [routing-batches.md](routing-batches.md) — один/два профиля, четыре параллельных батча,
-  budgets/resume и фактическая калибровка100.
-- [decisions-routing100-20261112.md](decisions-routing100-20261112.md) — протокол и метрики100.
-
-- [multi-source.md](multi-source.md) — четыре адаптера, общий CLI, native pagination и статус SuperJob.
-
-- [normalization.md](normalization.md) — общий формат v2, source identity, условия и миграция.
-
-- [collector-readiness.md](collector-readiness.md) — live-доступ и остаток реализации.
-- [collector.md](collector.md) — поиск, страницы, окна, бюджет и полнота.
-- [sources/README.md](sources/README.md) — четыре площадки и статус доступа.
-- [filtering.md](filtering.md) — рабочий TOML, семейства, допустимые грейды, unknown и история решений.
-- [evaluation.md](evaluation.md) — Codex CLI, ручные prepare/run/resume/export,
-  вход/выход v2, маршрутизация и определения вердиктов.
-- [storage.md](storage.md) — идентичность, версии, очередь и транзакции.
-- [security.md](security.md) — секреты, данные, действия и tracing.
-- ../schemas/ — проверяемые JSON Schema.
-- ../prompts/ — общий контракт и четыре предметных профиля.
-
-## Подготовка и приёмка
-
-- [development.md](development.md) — действующие команды initial/new и legacy collect и аргументы CLI.
-- [docker.md](docker.md) — контейнер, persistent volume, credentials и проверка пересоздания.
-- [operations.md](operations.md) — запуск, восстановление, лимиты, диагностика.
-- [hh-volume-acceptance.md](hh-volume-acceptance.md) — фактическая проверка сотен HH карточек и SIGKILL/resume.
-- [acceptance.md](acceptance.md) — сценарии и показатели качества.
-- [roadmap.md](roadmap.md) — коллектор, анализатор и незакрытая приёмка.
-- [backlog.json](backlog.json) — машиночитаемые зависимости и статусы задач.
-- [references/README.md](references/README.md) — официальная документация и XERJ.
-- [research/README.md](research/README.md) — результат исследования аналогов.
-
-Слова «должен» описывают целевой контракт. Реализованное перечислено в корневом
-README и docs/roadmap.md. Эта документация не доказывает запуск сервиса.
+История решений: [0001: стек](adr/0001-stack.md), [0002: маршрутизация](adr/0002-routing.md),
+[0003: источники](adr/0003-source-boundaries.md), [0004: collector first](adr/0004-collector-first.md).
+Ранний collector-first описывает порядок разработки, а не запрет уже реализованного анализа.

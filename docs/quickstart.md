@@ -19,6 +19,7 @@ uv sync --locked
 . .venv/bin/activate
 career-scout version
 career-scout schema
+umask 077
 mkdir -p private/me
 ```
 
@@ -83,8 +84,10 @@ career-scout --workspace private/me run results COLLECTION_RUN_ID --limit 20
 вызовы выключены; `--enable-calls` ниже явно включает конкретный запуск.
 
 ```sh
+cp examples/agent-connection.synthetic.json private/connection.json
+# Измените private/connection.json под доступную модель до connection put.
 career-scout --workspace private/me connection put default \
-  --input examples/agent-connection.synthetic.json --request-id connection-1
+  --input private/connection.json --request-id connection-1
 career-scout --workspace private/me evaluation prepare --context CONTEXT_ID \
   --collection-run COLLECTION_RUN_ID --limit 20 --max-calls 2 --max-decisions 0 \
   --request-id prepare-1
