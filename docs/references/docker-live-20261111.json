@@ -1,0 +1,97 @@
+{
+  "checked_on": "2026-11-11",
+  "kind": "actual Docker migration and container recreation",
+  "image_id": "sha256:b58f2d133e66593e04e9ad31e0931d5ae33ed85404704dff1e58a99d697e1464",
+  "volume": {
+    "name": "career-scout-data",
+    "mountpoint": "/var/lib/docker/volumes/career-scout-data/_data",
+    "external": true
+  },
+  "checks": {
+    "original_snapshots": 315,
+    "original_snapshots_preserved": 315,
+    "current_snapshots": 317,
+    "vacancies": 317,
+    "quick_check": "ok",
+    "foreign_key_errors": 0,
+    "database_mode": "0600",
+    "private_files_in_image": false
+  },
+  "before": {
+    "run_id": "b15f3b0e-983f-4276-8007-15b3e551d77a",
+    "status": "partial",
+    "error": "request_budget_exhausted",
+    "cooldown_until": null,
+    "requests": 1,
+    "pages_saved": 1,
+    "distinct_vacancies": 2,
+    "full_details": 0,
+    "deferred_details": 2,
+    "unavailable_details": 0,
+    "archived_details": 0,
+    "pending_queries": 1,
+    "completed_queries": 0,
+    "truncated_queries": 0,
+    "rejected_rows": 0,
+    "plan": {
+      "source": "hh",
+      "queries": [
+        "бизнес аналитик"
+      ],
+      "start": "2026-11-10T18:21:07+00:00",
+      "end": "2026-11-11T18:21:07+00:00",
+      "per_page": 2,
+      "ttl_hours": 24
+    }
+  },
+  "after": {
+    "run_id": "b15f3b0e-983f-4276-8007-15b3e551d77a",
+    "status": "partial",
+    "error": "request_budget_exhausted",
+    "cooldown_until": null,
+    "requests": 4,
+    "pages_saved": 2,
+    "distinct_vacancies": 4,
+    "full_details": 4,
+    "deferred_details": 0,
+    "unavailable_details": 0,
+    "archived_details": 0,
+    "pending_queries": 1,
+    "completed_queries": 0,
+    "truncated_queries": 0,
+    "rejected_rows": 0,
+    "plan": {
+      "source": "hh",
+      "queries": [
+        "бизнес аналитик"
+      ],
+      "start": "2026-11-10T18:21:07+00:00",
+      "end": "2026-11-11T18:21:07+00:00",
+      "per_page": 2,
+      "ttl_hours": 24
+    }
+  },
+  "first_container_deleted": true,
+  "second_container_id": "0e9b0ce86a2c64d400f5e498016fae9830fb2cf21bd15696b88717a5a27e6a62",
+  "root_filesystem_read_only": true,
+  "credentials_read_only": true,
+  "data_writable": true,
+  "real_hh_requests": 4,
+  "offline_container_check": {
+    "synthetic_vacancies": 300,
+    "first_full": 20,
+    "after_recreation_full": 300,
+    "status": "complete",
+    "network": "none"
+  },
+  "notes": [
+    "Original host database remains untouched.",
+    "Named external volume persists independently of containers.",
+    "Broad HH probe intentionally partial after finite request budget.",
+    "No scheduler, model or agent activated."
+  ],
+  "current_image_id": "sha256:e80c9ae02f8132fe4a1ed37a95afdaee12e244f0f424753048e301717e5a24f5",
+  "after_rebuild_volume_verified": true,
+  "container_offline_test_passed_after_final_build": true,
+  "unit_tests": 50
+}

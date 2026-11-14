@@ -1,0 +1,438 @@
+{
+  "$defs": {
+    "Attributes": {
+      "additionalProperties": false,
+      "properties": {
+        "salary": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Salary"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "experience": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Experience"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "work_formats": {
+          "items": {
+            "enum": [
+              "on_site",
+              "remote",
+              "hybrid",
+              "field_work",
+              "rotation"
+            ],
+            "type": "string"
+          },
+          "title": "Work Formats",
+          "type": "array"
+        },
+        "issues": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Issues",
+          "type": "array"
+        },
+        "conflicts": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Conflicts",
+          "type": "array"
+        },
+        "field_sources": {
+          "additionalProperties": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "title": "Field Sources",
+          "type": "object"
+        }
+      },
+      "title": "Attributes",
+      "type": "object"
+    },
+    "Experience": {
+      "additionalProperties": false,
+      "properties": {
+        "category": {
+          "anyOf": [
+            {
+              "enum": [
+                "no_experience",
+                "one_to_three",
+                "three_to_six",
+                "over_six"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Category"
+        },
+        "min_years": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "ge": 0
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Min Years"
+        },
+        "max_years": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "ge": 0
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max Years"
+        },
+        "min_inclusive": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Min Inclusive"
+        },
+        "max_inclusive": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max Inclusive"
+        }
+      },
+      "title": "Experience",
+      "type": "object"
+    },
+    "Salary": {
+      "additionalProperties": false,
+      "properties": {
+        "amount_from": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "ge": 0
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Amount From"
+        },
+        "amount_to": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "ge": 0
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Amount To"
+        },
+        "currency": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Z]{3}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Currency"
+        },
+        "gross": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Gross"
+        },
+        "period": {
+          "anyOf": [
+            {
+              "enum": [
+                "hour",
+                "shift",
+                "day",
+                "week",
+                "month",
+                "year",
+                "rotation",
+                "service",
+                "project"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Period"
+        },
+        "payout_frequency": {
+          "anyOf": [
+            {
+              "enum": [
+                "daily",
+                "weekly",
+                "twice_monthly",
+                "monthly",
+                "per_project"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Payout Frequency"
+        }
+      },
+      "title": "Salary",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "source": {
+      "enum": [
+        "hh",
+        "habr",
+        "superjob",
+        "trudvsem"
+      ],
+      "title": "Source",
+      "type": "string"
+    },
+    "source_id": {
+      "maxLength": 4096,
+      "minLength": 1,
+      "title": "Source Id",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": 2,
+      "default": 2,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "title": {
+      "minLength": 1,
+      "title": "Title",
+      "type": "string"
+    },
+    "company": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Company"
+    },
+    "url": {
+      "minLength": 1,
+      "title": "Url",
+      "type": "string"
+    },
+    "description": {
+      "minLength": 1,
+      "title": "Description",
+      "type": "string"
+    },
+    "description_html": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Description Html"
+    },
+    "source_payload": {
+      "additionalProperties": true,
+      "title": "Source Payload",
+      "type": "object"
+    },
+    "conditions": {
+      "additionalProperties": true,
+      "title": "Conditions",
+      "type": "object"
+    },
+    "attributes": {
+      "$ref": "#/$defs/Attributes"
+    },
+    "published_at": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Published At"
+    },
+    "created_at": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Created At"
+    },
+    "source_updated_at": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Source Updated At"
+    },
+    "detail_fetched_at": {
+      "title": "Detail Fetched At",
+      "type": "string"
+    },
+    "detail_status": {
+      "enum": [
+        "full",
+        "archived"
+      ],
+      "title": "Detail Status",
+      "type": "string"
+    },
+    "content_hash": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Content Hash",
+      "type": "string"
+    },
+    "source_normalizer_version": {
+      "title": "Source Normalizer Version",
+      "type": "string"
+    },
+    "normalizer_version": {
+      "const": "common-1",
+      "default": "common-1",
+      "title": "Normalizer Version",
+      "type": "string"
+    },
+    "normalization_hash": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Normalization Hash",
+      "type": "string"
+    }
+  },
+  "required": [
+    "source",
+    "source_id",
+    "title",
+    "company",
+    "url",
+    "description",
+    "description_html",
+    "source_payload",
+    "conditions",
+    "attributes",
+    "published_at",
+    "created_at",
+    "source_updated_at",
+    "detail_fetched_at",
+    "detail_status",
+    "content_hash",
+    "source_normalizer_version",
+    "normalization_hash"
+  ],
+  "title": "Vacancy",
+  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://career-scout.local/schemas/vacancy-v2.schema.json"
+}

@@ -1,17 +1,18 @@
 {
-  "schema_version": 1,
-  "evaluation_key": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+  "schema_version": 2,
+  "evaluation_key": "9e4f3c355c5cc8964dc9db3e452dfee0032a4f7e274c5aa276fbc54cc6a8ccf5",
   "profile_id": "business_analyst",
   "verdict": "BORDERLINE",
-  "reason": "Основные задачи подтверждены, но обязательный продвинутый SQL в резюме не подтверждён.",
+  "reason": "Обязательный продвинутый SQL не подтверждён.",
   "assessments": [
     {
+      "kind": "requirement",
       "requirement": "Продвинутый SQL",
       "mandatory": true,
       "vacancy_quote": "Обязателен продвинутый SQL.",
       "resume_quote": null,
       "status": "unconfirmed",
-      "explanation": "В резюме SQL не указан; это отсутствие подтверждения, не доказательство отсутствия навыка."
+      "explanation": "В резюме SQL не указан. Это отсутствие подтверждения."
     }
   ],
   "questions": [

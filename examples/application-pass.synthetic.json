@@ -1,0 +1,21 @@
+{
+  "schema_version": 3,
+  "evaluation_key": "80c10f96efb383426b25c870d8e385e6ce080e7c7b45fb4298ef51ae09f72f08",
+  "profile_id": "product",
+  "verdict": "PASS",
+  "reason": "Synthetic result.",
+  "assessments": [
+    {
+      "kind": "responsibility",
+      "requirement": "Основные обязанности",
+      "mandatory": true,
+      "vacancy_quote": "Исследовать задачи заказчика и запускать цифровые сервисы.",
+      "resume_quote": "Исследовал задачи заказчика и запускал цифровые сервисы.",
+      "status": "confirmed",
+      "explanation": "Synthetic evidence.",
+      "critical": true
+    }
+  ],
+  "questions": [],
+  "policy": "applications-1"
+}

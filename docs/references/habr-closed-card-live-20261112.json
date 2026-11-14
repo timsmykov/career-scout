@@ -1,0 +1,86 @@
+{
+  "verified_at_utc": "2026-11-12T05:07:23.811211+00:00",
+  "scope": "Closed-card recovery during a still-partial initial campaign; not complete source acceptance",
+  "campaign_id": "e7cc5d06-ee09-4766-ad15-b64c18e60f21",
+  "campaign_status": "partial",
+  "source": "habr",
+  "live_card_url": "https://career.habr.com/vacancies/1000168437",
+  "observed_http_status": 200,
+  "observed_tombstone": {
+    "ssr_identity_matches_requested_id": true,
+    "ssr_href_matches_requested_path": true,
+    "ssr_title_present": true,
+    "ssr_archived": true,
+    "ssr_description_absent": true,
+    "job_posting_absent": true
+  },
+  "prior_failure": {
+    "error": "detail_parser_drift",
+    "attempts": 3
+  },
+  "resolved_database_state": {
+    "checked_at": "2026-11-12T05:07:23.811211+00:00",
+    "source": "habr",
+    "source_id": "1000168437",
+    "detail_status": "unavailable",
+    "content_hash": null,
+    "active_failure": null,
+    "snapshots": 0,
+    "acquisitions": 0,
+    "resolved_verified": true
+  },
+  "runtime": {
+    "commit": "6c2a68ba39642eb199d97e88953a3f49b42f7c5d",
+    "image": "sha256:bd5b38cf2556bb49a89febcb7e2bd462d68c2243990a7d03d271b6a7219dd88c",
+    "container": "career-scout-initial-14d-20261112-r6c2a",
+    "running_verified": true,
+    "started_at": "2026-11-12T05:01:05.787537906Z",
+    "chunk_requests": 20,
+    "retry_failed": true,
+    "matches": true
+  },
+  "preservation": {
+    "checked_at": "2026-11-12T05:01:59.045239+00:00",
+    "campaign_id": "e7cc5d06-ee09-4766-ad15-b64c18e60f21",
+    "same_frozen_plan": true,
+    "same_child_runs": true,
+    "old_query_cursor_resets": 0,
+    "foreign_key_violations": 0,
+    "preserved": {
+      "snapshots": {
+        "old_rows": 3087,
+        "missing_or_changed": 0
+      },
+      "normalized_snapshots": {
+        "old_rows": 3087,
+        "missing_or_changed": 0
+      },
+      "vacancies": {
+        "old_rows": 3087,
+        "missing_or_changed": 0
+      }
+    }
+  },
+  "checks": {
+    "offline_tests_passed": 231,
+    "new_regression_cases": 12,
+    "ruff_and_repository_checker": "passed",
+    "github_actions_url": "https://github.com/timsmykov/career-scout/actions/runs/43157990433",
+    "github_actions_conclusion": "success",
+    "container_acceptance": "network=none first/recreated/campaign-first/campaign-recreated passed"
+  },
+  "guards_preserved": [
+    "Active or ambiguous missing-JobPosting pages remain parser errors",
+    "Foreign SSR/job identity remains identity error",
+    "Incomplete archived/href/title signature is not discarded",
+    "Full archived SSR description plus JobPosting remains an archived snapshot",
+    "Terminal unavailable and retry-queue cleanup roll back together on DB error"
+  ],
+  "local_evidence": {
+    "public_html_and_safe_probe": "data/acceptance/habr-detail-1000168437.html and habr-detail-1000168437-probe.json; HTML not committed",
+    "runtime_code": "data/acceptance/runtime-code-6c2a68b.json",
+    "recreation": "data/acceptance/6c2a-recreation-preservation.json",
+    "resolved_state": "data/acceptance/habr-tombstone-resolved.json"
+  },
+  "remaining": "Complete all four source query plans, then repeat final coverage/freshness/full-text/preservation audits and export."
+}

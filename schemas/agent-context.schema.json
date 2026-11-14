@@ -1,0 +1,204 @@
+{
+  "$defs": {
+    "FactRule": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[a-zA-Z0-9_.-]{1,64}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "field": {
+          "pattern": "^[a-zA-Z][a-zA-Z0-9_.]{0,150}$",
+          "title": "Field",
+          "type": "string"
+        },
+        "operator": {
+          "enum": [
+            "eq",
+            "in",
+            "not_in",
+            "gte",
+            "lte"
+          ],
+          "title": "Operator",
+          "type": "string"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ],
+          "title": "Value"
+        },
+        "guards": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "title": "Guards",
+          "type": "object"
+        }
+      },
+      "required": [
+        "id",
+        "field",
+        "operator",
+        "value"
+      ],
+      "title": "FactRule",
+      "type": "object"
+    },
+    "Preference": {
+      "additionalProperties": false,
+      "properties": {
+        "statement": {
+          "maxLength": 20000,
+          "minLength": 1,
+          "title": "Statement",
+          "type": "string"
+        },
+        "priority": {
+          "default": "preferred",
+          "enum": [
+            "required",
+            "preferred",
+            "avoid"
+          ],
+          "title": "Priority",
+          "type": "string"
+        },
+        "provenance": {
+          "additionalProperties": true,
+          "title": "Provenance",
+          "type": "object"
+        },
+        "structured": {
+          "additionalProperties": true,
+          "title": "Structured",
+          "type": "object"
+        }
+      },
+      "required": [
+        "statement"
+      ],
+      "title": "Preference",
+      "type": "object"
+    },
+    "ResumeInput": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,63}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "title": {
+          "maxLength": 500,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "text": {
+          "maxLength": 2000000,
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        },
+        "provenance": {
+          "additionalProperties": true,
+          "title": "Provenance",
+          "type": "object"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "text"
+      ],
+      "title": "ResumeInput",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "resumes": {
+      "items": {
+        "$ref": "#/$defs/ResumeInput"
+      },
+      "maxItems": 100,
+      "minItems": 1,
+      "title": "Resumes",
+      "type": "array"
+    },
+    "goals": {
+      "default": "",
+      "maxLength": 100000,
+      "title": "Goals",
+      "type": "string"
+    },
+    "preferences": {
+      "items": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/Preference"
+          },
+          {
+            "type": "string"
+          }
+        ]
+      },
+      "maxItems": 1000,
+      "title": "Preferences",
+      "type": "array"
+    },
+    "attributes": {
+      "additionalProperties": true,
+      "title": "Attributes",
+      "type": "object"
+    },
+    "interaction_mode": {
+      "const": "unattended",
+      "default": "unattended",
+      "title": "Interaction Mode",
+      "type": "string"
+    },
+    "fact_rules": {
+      "items": {
+        "$ref": "#/$defs/FactRule"
+      },
+      "maxItems": 100,
+      "title": "Fact Rules",
+      "type": "array"
+    }
+  },
+  "required": [
+    "resumes"
+  ],
+  "title": "ContextInput",
+  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://career-scout.local/schemas/agent-context.schema.json"
+}

@@ -1,0 +1,32 @@
+name: career-scout
+services:
+  collector:
+    image: career-scout:local
+    build: .
+    init: true
+    restart: "no"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    tmpfs:
+      - /tmp:mode=1777,size=32m
+    volumes:
+      - data:/data
+      - type: bind
+        source: ./configs/search.toml
+        target: /app/configs/search.toml
+        read_only: true
+        bind:
+          create_host_path: false
+    secrets:
+      - career_env
+    # Credentials stay in the user-owned host .env; never in the image.
+    user: "0:0"
+    command: ["--help"]
+secrets:
+  career_env:
+    file: .env
+volumes:
+  data:
+    name: ${CAREER_SCOUT_VOLUME:-career-scout-data}
+    external: true

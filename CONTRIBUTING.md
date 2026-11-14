@@ -1,13 +1,12 @@
 # Участие в разработке
 
 Career Scout 0.1 — личный CLI для сбора и оценки вакансий. Начните с
-[архитектуры](https://github.com/timsmykov/career-scout/blob/feat/evaluation-workers/docs/architecture.md), [контракта CLI](https://github.com/timsmykov/career-scout/blob/feat/evaluation-workers/docs/agent-cli.md) и
-[границ alpha](https://github.com/timsmykov/career-scout/blob/feat/evaluation-workers/docs/product-audit-0.1.md). Правила работы агента — в [AGENTS.md](https://github.com/timsmykov/career-scout/blob/feat/evaluation-workers/AGENTS.md).
+[архитектуры](https://github.com/timsmykov/career-scout/blob/main/docs/architecture.md), [контракта CLI](https://github.com/timsmykov/career-scout/blob/main/docs/agent-cli.md) и
+[границ alpha](https://github.com/timsmykov/career-scout/blob/main/docs/product-audit-0.1.md). Правила работы агента — в [AGENTS.md](https://github.com/timsmykov/career-scout/blob/main/AGENTS.md).
 
 ## Локальная среда
 
-Нужны Linux, Python 3.12 и uv. Текущая рабочая ветка — `feat/evaluation-workers`;
-`main` до слияния реализации не содержит весь runtime.
+Нужны Linux, Python 3.12 и uv. Публичная ветка main содержит runtime. Для своего изменения создайте feature-ветку.
 
 ```sh
 uv sync --locked --group dev
@@ -22,6 +21,7 @@ uv run --no-sync career-scout schema
 
 ```sh
 uv run --no-sync python scripts/check_repository.py
+uv run --no-sync python scripts/check_public_distribution.py
 uv run --no-sync ruff check .
 uv run --no-sync ruff format --check .
 uv run --no-sync pytest -m "not live"
@@ -38,7 +38,7 @@ python3 scripts/check_product.py
 
 Первый сценарий проверяет данные после пересоздания контейнера, второй — путь
 установленного пакета от сбора до подборки с эмуляторами HTTP/Codex.
-Это не проверки живой авторизации или смысловой точности. [Карта тестов](https://github.com/timsmykov/career-scout/blob/feat/evaluation-workers/tests/README.md).
+Это не проверки живой авторизации или смысловой точности. [Карта тестов](https://github.com/timsmykov/career-scout/blob/main/tests/README.md).
 
 ## Где менять код
 
@@ -50,7 +50,7 @@ python3 scripts/check_product.py
 | Хранение и общий формат | storage, migrations, models, normalization, source_normalization |
 | Исполнитель и доказательства | codex_worker, batch_worker, evidence |
 
-[Полная карта](https://github.com/timsmykov/career-scout/blob/feat/evaluation-workers/src/career_scout/README.md). Legacy-анализ и старые данные сохраняют
+[Полная карта](https://github.com/timsmykov/career-scout/blob/main/src/career_scout/README.md). Legacy-анализ и старые данные сохраняют
 свои контракты; не меняйте их под видом нового персонального режима.
 
 ## Как подготовить изменение
@@ -71,7 +71,7 @@ python3 scripts/check_product.py
 Используйте шаблон Issue: версия, команда с заменёнными личными значениями,
 ожидание, безопасный код ошибки и воспроизведение. Не прикладывайте рабочую базу,
 полное резюме, вакансии, credentials, cookies или model prompts.
-[Правила безопасного отчёта](https://github.com/timsmykov/career-scout/blob/feat/evaluation-workers/SECURITY.md).
+[Правила безопасного отчёта](https://github.com/timsmykov/career-scout/blob/main/SECURITY.md).
 
-Собственный код лицензирован [MIT](https://github.com/timsmykov/career-scout/blob/feat/evaluation-workers/LICENSE). При переносе стороннего кода
-сохраняйте его лицензию, copyright и происхождение по [NOTICE](https://github.com/timsmykov/career-scout/blob/feat/evaluation-workers/NOTICE.md).
+Собственный код лицензирован [MIT](https://github.com/timsmykov/career-scout/blob/main/LICENSE). При переносе стороннего кода
+сохраняйте его лицензию, copyright и происхождение по [NOTICE](https://github.com/timsmykov/career-scout/blob/main/NOTICE.md).

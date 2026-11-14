@@ -1,0 +1,24 @@
+{
+  "date": "2026-11-13",
+  "scope": "four synthetic vacancies, two synthetic resumes; no real candidate data",
+  "transport": {
+    "router": "native Decisions connector",
+    "evaluator": "Codex subscription, gpt-6-luna, max reasoning",
+    "decisions_requests": 4,
+    "codex_batch_calls": 4,
+    "job_platform_requests": 0
+  },
+  "outcomes": {"PASS": 2, "UNCERTAIN": 2, "REJECT": 0},
+  "completion": {"missing_selected_evaluations": 0, "technical_retries": 2},
+  "labeled_control_accuracy": 0.75,
+  "disagreement": "A synthetic vacancy combined mandatory surgical operations with remote case discussion. Original label REJECT was retained; evaluator chose UNCERTAIN. This is not counted as a correct rejection.",
+  "validator_findings": [
+    "conflict required evidence in both vacancy and resume",
+    "unconfirmed must not contain a resume evidence reference"
+  ],
+  "fix": "Context transport schema enforces resume-reference shape jointly with assessment status; evidence requirements were preserved.",
+  "limitations": [
+    "Four synthetic cases do not estimate general market quality or calibrate automatic Decisions exclusion.",
+    "No production evaluation was replaced. Automatic Decisions exclusion remains disabled by default."
+  ]
+}

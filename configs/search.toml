@@ -1,0 +1,44 @@
+# Public neutral defaults. Set your own queries before making network calls.
+schema_version = 2
+
+[search]
+days = 14
+per_page = 100
+refresh_hours = 24
+area_ids = []
+focused_queries = false
+focus_terms = []
+
+[runtime]
+requests = 50
+details = 30
+interval = 1.0
+retries = 2
+
+[families]
+custom = ["REPLACE_WITH_SEARCH_QUERY"]
+
+[filters]
+allowed_grades = ["intern", "junior", "middle", "senior", "lead", "head"]
+allowed_experience = ["no_experience", "one_to_three", "three_to_six", "over_six"]
+# No max_required_years: no implicit experience ceiling.
+keep_unknown = true
+salary_optional = true
+domain_terms = []
+outside_role_names = []
+outside_industry_names = []
+
+[sources.hh]
+enabled = true
+
+[sources.trudvsem]
+enabled = true
+
+[sources.habr]
+enabled = true
+interval = 3.0
+
+[sources.superjob]
+enabled = true
+# Set true only for your own permitted installation.
+storage_allowed = false

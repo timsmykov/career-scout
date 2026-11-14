@@ -1,0 +1,141 @@
+{
+  "checked_on": "2026-11-11",
+  "kind": "bounded live HH collector acceptance",
+  "source": "hh",
+  "network_requests_total": 11,
+  "models_called": false,
+  "phases": [
+    {
+      "name": "budgeted_initial",
+      "report": {
+        "run_id": "34f30f81-1c3a-4822-b418-e2356b6a1ca5",
+        "status": "partial",
+        "error": "request_budget_exhausted",
+        "cooldown_until": null,
+        "requests": 1,
+        "pages_saved": 1,
+        "distinct_vacancies": 2,
+        "full_details": 0,
+        "deferred_details": 2,
+        "unavailable_details": 0,
+        "archived_details": 0,
+        "pending_queries": 1,
+        "completed_queries": 0,
+        "truncated_queries": 0,
+        "rejected_rows": 0,
+        "plan": {
+          "source": "hh",
+          "queries": [
+            "бизнес аналитик"
+          ],
+          "start": "2026-11-10T17:47:46+00:00",
+          "end": "2026-11-11T17:47:46+00:00",
+          "per_page": 2,
+          "ttl_hours": 24
+        }
+      }
+    },
+    {
+      "name": "resume",
+      "report": {
+        "run_id": "34f30f81-1c3a-4822-b418-e2356b6a1ca5",
+        "status": "partial",
+        "error": "request_budget_exhausted",
+        "cooldown_until": null,
+        "requests": 5,
+        "pages_saved": 2,
+        "distinct_vacancies": 4,
+        "full_details": 3,
+        "deferred_details": 1,
+        "unavailable_details": 0,
+        "archived_details": 0,
+        "pending_queries": 1,
+        "completed_queries": 0,
+        "truncated_queries": 0,
+        "rejected_rows": 0,
+        "plan": {
+          "source": "hh",
+          "queries": [
+            "бизнес аналитик"
+          ],
+          "start": "2026-11-10T17:47:46+00:00",
+          "end": "2026-11-11T17:47:46+00:00",
+          "per_page": 2,
+          "ttl_hours": 24
+        }
+      }
+    },
+    {
+      "name": "complete_narrow_window",
+      "report": {
+        "run_id": "14867aec-37f2-4c00-876d-d36dce370457",
+        "status": "complete",
+        "error": null,
+        "cooldown_until": null,
+        "requests": 4,
+        "pages_saved": 2,
+        "distinct_vacancies": 3,
+        "full_details": 3,
+        "deferred_details": 0,
+        "unavailable_details": 0,
+        "archived_details": 0,
+        "pending_queries": 0,
+        "completed_queries": 1,
+        "truncated_queries": 0,
+        "rejected_rows": 0,
+        "plan": {
+          "source": "hh",
+          "queries": [
+            "бизнес аналитик"
+          ],
+          "start": "2026-11-11T17:22:52+00:00",
+          "end": "2026-11-11T17:22:54+00:00",
+          "per_page": 2,
+          "ttl_hours": 24
+        }
+      }
+    },
+    {
+      "name": "final_pagination_validation",
+      "report": {
+        "run_id": "b3fd5ce0-24c7-4602-bad6-eb57be9b0bca",
+        "status": "complete",
+        "error": null,
+        "cooldown_until": null,
+        "requests": 2,
+        "pages_saved": 2,
+        "distinct_vacancies": 3,
+        "full_details": 3,
+        "deferred_details": 0,
+        "unavailable_details": 0,
+        "archived_details": 0,
+        "pending_queries": 0,
+        "completed_queries": 1,
+        "truncated_queries": 0,
+        "rejected_rows": 0,
+        "plan": {
+          "source": "hh",
+          "queries": [
+            "бизнес аналитик"
+          ],
+          "start": "2026-11-11T17:22:52+00:00",
+          "end": "2026-11-11T17:22:54+00:00",
+          "per_page": 2,
+          "ttl_hours": 24
+        }
+      }
+    }
+  ],
+  "checks": [
+    "saved cursor advanced from page 1 to page 2 on resume",
+    "full HTML and normalized text match original detail description",
+    "complete narrow window: 2 pages, 3 distinct/full cards, no deferred/truncated/rejected",
+    "JSON export read from one SQLite transaction; personal contents stay in ignored data/"
+  ],
+  "limits": [
+    "not a load test",
+    "broad initial run intentionally partial",
+    "upstream mutable pages do not guarantee permanent market completeness",
+    "date splitting, auth/error paths and process death are offline tests"
+  ]
+}

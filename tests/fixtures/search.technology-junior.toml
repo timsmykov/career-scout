@@ -1,0 +1,53 @@
+# Synthetic constrained policy for filtering/collector regression tests.
+schema_version = 2
+
+[search]
+days = 7
+per_page = 100
+refresh_hours = 24
+# Empty means no geographic restriction. No unrequested country/city assumption.
+area_ids = []
+focused_queries = true
+focus_terms = ["IT", "финтех", "ИИ", "ML"]
+
+[runtime]
+requests = 50
+details = 30
+interval = 1.0
+retries = 2
+
+[families]
+product = ["менеджер продукта", "product manager", "цифровые сервисы"]
+business_analyst = ["бизнес аналитик", "business analyst", "сбор требований"]
+business_assistant = ["бизнес ассистент", "ассистент основателя", "координатор проектов"]
+automation = ["автоматизация процессов", "внедрение ИИ", "интеграция сервисов"]
+
+[filters]
+allowed_grades = ["intern", "junior", "middle"]
+allowed_experience = ["no_experience", "one_to_three"]
+max_required_years = 3
+keep_unknown = true
+salary_optional = true
+# Evidence of a technology function OR technology employer, never a required AI word.
+domain_terms = ["IT", "ИТ", "финтех", "fintech", "ИИ", "AI", "ML", "LLM", "SaaS", "software", "искусственный интеллект", "искусственного интеллекта", "машинное обучение", "машинного обучения", "нейросеть", "нейросети", "нейросетей", "информационные технологии", "разработка ПО", "цифровой продукт", "цифровых продуктов", "автоматизация процессов", "интеграция сервисов"]
+# Outside is proven only by BOTH a clearly unrelated role and explicit unrelated industry.
+outside_role_names = ["водитель", "курьер", "грузчик", "повар", "кассир", "уборщик"]
+outside_industry_names = ["Розничная торговля", "Общественное питание", "Сельское хозяйство"]
+
+[sources.hh]
+enabled = true
+
+[sources.trudvsem]
+enabled = true
+# region_code = "7700000000000" # Native Trudvsem code, not an HH area ID.
+
+[sources.habr]
+enabled = true
+interval = 3.0
+# city_id = 678 # Native Habr city ID.
+
+[sources.superjob]
+enabled = true
+# Synthetic test transport only; no real credentials or service permissions.
+storage_allowed = true
+# town_id = 4 # Native SuperJob town ID.

@@ -1,13 +1,13 @@
 {
   "schema_version": 1,
-  "updated_on": "2026-11-11",
-  "status": "development_plan_not_runtime",
+  "updated_on": "2026-11-12",
+  "status": "collection_continues_codex_analysis_acceptance_in_progress",
   "milestones": {
     "M0": "complete",
-    "M1": "planned",
-    "M2": "planned",
+    "M1": "in_progress",
+    "M2": "in_progress",
     "M3": "planned",
-    "M4": "deferred",
+    "M4": "in_progress",
     "M5": "planned",
     "M6": "planned"
   },
@@ -16,137 +16,148 @@
       "id": "CS-001",
       "milestone": "M1",
       "title": "Модели источников и ошибок",
-      "status": "planned",
+      "status": "in_progress",
       "depends_on": [],
       "deliverable": "domain/source.py, domain/errors.py, JSON Schema",
       "acceptance": "SourceQuery/Page, typed cursor, capability map; drift отличим от пустой выдачи",
-      "scope": "collector"
+      "scope": "collector",
+      "implementation_note": "Common vacancy/identity/attributes v2 и safe errors реализованы; transport/source page capabilities остальных площадок впереди."
     },
     {
       "id": "CS-002",
       "milestone": "M1",
       "title": "Нормализация и версии",
-      "status": "planned",
+      "status": "in_progress",
       "depends_on": [
         "CS-001"
       ],
       "deliverable": "normalization/{html,hashing,time,salary}.py",
       "acceptance": "Разделы/даты/gross-net/период/unknown сохранены; хеш устойчив к query provenance",
-      "scope": "collector"
+      "scope": "collector",
+      "implementation_note": "Common-1 salary/currency/gross/period/frequency, experience и work formats, unknown/conflicts/provenance; mappings HH/Trudvsem/Habr/SuperJob готовы. Дополнительные признаки и дальнейший quality контроль впереди."
     },
     {
       "id": "CS-003",
       "milestone": "M1",
       "title": "Конфигурация и секреты",
-      "status": "planned",
+      "status": "complete",
       "depends_on": [
         "CS-001"
       ],
       "deliverable": "config.py, env loader, config validation",
       "acceptance": "Читается единый .env; missing key диагностируется без печати значения",
-      "scope": "collector"
+      "scope": "collector",
+      "implementation_note": "Валидируемый configs/search.toml, --config/CLI overrides, safe env/token cache и ошибки без секретов; invalid config отклоняется до БД/HTTP."
     },
     {
       "id": "CS-004",
       "milestone": "M1",
       "title": "HTTP и source budget",
-      "status": "planned",
+      "status": "complete",
       "depends_on": [
         "CS-001",
         "CS-003"
       ],
       "deliverable": "collectors/transport.py, budget.py",
       "acceptance": "Finite retries, Retry-After seconds/date, cooldown общего источника, отказ за пределами бюджета",
-      "scope": "collector"
+      "scope": "collector",
+      "implementation_note": "HH transport и общий ReadClient для Habr/Trudvsem/SJ: finite retries/budget, safe errors, 401/403/429, SJ quota-like503, persisted source cooldown; source-specific auth не смешивается."
     },
     {
       "id": "CS-005",
       "milestone": "M1",
       "title": "HH application auth",
-      "status": "planned",
+      "status": "complete",
       "depends_on": [
         "CS-004"
       ],
       "deliverable": "collectors/auth/hh.py",
       "acceptance": "Рабочий токен переиспользуется; acquire атомарен; 401 не вызывает бесконечный цикл",
-      "scope": "collector"
+      "scope": "collector",
+      "implementation_note": "HH application acquire/однократная 401 renewal и cache атомарны; offline auth/cache тесты, прежний client_credentials live и Docker search/detail проверены."
     },
     {
       "id": "CS-006",
       "milestone": "M1",
       "title": "HH search/detail",
-      "status": "planned",
+      "status": "complete",
       "depends_on": [
         "CS-002",
         "CS-005"
       ],
       "deliverable": "collectors/adapters/hh.py",
       "acceptance": "Search pages и full detail с identity; cap отмечен; snippets не проходят за full",
-      "scope": "collector"
+      "scope": "collector",
+      "implementation_note": "HH search/detail, страницы/дата-окна реализованы; 315 full live и source ID/hash/HTML/text аудит, cap/drift offline проверены."
     },
     {
       "id": "CS-007",
       "milestone": "M1",
       "title": "Планирование запросов",
-      "status": "planned",
+      "status": "complete",
       "depends_on": [
         "CS-001",
         "CS-003"
       ],
       "deliverable": "collectors/planner.py, versioned search config",
       "acceptance": "Union четырёх семейств, title-only/AI-only не обязательны, fair ordering, immutable plan",
-      "scope": "collector"
+      "scope": "collector",
+      "implementation_note": "Четыре семейства и source-native параметры; HH16focused+broad, остальные12broad без неподдерживаемого Boolean. Immutable source/window/options/budget/policy; native geography."
     },
     {
       "id": "CS-008",
       "milestone": "M1",
       "title": "CLI plan и проверка конфигурации",
-      "status": "planned",
+      "status": "in_progress",
       "depends_on": [
         "CS-003",
         "CS-007"
       ],
       "deliverable": "cli.py: plan, doctor",
       "acceptance": "Plan без сети; doctor различает отсутствие credentials, неподтверждённый order и disabled sources",
-      "scope": "collector"
+      "scope": "collector",
+      "implementation_note": "Plan без БД/сети и Pydantic TOML validation реализованы; doctor остаётся будущей командой."
     },
     {
       "id": "CS-009",
       "milestone": "M2",
       "title": "SQLite и миграции",
-      "status": "planned",
+      "status": "complete",
       "depends_on": [
         "CS-001",
         "CS-002"
       ],
       "deliverable": "storage/migrations, connection.py",
       "acceptance": "WAL, foreign keys, schema version, транзакции на временной БД",
-      "scope": "collector"
+      "scope": "collector",
+      "implementation_note": "Schema4 добавляет query_pagination; atomic v1/v2/v3 migrations с backup/flock. Прежние raw/normalized snapshots и filter history сохраняются."
     },
     {
       "id": "CS-010",
       "milestone": "M2",
       "title": "Snapshots и discoveries",
-      "status": "planned",
+      "status": "complete",
       "depends_on": [
         "CS-009"
       ],
       "deliverable": "storage/vacancies.py, discoveries.py",
       "acceptance": "Один source ID в нескольких запросах не дублируется; изменённый текст создаёт версию",
-      "scope": "collector"
+      "scope": "collector",
+      "implementation_note": "Source+ID snapshots/discoveries и content versions реализованы; разные source с одинаковым ID не пересекаются, все raw snapshot bytes/hash сохранены; normalized projections раздельны."
     },
     {
       "id": "CS-011",
       "milestone": "M2",
       "title": "Прогресс query/window",
-      "status": "planned",
+      "status": "in_progress",
       "depends_on": [
         "CS-009",
         "CS-007"
       ],
       "deliverable": "storage/progress.py",
       "acceptance": "Cursor меняется вместе с записью страницы; partial не продвигает чужой watermark",
-      "scope": "collector"
+      "scope": "collector",
+      "implementation_note": "HH page cursor + discoveries атомарны, split windows сохраняются; общие source watermarks впереди."
     },
     {
       "id": "CS-012",
@@ -164,7 +175,7 @@
       "id": "CS-013",
       "milestone": "M2",
       "title": "Исполнитель сбора и detail",
-      "status": "planned",
+      "status": "in_progress",
       "depends_on": [
         "CS-006",
         "CS-010",
@@ -173,168 +184,180 @@
       ],
       "deliverable": "services/collection.py, detail.py, cli collect",
       "acceptance": "Kill/restart не теряет данные; stale/deferred не уходит в evaluation",
-      "scope": "collector"
+      "scope": "collector",
+      "implementation_note": "HH collect/resume и pending detail реализованы; один процесс flock, multi-worker leases CS-012 не реализованы."
     },
     {
       "id": "CS-014",
       "milestone": "M2",
       "title": "Фильтры с основаниями",
-      "status": "planned",
+      "status": "complete",
       "depends_on": [
         "CS-002",
         "CS-010"
       ],
       "deliverable": "domain/filtering.py, storage/filter_decisions.py",
       "acceptance": "Unknown/conflict сохранены; senior-коллега не означает senior-вакансию; версия фильтра",
-      "scope": "collector"
+      "scope": "collector",
+      "implementation_note": "Детерминированные domain/grade/experience, unknown/conflict KEEP_UNKNOWN, зарплата полностью нейтральна; hash/версия/цитаты, offline refilter и export selected/all. Проверены synthetic и317 сохранённых real карточек; это не оценка соответствия резюме и не доказательство полноты рынка."
     },
     {
       "id": "CS-015",
       "milestone": "M3",
       "title": "Trudvsem адаптер",
-      "status": "planned",
+      "status": "complete",
       "depends_on": [
         "CS-004",
         "CS-013"
       ],
       "deliverable": "collectors/adapters/trudvsem.py",
       "acceptance": "Offset 0/1/2, companycode+id, qualification/условия, complete/truncated",
-      "scope": "collector"
+      "scope": "collector",
+      "implementation_note": "REST v1 search/detail, offset=page0, составной companycode+id, duty+requirements+qualification и native salary/minimum experience. Курсоры/restart и bounded real сбор проверены."
     },
     {
       "id": "CS-016",
       "milestone": "M3",
       "title": "Habr адаптер",
-      "status": "planned",
+      "status": "complete",
       "depends_on": [
         "CS-004",
         "CS-013"
       ],
       "deliverable": "collectors/adapters/habr.py",
       "acceptance": "Frontend+HTML, SSR/JSON-LD identity, capped passes, partial/stale/blocked",
-      "scope": "collector"
+      "scope": "collector",
+      "implementation_note": "Frontend JSON page1 + SSR/JSON-LD detail с ID/title/company проверками; актуальные detail conditions/qualification. Budget/cap/drift/blocked и restart проверены. Неофициальный frontend контракт, диапазон дат не подтверждён."
     },
     {
       "id": "CS-017",
       "milestone": "M3",
       "title": "SuperJob адаптер",
-      "status": "planned",
+      "status": "complete",
       "depends_on": [
         "CS-004",
         "CS-013"
       ],
       "deliverable": "collectors/adapters/superjob.py",
       "acceptance": "Собственный app key, more/page size, rich/fallback text, quota-like503",
-      "scope": "collector"
+      "scope": "collector",
+      "implementation_note": "SuperJob API search/detail, key, native count/promo/more, cap500/windows, rich/fallback и503 реализованы. Владелец 11.11.2026 подтвердил все разрешения на хранение; production storage_allowed=true. Реальный постоянный сбор, несколько страниц и resume новым контейнером проверены; proof superjob-storage-live-20261111.json."
     },
     {
       "id": "CS-018",
       "milestone": "M3",
-      "title": "Окна и общая справедливость",
-      "status": "planned",
+      "title": "Полный обход окон и общий resume без квот на число карточек",
+      "status": "in_progress",
       "depends_on": [
         "CS-006",
         "CS-007",
         "CS-013"
       ],
-      "deliverable": "collectors/windows.py, scheduling.py",
-      "acceptance": "Большой запрос не забирает весь budget; пересечения окон дедуплицируются; остаток виден",
-      "scope": "collector"
+      "deliverable": "storage.py windows; campaigns.py drive",
+      "acceptance": "Все доступные окна обходятся без лимита на число карточек; дубли границ пропускаются; общий campaign resume; truncated виден",
+      "scope": "collector",
+      "implementation_note": "Initial/new14дней по публикации, frozen start/end; HH/SJ split и frozen parent/child runs. Ограничение запросов относится к chunk; число chunks не ограничено по умолчанию. Нет выравнивания объёмов площадок. Synthetic restart и all-source проверены; полный live проход идёт."
     },
     {
       "id": "CS-019",
       "milestone": "M3",
-      "title": "Сверка обновлений и source acceptance",
-      "status": "planned",
+      "title": "Первичный сбор и ручное добавление новых ID",
+      "status": "in_progress",
       "depends_on": [
         "CS-015",
         "CS-016",
         "CS-017",
         "CS-018"
       ],
-      "deliverable": "services/reconciliation.py, live acceptance receipts",
-      "acceptance": "TTL обновляет прежние listing; сбой источника даёт partial; доступ/retention отдельно",
-      "scope": "collector"
+      "deliverable": "campaigns.py; initial/new/resume CLI; acquisitions",
+      "acceptance": "После full initial ручной new добавляет только неизвестные описания; старые строки неизменны; backlog дочитывается; ошибки не скрываются",
+      "scope": "collector",
+      "implementation_note": "Append-only режим реализован. Daily повторяет все доступные списки без остановки на known ID; detail только отсутствующих. Backlog/new/known различаются, new export — delta. Refresh/проверка закрытия исключены владельцем из текущего этапа. Полная live приёмка выполняется."
     },
     {
       "id": "CS-020",
       "milestone": "M4",
       "title": "Импорт резюме и профилей",
-      "status": "deferred",
+      "status": "in_progress",
       "depends_on": [
         "CS-003",
         "CS-009"
       ],
       "deliverable": "profiles/importer.py, registry.py",
       "acceptance": "Ровно четыре актуальных текста, hash/версия, universal/research исключены",
-      "scope": "future_analysis"
+      "scope": "analysis",
+      "implementation_note": "Загрузка четырёх полных ResumeSnapshot с hash/версиями реализована; рабочие HH-снимки сверены с источником и очищены от UI. Импорт пока через приватные JSON."
     },
     {
       "id": "CS-021",
       "milestone": "M4",
       "title": "Рубрики и версия маршрута",
-      "status": "deferred",
+      "status": "in_progress",
       "depends_on": [
         "CS-014",
         "CS-020"
       ],
       "deliverable": "evaluation/policy.py, validated rubric config",
       "acceptance": "Вердикты однозначны; order подтверждён до evaluate; без скрытого обогащения биографии",
-      "scope": "future_analysis"
+      "scope": "analysis",
+      "implementation_note": "Владелец12.11 подтвердил Product → automation → business_assistant → BA; роли и общая инструкция входят в hash. Проверка качества рубрик продолжается."
     },
     {
       "id": "CS-022",
       "milestone": "M4",
       "title": "Модельный адаптер и бюджет",
-      "status": "deferred",
+      "status": "in_progress",
       "depends_on": [
         "CS-003",
         "CS-004"
       ],
       "deliverable": "evaluation/model.py, usage.py",
-      "acceptance": "API model ID проверен, finite retries, timeout/context, tokens/cost_unknown, расходы ограничены",
-      "scope": "future_analysis"
+      "acceptance": "Codex subscription model/reasoning проверены; finite retries, timeout/context, tokens/cost_unknown, durable max_calls",
+      "scope": "analysis",
+      "implementation_note": "codex_worker.py: native Codex CLI через ChatGPT login, Luna/max, timeout, строгий context size и durable max_calls. USD не оценивается для подписки. Батчевый вызов Codex до10карточек,4профиля параллельно; routing Decisions с отдельным budget через существующий native helper."
     },
     {
       "id": "CS-023",
       "milestone": "M4",
       "title": "Проверка результата",
-      "status": "deferred",
+      "status": "in_progress",
       "depends_on": [
         "CS-020",
         "CS-021"
       ],
       "deliverable": "evaluation/validation.py",
       "acceptance": "Schema, profile/version identity, цитаты в нужном тексте, без silent truncation",
-      "scope": "future_analysis"
+      "scope": "analysis",
+      "implementation_note": "evaluation.py: v2 schema, profile/hash identity, точные цитаты; wire schema ограничивает цитаты фрагментами одного входа. Смысловая верность проверяется отдельно. ApplicationResult v3: critical отдельно от mandatory, PASS/REJECT без вопросов; strict v2 сохранён."
     },
     {
       "id": "CS-024",
       "milestone": "M4",
-      "title": "Последовательный LangGraph",
-      "status": "deferred",
+      "title": "Decisions и четыре профильные очереди",
+      "status": "in_progress",
       "depends_on": [
-        "CS-012",
         "CS-021",
         "CS-022",
         "CS-023"
       ],
-      "deliverable": "evaluation/graph.py, routing.py",
-      "acceptance": "First PASS прекращает вызовы; 256 сочетаний исходов и реальные call counts; persistent checkpoint",
-      "scope": "future_analysis"
+      "deliverable": "decisions.py, routed_pipeline.py, batch_worker.py; legacy analysis_graph.py",
+      "acceptance": "Выбор одного/двух профилей, четыре параллельных очереди, до10полных карточек; обе оценки, finite budgets/resume",
+      "scope": "analysis",
+      "implementation_note": "Реализован новый routed mode; legacy first-PASS сохранён. Калибровка100 primary98/100; владелец подтвердил достаточность одного уверенного профиля. Второй при рабочем gap≤0.10 внутри равнозначного development-плато0…0.55."
     },
     {
       "id": "CS-025",
       "milestone": "M4",
       "title": "Кэш и согласование checkpoint",
-      "status": "deferred",
+      "status": "in_progress",
       "depends_on": [
         "CS-010",
         "CS-024"
       ],
       "deliverable": "evaluation/cache.py, recovery.py",
       "acceptance": "Все входные версии в ключах; checkpoint сверяется с ledger; error не кешируется как reject",
-      "scope": "future_analysis"
+      "scope": "analysis",
+      "implementation_note": "Проверенные ответы записываются до checkpoint. Cache по полным версиям входов; тестируется сбой между результатом и checkpoint, сохранён бюджет попыток. В routed mode кэш по карточкам, usage/бюджет по батчу; DB пишет один координатор. analysis_admissions/selection_key: следующие порции, восстановление после сбоя, pending runs сохраняются."
     },
     {
       "id": "CS-026",
@@ -347,100 +370,108 @@
       ],
       "deliverable": "services/review.py, cli review",
       "acceptance": "Показать основание/вопрос, ответ владельца версионируется; перепроверка затронутой пары",
-      "scope": "future_analysis"
+      "scope": "analysis",
+      "implementation_note": "Владелец12.11 исключил вопросы/ввод ответов. Новая applications-1 оценивает по резюме и параметрам, questions=[]; shortlist содержит только рекомендации."
     },
     {
       "id": "CS-027",
       "milestone": "M5",
       "title": "Контрольная разметка",
-      "status": "deferred",
+      "status": "in_progress",
       "depends_on": [
         "CS-014",
         "CS-021"
       ],
       "deliverable": "private evaluation dataset + anonymized protocol",
       "acceptance": "Наборы настройки/контроля раздельны; по четырём профилям есть пограничные/негативные случаи",
-      "scope": "future_analysis"
+      "scope": "analysis",
+      "implementation_note": "100реальных ролей, фиксированные labels и split60/40; native Decisions primary98/100. Уверенный один профиль достаточен по уточнению владельца; второй при gap≤0.10. Это авторская предварительная разметка, не независимый gold соответствия CV."
     },
     {
       "id": "CS-028",
       "milestone": "M5",
       "title": "Охват поискового плана",
-      "status": "planned",
+      "status": "in_progress",
       "depends_on": [
         "CS-019",
         "CS-037"
       ],
       "deliverable": "Отчёт потерь search/filter",
       "acceptance": "Контрольные вакансии проверены на обнаружение и сохранение; оценка резюме не нужна",
-      "scope": "collector"
+      "scope": "collector",
+      "implementation_note": "В ограниченном HH окне source found/discoveries совпали: 315/315 для каждого запроса. Контрольного набора подходящих вакансий/оценки потерь ещё нет."
     },
     {
       "id": "CS-029",
       "milestone": "M5",
       "title": "Качество оценщиков",
-      "status": "deferred",
+      "status": "in_progress",
       "depends_on": [
         "CS-025",
         "CS-027"
       ],
       "deliverable": "evaluation report per profile and route",
       "acceptance": "False rejects/accepts, clarification/error rates; отдельно по профилям; пороги согласованы",
-      "scope": "future_analysis"
+      "scope": "analysis",
+      "implementation_note": "100реальных ролей, фиксированные labels и split60/40; native Decisions primary98/100. Уверенный один профиль достаточен по уточнению владельца; второй при gap≤0.10. Это авторская предварительная разметка, не независимый gold соответствия CV."
     },
     {
       "id": "CS-030",
       "milestone": "M5",
       "title": "Нагрузка коллектора",
-      "status": "planned",
+      "status": "in_progress",
       "depends_on": [
         "CS-019"
       ],
       "deliverable": "Offline load report и bounded live acceptance",
       "acceptance": "Сотни synthetic карточек, HTTP budgets, memory/backlog и длительность; без LLM",
-      "scope": "collector"
+      "scope": "collector",
+      "implementation_note": "315 real HH full + 300 synthetic full в двух пересозданных Docker контейнерах без сети; memory sample/бюджет/время проверены, длительная multi-source нагрузка впереди."
     },
     {
       "id": "CS-031",
       "milestone": "M5",
       "title": "Сбои и восстановление коллектора",
-      "status": "planned",
+      "status": "in_progress",
       "depends_on": [
         "CS-013"
       ],
       "deliverable": "Collector failure acceptance suite",
       "acceptance": "Падение HTTP/DB, duplicate pages, drift и exhausted budget не теряют очередь",
-      "scope": "collector"
+      "scope": "collector",
+      "implementation_note": "HH rollback/HTTP errors/budget/drift offline, SIGKILL после 61 full live и Docker recreation/resume проходят; общие multi-source failure сценарии впереди."
     },
     {
       "id": "CS-032",
       "milestone": "M6",
       "title": "Статус и диагностика сбора",
-      "status": "planned",
+      "status": "in_progress",
       "depends_on": [
         "CS-013"
       ],
       "deliverable": "CLI status, inspect, source-health",
       "acceptance": "Видны list/detail/filter/expiry и причины; нет зависимости от графа оценки",
-      "scope": "collector"
+      "scope": "collector",
+      "implementation_note": "HH status/inspect работают, source error/backlog видны; общая диагностика filtering/expiry/source-health впереди."
     },
     {
       "id": "CS-033",
       "milestone": "M6",
       "title": "Экспорт готовых данных",
-      "status": "planned",
+      "status": "in_progress",
       "depends_on": [
         "CS-032"
       ],
       "deliverable": "CLI export JSON/CSV, manifest и курсор",
       "acceptance": "Полные согласованные версии с ID/hash/датами/provenance; partial/stale вне готового набора",
-      "scope": "collector"
+      "scope": "collector",
+      "implementation_note": "HH JSON export из согласованного read snapshot работает; CSV, неизменяемый набор content versions, manifest/cursor/retention впереди."
     },
     {
       "id": "CS-034",
       "milestone": "M6",
       "title": "Сроки хранения коллектора",
-      "status": "planned",
+      "status": "deferred",
       "depends_on": [
         "CS-010",
         "CS-012",
@@ -448,20 +479,22 @@
       ],
       "deliverable": "Retention service и maintenance command",
       "acceptance": "Expiry raw/snapshot/очереди/export/backup согласован; данные не попадают в готовый набор после истечения",
-      "scope": "collector"
+      "scope": "future_operations",
+      "implementation_note": "Не входит в запрос 12.11: владелец просит initial и manual daily без мониторинга, обновления старых карточек или расписания."
     },
     {
       "id": "CS-035",
       "milestone": "M6",
       "title": "Логи и итог сбора",
-      "status": "planned",
+      "status": "in_progress",
       "depends_on": [
         "CS-004",
         "CS-013"
       ],
       "deliverable": "Run summary и redaction",
       "acceptance": "Видны requests, retry, full/deferred/stale, backlog и полнота; secrets не логируются",
-      "scope": "collector"
+      "scope": "collector",
+      "implementation_note": "HH safe error codes и counters; общий multi-source отчёт/операционные метрики впереди."
     },
     {
       "id": "CS-036",
@@ -474,7 +507,6 @@
         "CS-031",
         "CS-032",
         "CS-033",
-        "CS-034",
         "CS-035"
       ],
       "deliverable": "Runbook и release acceptance",
@@ -495,5 +527,5 @@
       "acceptance": "Проверены discovery, целостность текста, условия, дубли, версии и потери фильтра; резюме и LLM не нужны"
     }
   ],
-  "current_scope": "collector_first"
+  "current_scope": "append_only_collection_and_codex_subscription_analysis"
 }

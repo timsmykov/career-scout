@@ -5,7 +5,14 @@ build-backend = "hatchling.build"
 [project]
 name = "career-scout"
 version = "0.1.0"
-description = "API-first vacancy collection and sequential resume matching; pre-development bootstrap."
+description = "Restartable API-first vacancy collection with local versioned storage."
+license = "MIT"
+license-files = ["LICENSE", "NOTICE.md"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Operating System :: POSIX :: Linux",
+  "Programming Language :: Python :: 3.12",
+]
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 authors = [{ name = "Tim Smykov" }]
@@ -16,6 +23,9 @@ dependencies = [
   "langgraph-checkpoint-sqlite>=3,<4",
   "langchain-openai>=1,<2",
 ]
+
+[project.scripts]
+career-scout = "career_scout.agent_cli:main"
 
 [dependency-groups]
 dev = [

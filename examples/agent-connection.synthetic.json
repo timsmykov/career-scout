@@ -1,0 +1,20 @@
+{
+  "model": {
+    "provider": "codex_subscription",
+    "model": "gpt-6-luna",
+    "reasoning_effort": "max",
+    "timeout_seconds": 300,
+    "max_input_characters": 100000,
+    "max_attempts_per_profile": 2
+  },
+  "decisions": null,
+  "external_calls_enabled": false,
+  "batch_size": 20,
+  "workers": 4,
+  "freshness_days": 14,
+  "max_batch_characters": 200000,
+  "max_decision_characters": 200000,
+  "routing_margin": 0.1,
+  "allow_decisions_exclusion": false,
+  "exclusion_threshold": 0.995
+}

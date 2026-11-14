@@ -27,7 +27,7 @@
       "url": "https://api.superjob.ru/",
       "kind": "official_accessible_legacy_applicant_reference",
       "xerj_corpus": "superjob-api-docs",
-      "limitation": "Current /doc/ inaccessible; registration and retention unresolved"
+      "limitation": "Current /doc inaccessible; search/detail/store verified. Owner confirmed storage permissions on 2026-11-11; persistent storage enabled."
     }
   ]
 }

@@ -1,0 +1,268 @@
+{
+  "verified_at_utc": "2026-11-12T04:25:52.128251+00:00",
+  "status": "partial",
+  "scope": "Interim audit of a live fourteen-day initial campaign; discovery remains incomplete for all four sources. Corpus counts include preserved archive rows.",
+  "runtime_commit": "c22c513eaa303df071962eb4e2376c6842c99365",
+  "runtime_image": "sha256:2abcea03c5592dedf5d0b66abcf146bb46401a37c7bae4c7160bc795a230bac0",
+  "runtime_sources_match_commit": true,
+  "campaign_id": "e7cc5d06-ee09-4766-ad15-b64c18e60f21",
+  "publication_window": [
+    {
+      "source": "hh",
+      "from": "2026-10-29T03:08:18+00:00",
+      "to": "2026-11-12T03:08:18+00:00"
+    },
+    {
+      "source": "trudvsem",
+      "from": "2026-10-29T03:08:18+00:00",
+      "to": "2026-11-12T03:08:18+00:00"
+    },
+    {
+      "source": "habr",
+      "from": "2026-10-29T03:08:18+00:00",
+      "to": "2026-11-12T03:08:18+00:00"
+    },
+    {
+      "source": "superjob",
+      "from": "2026-10-29T03:08:18+00:00",
+      "to": "2026-11-12T03:08:18+00:00"
+    }
+  ],
+  "campaign_report": {
+    "campaign_id": "e7cc5d06-ee09-4766-ad15-b64c18e60f21",
+    "mode": "initial",
+    "created_at": "2026-11-12T03:08:18.468144+00:00",
+    "publication_window": [
+      {
+        "source": "hh",
+        "from": "2026-10-29T03:08:18+00:00",
+        "to": "2026-11-12T03:08:18+00:00"
+      },
+      {
+        "source": "trudvsem",
+        "from": "2026-10-29T03:08:18+00:00",
+        "to": "2026-11-12T03:08:18+00:00"
+      },
+      {
+        "source": "habr",
+        "from": "2026-10-29T03:08:18+00:00",
+        "to": "2026-11-12T03:08:18+00:00"
+      },
+      {
+        "source": "superjob",
+        "from": "2026-10-29T03:08:18+00:00",
+        "to": "2026-11-12T03:08:18+00:00"
+      }
+    ],
+    "status": "partial",
+    "sources": [
+      {
+        "run_id": "7f41c0f0-d9bc-4e07-b76e-944239294114",
+        "source": "hh",
+        "status": "partial",
+        "error": "request_budget_exhausted",
+        "requests": 657,
+        "pages_saved": 10,
+        "pending_queries": 21,
+        "truncated_queries": 0,
+        "rejected_rows": 0,
+        "discovery_complete": false,
+        "pagination_replans": 0,
+        "discovered_ids": 826,
+        "new_ids": 645,
+        "known_ids": 174,
+        "backlog_ids": 7,
+        "saved_descriptions": 816,
+        "unavailable": 0,
+        "pending_details": 10,
+        "outside_publication_window": 0,
+        "unknown_publication_date": 0,
+        "failed_details": 0,
+        "new_descriptions": 642,
+        "filtering": {
+          "FILTERED_OUT": 321,
+          "KEEP": 10,
+          "KEEP_UNKNOWN": 485
+        }
+      },
+      {
+        "run_id": "8aaca3de-7fe8-4309-ac42-cde8cc95ea29",
+        "source": "trudvsem",
+        "status": "partial",
+        "error": "transport_error",
+        "requests": 134,
+        "pages_saved": 123,
+        "pending_queries": 2,
+        "truncated_queries": 0,
+        "rejected_rows": 0,
+        "discovery_complete": false,
+        "pagination_replans": 1,
+        "discovered_ids": 1740,
+        "new_ids": 1731,
+        "known_ids": 9,
+        "backlog_ids": 0,
+        "saved_descriptions": 447,
+        "unavailable": 0,
+        "pending_details": 0,
+        "outside_publication_window": 1299,
+        "unknown_publication_date": 49,
+        "failed_details": 0,
+        "new_descriptions": 438,
+        "filtering": {
+          "FILTERED_OUT": 64,
+          "KEEP": 2,
+          "KEEP_UNKNOWN": 381
+        }
+      },
+      {
+        "run_id": "77b896bb-8997-49a8-9af1-e8535f2fd5a7",
+        "source": "habr",
+        "status": "partial",
+        "error": "interrupted",
+        "requests": 455,
+        "pages_saved": 37,
+        "pending_queries": 9,
+        "truncated_queries": 0,
+        "rejected_rows": 0,
+        "discovery_complete": false,
+        "pagination_replans": 0,
+        "discovered_ids": 622,
+        "new_ids": 417,
+        "known_ids": 200,
+        "backlog_ids": 5,
+        "saved_descriptions": 618,
+        "unavailable": 0,
+        "pending_details": 0,
+        "outside_publication_window": 317,
+        "unknown_publication_date": 14,
+        "failed_details": 0,
+        "new_descriptions": 418,
+        "filtering": {
+          "FILTERED_OUT": 250,
+          "KEEP": 25,
+          "KEEP_UNKNOWN": 343
+        }
+      },
+      {
+        "run_id": "f30f3476-9f04-4dea-aeb4-f3de9a721259",
+        "source": "superjob",
+        "status": "partial",
+        "error": "request_budget_exhausted",
+        "requests": 400,
+        "pages_saved": 20,
+        "pending_queries": 11,
+        "truncated_queries": 0,
+        "rejected_rows": 0,
+        "discovery_complete": false,
+        "pagination_replans": 0,
+        "discovered_ids": 547,
+        "new_ids": 383,
+        "known_ids": 164,
+        "backlog_ids": 0,
+        "saved_descriptions": 536,
+        "unavailable": 0,
+        "pending_details": 11,
+        "outside_publication_window": 1,
+        "unknown_publication_date": 0,
+        "failed_details": 0,
+        "new_descriptions": 372,
+        "filtering": {
+          "FILTERED_OUT": 69,
+          "KEEP": 20,
+          "KEEP_UNKNOWN": 447
+        }
+      }
+    ],
+    "totals": {
+      "requests": 1646,
+      "pages_saved": 190,
+      "discovered_ids": 3735,
+      "new_ids": 3176,
+      "known_ids": 547,
+      "backlog_ids": 12,
+      "new_descriptions": 1870,
+      "saved_descriptions": 2417,
+      "pending_details": 21,
+      "failed_details": 0,
+      "unavailable": 0,
+      "outside_publication_window": 1617,
+      "unknown_publication_date": 63
+    }
+  },
+  "all_database_snapshots_audit": {
+    "snapshots_checked_by_source": {
+      "hh": 1040,
+      "trudvsem": 453,
+      "habr": 618,
+      "superjob": 548
+    },
+    "description_chars_by_source": {
+      "hh": 3074633,
+      "trudvsem": 766652,
+      "habr": 1457267,
+      "superjob": 1835716
+    },
+    "all_projections_and_source_reconstructions_match": true,
+    "all_plain_text_matches_full_html": true,
+    "database_quick_check": "ok",
+    "foreign_key_violations": 0,
+    "duplicate_source_identities": 0
+  },
+  "all_database_snapshots_audit_extra": {
+    "total_checked": 2659,
+    "missing_common_projections": 0
+  },
+  "selected_fresh_export": {
+    "count_by_source": {
+      "hh": 495,
+      "trudvsem": 335,
+      "habr": 162,
+      "superjob": 466
+    },
+    "total": 1458,
+    "all_publication_dates_independently_checked_in_frozen_window": true,
+    "unknown_publication_dates_excluded": true,
+    "older_archive_rows_preserved": true
+  },
+  "container_recreation_preservation": {
+    "snapshots": {
+      "old_rows": 2556,
+      "missing_or_changed": 0
+    },
+    "normalized_snapshots": {
+      "old_rows": 2556,
+      "missing_or_changed": 0
+    },
+    "same_campaign_plan": true
+  },
+  "checks": {
+    "offline_tests_passed": 219,
+    "github_actions_url": "https://github.com/timsmykov/career-scout/actions/runs/43152429000",
+    "github_actions_conclusion": "success",
+    "current_image_network_disabled_container_acceptance": "passed: first/recreated/campaign-first/campaign-recreated"
+  },
+  "live_trudvsem_recovery": {
+    "observed_error": "transport_error",
+    "parent_query_id": 82,
+    "replacement_query_id": 141,
+    "old_page_size": 20,
+    "new_page_size": 10,
+    "same_query_and_window": true,
+    "old_cursor_and_discoveries_preserved": true,
+    "replacement_restarts_at_zero": true,
+    "full_source_completion_verified": false
+  },
+  "local_evidence": {
+    "snapshot_audit": "data/acceptance/audit-c22-partial.json",
+    "consistent_database_copy": "data/acceptance/audit-c22-snapshot.sqlite3",
+    "recreation_comparison": "data/acceptance/c22-recreation-preservation.json",
+    "runtime_code_hashes": "data/acceptance/runtime-code-c22c513.json",
+    "producer_log": "data/acceptance/initial-14d-20261112.log"
+  },
+  "remaining_acceptance": [
+    "Complete every accessible query leaf of the frozen plan on all four sources",
+    "Finish pending descriptions or report terminal unavailability/errors explicitly",
+    "Repeat publication, full-source reconstruction, identity uniqueness and preserved-baseline audits after completion",
+    "Export the final selected fourteen-day catalog; do not claim whole-market coverage"
+  ]
+}

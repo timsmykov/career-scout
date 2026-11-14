@@ -1,14 +1,29 @@
-# План тестов
+# Проверки
 
-Исполняемых runtime-тестов пока нет, потому что нет runtime-кода.
-Сценарии поведения определены в docs/acceptance.md.
+Тесты находятся непосредственно в tests/test_*.py; инструкции ниже не требуют
+несуществующих каталогов unit/collectors/evaluation.
 
-Добавлять тесты в одном изменении с реализацией:
-unit/ — фильтры, версии, агрегирование;
-collectors/ — HTTP через respx и вымышленные фикстуры;
-storage/ — реальные временные SQLite, транзакции и leases;
-evaluation/ — fake model adapter, порядок вызовов, ошибки, цитаты;
-live/ — только отдельный явный запуск.
+```sh
+uv run --no-sync pytest -m "not live"
+```
 
-Текущие JSON/TOML/Markdown-контракты проверяет scripts/check_repository.py.
-Не проверять бизнес-логику тестом, который только повторяет её исходник.
+| Область | Файлы |
+|---|---|
+| CLI, квитанции, версии и budgets | test_agent_cli.py |
+| Персональный context-1 | test_context_engine.py |
+| Источники, миграции и нормализация | test_hh_collector.py, test_migration.py, test_normalization.py |
+| Ранний анализ, routed queues | test_analysis.py, test_routed_analysis.py |
+| Технические контракты | test_core_contracts.py |
+
+Это навигация, не полный список: дополнительные test_*.py покрывают кампании,
+выдачу, исключения, performance и другие сценарии. Используются временные SQLite,
+контролируемый HTTP и fake model executable. Сети, реальных ключей и модельных
+вызовов в обычном CI нет.
+
+После Docker-сборки scripts/check_container.py проверяет перенос/пересоздание и
+сохранение данных; scripts/check_product.py — весь поток установленного пакета
+с эмуляторами. check_repository.py валидирует схемы/примеры и локальные ссылки.
+
+Живые проверки авторизации, API и Codex — отдельные конечные сценарии. Корректная
+схема и цитата не доказывают смысловую точность. [Аудит0.1](../docs/product-audit-0.1.md),
+[критерии](../docs/acceptance.md), [CONTRIBUTING](../CONTRIBUTING.md).

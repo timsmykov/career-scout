@@ -1,0 +1,46 @@
+{
+  "policy": "applications-1",
+  "first_run_id": "30e4747b-1677-491a-ad63-5f34f1d4f061",
+  "first_jobs": 100,
+  "valid_evaluations": 54,
+  "recommended": 14,
+  "outcomes": {
+    "REJECTED_BY_SELECTED": 40,
+    "ROUTING_REVIEW": 46,
+    "ACCEPTED": 14
+  },
+  "native_batch_calls": 9,
+  "historical_validation_errors": {
+    "invalid_evaluation_result": 1,
+    "invalid_evidence_range_length": 1
+  },
+  "validation_recoveries_from_unchanged_response": 1,
+  "unresolved_evaluations": 0,
+  "questions": 0,
+  "model": "gpt-6-luna",
+  "reasoning_effort": "max",
+  "billing": "codex_subscription",
+  "tokens": {
+    "input_tokens": 422973,
+    "cached_input_tokens": 59136,
+    "output_tokens": 111537
+  },
+  "independent_semantic_gold": false,
+  "synthetic_controls": {
+    "count": 9,
+    "matched": 9
+  },
+  "next_prepared_jobs": 10,
+  "previously_admitted_skipped": 100,
+  "overlap_with_previous": 0,
+  "next_model_calls": 0,
+  "previous_strict_results_preserved": 56,
+  "live_hh_checks": 14,
+  "all_recommended_open_and_same_description": true,
+  "shortlist_profiles": {
+    "business_analyst": 6,
+    "business_assistant": 2,
+    "product": 2,
+    "automation": 4
+  }
+}

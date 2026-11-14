@@ -3,9 +3,16 @@
 - Приватный репозиторий не хранилище credentials. В Git только пустой .env.example.
 - Ключи в локальном secret/env store. Не копировать токены из старого Scout автоматически.
 - Резюме и данные владельца — private/resumes/, исключены из Git.
-- Worker model API получает минимальный нужный контекст: соответствующее резюме,
-  полный текст вакансии и заданные атрибуты. Разрешённость такой передачи зависит
-  от политики источника и выбранного провайдера.
+- Оценщик получает соответствующее полное резюме, полный текст вакансии и заданные
+  атрибуты. Владелец выбрал работу через существующую подписку Codex.
+- Native Codex CLI использует штатную ChatGPT авторизацию. Приложение не читает и
+  не копирует auth.json; ключи model API и площадок в дочерний процесс не передаются.
+  API-key login отклоняется до передачи задания.
+- Дочерний вызов игнорирует пользовательский config и проектные инструкции,
+  отключает MCP/apps/plugins, память, shell, браузер и делегацию. Пустой временный
+  каталог, read-only sandbox, ephemeral session; обнаруженный tool call — ошибка.
+- analysis.sqlite3 имеет отдельный application_id и права0600. Чужая БД отвергается
+  до изменения; соединение с ledger коллектора открывается только mode=ro.
 - Tracing отключён. Не отправлять prompts в LangSmith/телеметрию по умолчанию.
 - Ошибки/логи редактируют Authorization, X-Api-App-Id, cookies, OAuth code и token
   response. Не логировать полный URL, если в нём могут быть секретные query params.
@@ -17,7 +24,8 @@
 
 ## Единый файл доступа
 
-Локальный .env в корне checkout — актуальный единый файл job API credentials:
+Legacy CLI использует локальный .env в корне checkout; agent CLI принимает ссылку
+`--env /absolute/path/jobs.env` либо .env внутри личного workspace. Набор job API credentials:
 HH_CLIENT_ID, HH_CLIENT_SECRET, HH_ACCESS_TOKEN, HH_USER_AGENT,
 SUPERJOB_APP_ID и SUPERJOB_APP_KEY. Права 0600; Git игнорирует файл.
 Trudvsem и проверенный Habr frontend не требуют ключей в текущем read-only сценарии.

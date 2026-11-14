@@ -1,17 +1,18 @@
 {
-  "schema_version": 1,
-  "evaluation_key": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-  "profile_id": "product",
+  "schema_version": 2,
+  "evaluation_key": "3dec34a60b8d888971cb808d4de4d4123b33a19ab7e8c5d9bf17e281b29b8338",
+  "profile_id": "business_analyst",
   "verdict": "REJECT",
-  "reason": "Основные обязанности этой вакансии относятся к бизнес-анализу, продуктовая ответственность не описана.",
+  "reason": "Явный конфликт обязательного уровня SQL с резюме.",
   "assessments": [
     {
-      "requirement": "Сбор требований и пользовательские сценарии",
+      "kind": "requirement",
+      "requirement": "Продвинутый SQL",
       "mandatory": true,
-      "vacancy_quote": "Нужно собирать требования заказчика и описывать пользовательские сценарии.",
-      "resume_quote": null,
-      "status": "outside_profile",
-      "explanation": "Набор основных обязанностей вне предметного профиля Product."
+      "vacancy_quote": "Обязателен продвинутый SQL.",
+      "resume_quote": "SQL — базовый уровень.",
+      "status": "conflict",
+      "explanation": "Вакансия требует продвинутый уровень, резюме прямо указывает базовый."
     }
   ],
   "questions": []

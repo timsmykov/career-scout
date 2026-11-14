@@ -1,0 +1,135 @@
+# Docker: коллектор и постоянная SQLite
+
+Реализация остаётся batch CLI: контейнер запускается на одну команду, завершает её
+и останавливается. `restart: no`; нет расписания, фонового поиска и HTTP-сервера.
+Сам коллектор не использует модели. Четыре адаптера и точный статус
+сохранения SuperJob — [multi-source.md](multi-source.md). Исходный Python CLI также остаётся доступен.
+
+## Подготовка
+
+Из корня проекта, с уже заполненным локальным `.env`:
+
+```sh
+docker volume create career-scout-data
+docker compose build
+```
+
+Образ `career-scout:local` собирается в два этапа: Python 3.12 и uv 0.13.6 по
+зафиксированным digest, установка по `uv.lock --locked --no-dev --no-editable`.
+Финальный образ содержит установленный пакет, рабочий search.toml и окружение, без исходных секретов,
+рабочих БД, экспортов, Git и host `.venv`. `.dockerignore` задаёт allowlist.
+Bootstrap-зависимости проекта оставлены прежними; код моделей не импортируется.
+
+Volume объявлен external: Compose использует заранее созданный `career-scout-data`
+либо имя из CAREER_SCOUT_VOLUME
+и не управляет его удалением. Удаление/пересоздание контейнера не удаляет данные.
+Сам volume не удалять. Это сохранность при пересоздании контейнера, не отдельная
+резервная копия при потере сервера.
+
+## Запуск
+
+```sh
+docker compose run --rm collector plan --query "бизнес аналитик" --days 7
+docker compose run --rm collector initial --source all --progress
+docker compose run --rm collector new --source all --progress
+docker compose run --rm collector resume CAMPAIGN_ID --progress
+docker compose run --rm collector status CAMPAIGN_ID
+docker compose run --rm collector inspect VACANCY_ID
+docker compose run --rm collector export CAMPAIGN_ID --output /data/exports/run.json
+```
+
+`--rm` удаляет только завершившийся контейнер. Бюджеты, `partial` и exit code 2
+сохраняют прежний смысл: это не авария Docker. Повторный `resume` с тем же campaign ID
+продолжает сохранённый план, а не создаёт новую выборку. Без команды выводится help.
+Один активный collector на ledger защищён flock между контейнерами на этом volume.
+
+Default prefix entrypoint:
+`--db /data/ledger.sqlite3 --env /run/secrets/career_env --token-file /data/auth/hh-token.json`.
+Общие аргументы можно переопределить до подкоманды, например:
+`docker compose run --rm collector --db /data/test.sqlite3 status RUN_ID`.
+
+`configs/search.toml` встроен в образ и в Compose перекрывается read-only bind
+того же host-файла. Для смены параметров не требуется пересборка. Новый collect
+читает config; resume сохраняет условия старого run, refilter меняет их явно.
+Подробнее: [фильтры](filtering.md).
+
+## Где находятся данные и ключи
+
+| Объект | Размещение |
+|---|---|
+| SQLite, WAL, SHM, flock | `/data/ledger.sqlite3` и соседние файлы, volume `career-scout-data` |
+| Экспорты | `/data/exports/`, тот же volume |
+| Обновляемый HH token | `/data/auth/hh-token.json`, атомарная запись, 0600 |
+| Исходные app credentials | Канонический host `.env`, read-only secret `/run/secrets/career_env` |
+
+`.env` не передаётся через Docker build ARG или environment. Compose монтирует его
+только при запуске. Cache содержит токен и hash app ID; токен другого приложения
+не подменяет текущий. Плохой cache даёт безопасный `invalid_token_cache`.
+При наличии `--token-file` обновление токена не меняет исходный `.env`; без этого
+флага прежний host CLI продолжает атомарно обновлять `.env` как раньше.
+
+Процесс внутри контейнера имеет UID 0, чтобы прочитать root-owned host `.env` 0600,
+с отключёнными capabilities, no-new-privileges и read-only root filesystem.
+Запись разрешена в `/data` и временный `/tmp`. Entry point устанавливает umask 077;
+порты не публикуются, Docker socket и другие сервисы в контейнер не подключаются.
+
+На текущем сервере Docker показывает mountpoint
+`/var/lib/docker/volumes/career-scout-data/_data`.
+Путь управляется Docker; для работы с БД использовать контейнер и `/data`,
+а не менять файлы из mountpoint вручную.
+
+## Перенос прежней базы
+
+В volume импортирована согласованная копия проверенной БД с 315 full карточками
+через SQLite backup API, с отказом перезаписывать существующий ledger.
+Исходник `data/hh-volume-20261111.sqlite3` оставлен без изменений.
+Не копировать один `.sqlite3` у активного WAL writer обычным `cp`: последние
+commits могут находиться в WAL. Для следующей миграции использовать SQLite backup
+и проверять quick_check/foreign_key_check, количество карточек и snapshots.
+
+## Обновление схемы
+
+Текущая база в volume имеет schema v5 и общий export v2. Первый запуск нового
+образа на v1/v2/v3/v4 делает backup и атомарный перенос; явная команда:
+`docker compose run --rm collector migrate`. Инструкция и доказательства —
+[normalization.md](normalization.md). Исходные v1 payload не переписываются.
+
+## Проверки
+
+```sh
+# Docker engine нужен; HH/LLM/реальные ключи не нужны
+docker build -t career-scout:local .
+python3 scripts/check_container.py
+```
+
+Тест создаёт собственный уникальный volume с synthetic данными: одна legacy v1 карточка сначала мигрируется с сохранением source payload, затем
+собираются 300 новых synthetic карточек. Первый контейнер сохраняет 20 full и partial, удаляется; второй читает ту же БД,
+cache и run ID, продолжает до 300 full/complete. HTTP полностью MockTransport,
+Docker network=none. Проверены отсутствие повторного detail для сохранённых ID,
+303 попытки на 3 страницы/300 карточек, export и SQLite integrity.
+Рабочий config прочитан из образа; из 300 карточек без зарплаты выбираются
+200 junior, 100 senior исключаются с сохранением всех 300 full в архиве. После теста
+удаляется только его synthetic volume; рабочий `career-scout-data` не затрагивается.
+Ещё два новых контейнера проверяют campaign initial/resume на300 известных ID
+без повторных detail, daily добавление ровно301/302 и пустую следующую delta.
+Проверка включена в отдельный CI job.
+
+Фактическая серверная приёмка: [docker-live-20261111.json](references/docker-live-20261111.json).
+Удалён настоящий первый контейнер после budgeted HH search; новый контейнер
+продолжил тот же run и ledger, не потеряв исходные 315 snapshots. Четыре реальных
+HTTP-запроса (search/detail) суммарно; широкий run намеренно остаётся partial по
+бюджету. Это проверка Docker persistence, не повторная нагрузочная приёмка рынка.
+
+Сбор до Docker и настоящий SIGKILL: [hh-volume-acceptance.md](hh-volume-acceptance.md).
+
+## Публичная нейтральная поставка
+
+Стандартный TOML не отбирает IT/junior/middle и не содержит потолка стажа.
+Задайте свои --query или families; без них коллектор вернёт
+search_queries_not_configured до сети. Для SuperJob отдельно подтвердите своё
+разрешение хранения; публичный storage_allowed=false.
+
+Актуальная offline-проверка образа сохраняет и экспортирует все300вымышленных
+карточек, включая senior, без зарплатного/профессионального отсева. Ранее приведённые
+результаты200/100 относятся к исторической явно ограниченной политике, не к default.
+Тесты создают собственные временные volumes; рабочие volumes не затрагиваются.

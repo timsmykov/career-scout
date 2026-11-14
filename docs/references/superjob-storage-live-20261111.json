@@ -1,0 +1,90 @@
+{
+  "verified_at_utc": "2026-11-11T20:36:16.950882+00:00",
+  "owner_storage_permission": {
+    "confirmed": true,
+    "date": "2026-11-11",
+    "provenance": "Direct owner statement in this task; existing permissions confirmed, no new permission requested"
+  },
+  "storage_allowed": true,
+  "run_id": "ce48bbf8-9037-4834-8958-01193a88ce9c",
+  "summary": {
+    "status": "partial",
+    "error": "request_budget_exhausted",
+    "requests": 16,
+    "pages_saved": 4,
+    "distinct_vacancies": 20,
+    "full_details": 12,
+    "deferred_details": 8,
+    "pending_queries": 1,
+    "unavailable_details": 0,
+    "filtering": {
+      "applied": true,
+      "policy_hash": "87e38a08a77876d1553747cb3da3d331ee9f5ade292e8a62d7e295b4bdd7acc8",
+      "engine_version": "rules-3",
+      "KEEP": 1,
+      "KEEP_UNKNOWN": 11,
+      "FILTERED_OUT": 0,
+      "pending": 0
+    }
+  },
+  "frozen_search": {
+    "source": "superjob",
+    "queries": [
+      "аналитик"
+    ],
+    "start": "2026-11-04T20:32:16+00:00",
+    "end": "2026-11-11T20:32:16+00:00",
+    "per_page": 5,
+    "source_options": {
+      "enabled": true,
+      "storage_allowed": true
+    },
+    "window_field": "date_published"
+  },
+  "unique_full_cards": 12,
+  "raw_sections_preserved": true,
+  "filter_cache_verified": true,
+  "no_unchanged_full_card_refetched": true,
+  "all_exported": 12,
+  "selected_exported": 12,
+  "salary_unspecified_full_cards": 11,
+  "previous_hh_trudvsem_habr_data_unchanged": true,
+  "vacancies_by_source": {
+    "habr": 15,
+    "hh": 317,
+    "superjob": 20,
+    "trudvsem": 15
+  },
+  "full_cards_by_source": {
+    "habr": 10,
+    "hh": 317,
+    "superjob": 12,
+    "trudvsem": 11
+  },
+  "schema_version": 4,
+  "quick_check": "ok",
+  "foreign_key_violations": 0,
+  "scope": "Bounded live storage/pagination/resume acceptance, not full market coverage",
+  "container_recreation": {
+    "first_removed": true,
+    "resumed_in_new_container": true,
+    "first": {
+      "requests": 8,
+      "pages_saved": 2,
+      "full_details": 6,
+      "distinct_vacancies": 11,
+      "deferred_details": 5,
+      "status": "partial",
+      "error": "request_budget_exhausted"
+    },
+    "resumed": {
+      "requests": 16,
+      "pages_saved": 4,
+      "full_details": 12,
+      "distinct_vacancies": 20,
+      "deferred_details": 8,
+      "status": "partial",
+      "error": "request_budget_exhausted"
+    }
+  }
+}

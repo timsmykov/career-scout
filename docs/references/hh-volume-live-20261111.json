@@ -1,0 +1,172 @@
+{
+  "schema_version": 1,
+  "checked_on": "2026-11-11",
+  "code_commit": "eb79ee953fa328b33c3230e5a6c78d650ba8e5ed",
+  "database": "/root/work/career-scout/data/hh-volume-20261111.sqlite3",
+  "report": {
+    "run_id": "8736b90e-c8a7-49d8-94f9-056225bc5433",
+    "status": "complete",
+    "error": null,
+    "cooldown_until": null,
+    "requests": 324,
+    "pages_saved": 8,
+    "distinct_vacancies": 315,
+    "full_details": 315,
+    "deferred_details": 0,
+    "unavailable_details": 0,
+    "archived_details": 0,
+    "pending_queries": 0,
+    "completed_queries": 2,
+    "truncated_queries": 0,
+    "rejected_rows": 0,
+    "plan": {
+      "source": "hh",
+      "queries": [
+        "бизнес аналитик",
+        "бизнес AND аналитик"
+      ],
+      "start": "2026-11-11T14:01:42+00:00",
+      "end": "2026-11-11T18:01:42+00:00",
+      "per_page": 100,
+      "ttl_hours": 24
+    }
+  },
+  "query_counts": [
+    {
+      "query": "бизнес аналитик",
+      "source_found_last_response": 315,
+      "pages_saved": 4,
+      "status": "complete",
+      "distinct_discovered": 315
+    },
+    {
+      "query": "бизнес AND аналитик",
+      "source_found_last_response": 315,
+      "pages_saved": 4,
+      "status": "complete",
+      "distinct_discovered": 315
+    }
+  ],
+  "integrity": {
+    "quick_check": "ok",
+    "foreign_key_errors": 0,
+    "duplicate_vacancy_id_rows": 0,
+    "duplicate_snapshot_keys": 0,
+    "payloads_checked": 315,
+    "payload_validation_errors": 0,
+    "traced_search_ids": 315,
+    "traced_ids_missing_in_ledger": 0,
+    "ledger_ids_absent_from_search_traces": 0,
+    "min_text_length": 871,
+    "max_text_length": 7818
+  },
+  "deduplication": {
+    "discovery_rows": 630,
+    "distinct_ids": 315,
+    "overlap_deduplicated": 315,
+    "multiple_ids_with_same_content_groups": 0,
+    "same_employer_title_text_groups": 7,
+    "same_employer_title_text_vacancies": 46,
+    "same_text_group_comparison": [
+      {
+        "vacancies": 2,
+        "different_condition_fields": [
+          "area"
+        ],
+        "distinct_area_names": 2
+      },
+      {
+        "vacancies": 2,
+        "different_condition_fields": [
+          "address",
+          "area"
+        ],
+        "distinct_area_names": 2
+      },
+      {
+        "vacancies": 13,
+        "different_condition_fields": [
+          "area"
+        ],
+        "distinct_area_names": 13
+      },
+      {
+        "vacancies": 2,
+        "different_condition_fields": [
+          "address",
+          "area"
+        ],
+        "distinct_area_names": 2
+      },
+      {
+        "vacancies": 8,
+        "different_condition_fields": [
+          "area",
+          "languages",
+          "professional_roles",
+          "salary",
+          "salary_range"
+        ],
+        "distinct_area_names": 8
+      },
+      {
+        "vacancies": 16,
+        "different_condition_fields": [
+          "area"
+        ],
+        "distinct_area_names": 16
+      },
+      {
+        "vacancies": 3,
+        "different_condition_fields": [
+          "area"
+        ],
+        "distinct_area_names": 3
+      }
+    ]
+  },
+  "crash_recovery": {
+    "signal": "SIGKILL",
+    "saved_full_at_crash": 61,
+    "saved_snapshots_preserved": true,
+    "resumed_detail_requests_for_previously_committed_ids": 0,
+    "resumed_search_requests_below_saved_cursor": 0,
+    "extra_detail_attempts_including_killed_inflight_request": 1
+  },
+  "network": {
+    "collector_request_reservations": 324,
+    "traced_request_attempts": 324,
+    "preflight_requests": 1,
+    "wall_duration_seconds": 330.2,
+    "http_statuses": {
+      "200": 323
+    },
+    "requests_without_response": 1
+  },
+  "export": {
+    "file": "/root/work/career-scout/data/exports/hh-volume-20261111.json",
+    "full_rows": 315,
+    "unique_ids": 315,
+    "duplicate_ids": 0
+  },
+  "limitations": [
+    "Fixed bounded API search, not an exhaustive market-coverage proof.",
+    "Changing source data can shift pages.",
+    "Different source IDs are preserved; no semantic merge.",
+    "Single process/SQLite on server, no separate application Docker."
+  ],
+  "passed": true,
+  "deployment": {
+    "mode": "server Python CLI, no separate Docker/daemon",
+    "project": "/root/work/career-scout",
+    "interpreter": "/root/work/career-scout/.venv/bin/python",
+    "storage": "SQLite WAL file on server ext4 /dev/sda1",
+    "database_bytes": 19124224,
+    "observed_worker_resources": {
+      "pid": 3059431,
+      "VmRSS": "45436 kB",
+      "VmHWM": "45436 kB",
+      "Threads": "1"
+    }
+  }
+}
