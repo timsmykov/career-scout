@@ -6,14 +6,14 @@
   skill; international search requires separate sources and workflow.
 
 
-- Bundled installable Career Scout Agent Skill for Codex and Claude Code, with
-  JSON discovery and non-destructive installer.
-- Ten evaluator API providers and official Claude Code subscription transport;
-  keys remain environment references, validation/queue budgets are shared.
-- Unknown native/API delivery now blocks both current and legacy resume before
-  increasing budgets; unclassified Codex failures no longer trigger blind retries.
-- Context-aware doctor no longer requires Decisions for the single-CV path or
-  platform credentials for evaluating an existing catalog.
+- Install the bundled Career Scout Agent Skill with `skill install --agent codex`
+  or `--agent claude`; JSON discovery and the installer preserve existing custom skills.
+- Choose among ten evaluator API providers or the official Claude Code subscription
+  transport; keys remain environment references, validation/queue budgets are shared.
+- Resume stops on unknown native/API delivery in both current and legacy paths
+  before increasing budgets; unclassified Codex failures no longer trigger blind retries.
+- Check single-CV setup with `doctor --context`: Decisions is optional, and evaluating
+  an existing catalog does not require platform credentials.
 
 
 Публичная версия находится в main. Запись описывает alpha, а не стабильный1.x

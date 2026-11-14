@@ -31,11 +31,18 @@ Collection ID и evaluation ID различны. DATABASE берётся из ev
 | model_calls_disabled | Внешнее выполнение не разрешено | После проверки входов/бюджетов явно используйте enable-calls |
 | decisions_connection_missing | Нужен router, но нет подключения | Настройте совместимый коннектор; одному CV при выключенном автоотсеве он не нужен |
 | codex_unavailable | Исполнитель Codex не запускается | Проверьте установку, executable и права в своей среде |
+| claude_unavailable / claude_isolation_flags_unavailable | Claude CLI не запускается или не поддерживает нужные флаги | Проверьте установку и версию; не отключайте изоляцию ради обхода |
+| claude_subscription_login_required | Нет действующего входа через claude.ai | Настройте свой подписочный вход; API login — другое подключение |
+| model_api_key_missing_or_invalid | Нет ключа выбранного API | Проверьте имя переменной, --env и свой файл; значение ключа не выводите |
+| model_authentication_failed / model_access_denied | API отклонил доступ | Проверьте своё подключение и доступность модели |
+| model_rate_limited | Провайдер вернул 429 | Проверьте лимиты провайдера; запуск остановлен без скрытого повтора |
+| model_request_rejected / model_invalid_response | API отклонил параметры или вернул невалидный ответ | Проверьте model ID, JSON/schema режим и лимиты ответа по model-providers |
 | batch_outcome_unknown | Неизвестно, завершился ли внешний вызов | Сверьте сохранённую попытку и процесс; не сбрасывайте журнал ради повтора |
+| model_outcome_unknown / native-код с outcome_unknown | Запрос мог выполниться до timeout/разрыва | Сверьте сохранённую попытку и историю провайдера; новый request-id не разрешает повтор |
 | input_exceeds_decisions_context | Вход больше разрешённого объёма | Уточните контекст/лимит осознанно; программа не обрезает его молча |
 | cursor_stale | Список изменился после получения cursor | Начните чтение списка без cursor |
 | labels_context_mismatch | Метки относятся к другой версии | Используйте разметку с соответствующим context_hash |
-| doctor ready=false без Decisions | В0.1 doctor проверяет полный набор | Проверьте checks; это не запрет single-CV пути |
+| doctor ready=false | Не готов один из нужных компонентов | Передайте --context CONTEXT_ID и смотрите next/checks; без context необходимость Decisions не проверена |
 | Пустой shortlist | Нет PASS, истекло окно, сработала история или есть ошибки | Смотрите status, include-uncertain и explain |
 
 ## Внешняя площадка не отвечает

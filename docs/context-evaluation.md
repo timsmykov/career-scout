@@ -27,7 +27,7 @@ fact_rule; программа не придумывает из пожелани�
 career-scout --workspace private/me connection put default \
   --input examples/agent-connection.synthetic.json --request-id connection-1
 career-scout --workspace private/me connection show default
-career-scout --workspace private/me doctor --connection default --env /absolute/path/jobs.env
+career-scout --workspace private/me doctor --context CONTEXT_ID --connection default --env /absolute/path/jobs.env
 ```
 
 [Пример подключения](../examples/agent-connection.synthetic.json) выключает внешние
@@ -72,7 +72,7 @@ request-id. Меняется только разрешение выполнен�
 сам по себе не меняется.
 
 Prepare не вызывает модели. Закрепляются контекст, версия, полный текст карточек,
-параметры подключения и отдельные бюджеты Decisions/Codex. БД анализа находится в
+параметры подключения и отдельные бюджеты Decisions/оценщика. БД анализа находится в
 `WORKSPACE/evaluations/CONTEXT_ID/CONTEXT_HASH.sqlite3`. Файловый lock сериализует
 подготовку и выполнение. Записывающие evaluation-команды отказываются работать
 с БД вне этого каталога. Исходный collector и прежняя рабочая БД не изменяются.
@@ -178,7 +178,7 @@ Applied/dismissed/withdrawn/rejected скрывают повторный отк�
 не переносится в новый workspace без явного импорта с происхождением.
 
 Метрики показывают исходы, технические ошибки, неопределённость, зарезервированные
-вызовы Decisions/Codex, батчи и измеренные tokens. Без контрольной разметки качество
+вызовы Decisions/оценщика, батчи и измеренные tokens. Без контрольной разметки качество
 обозначено measured=false. Разметка задаётся объектом context_hash и cases со
 source/source_id/expected (PASS/UNCERTAIN/REJECT). Возвращаются confusion, precision,
 recall, доля ложных отказов, accuracy, abstention и technical_error_rate **только

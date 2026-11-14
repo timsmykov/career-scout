@@ -44,11 +44,11 @@ python3 scripts/check_product.py
 
 | Изменение | Основные модули |
 |---|---|
-| CLI и команды | agent_cli, agent_service, agent_results, agent_state |
+| CLI, команды и установка навыка | agent_cli, agent_service, agent_results, agent_state, agent_skill |
 | Контекст и персональный анализ | agent_models, context_models, context_commands, context_engine |
 | Источник/страницы/транспорт | hh, adapters, source_types, transport, campaigns |
 | Хранение и общий формат | storage, migrations, models, normalization, source_normalization |
-| Исполнитель и доказательства | codex_worker, batch_worker, evidence |
+| Исполнители и доказательства | model_providers, codex_worker, claude_worker, batch_worker, evidence |
 
 [Полная карта](https://github.com/timsmykov/career-scout/blob/main/src/career_scout/README.md). Legacy-анализ и старые данные сохраняют
 свои контракты; не меняйте их под видом нового персонального режима.
@@ -61,6 +61,8 @@ python3 scripts/check_product.py
 4. При изменении формата данных добавьте явную версию/миграцию и проверку сохранности.
 5. Обновите соответствующие команды, схемы, примеры и документацию в том же PR.
 6. Укажите выполненные проверки и оставшиеся ограничения.
+
+[Шаблон PR](.github/pull_request_template.md) содержит поля для результата и проверок.
 
 Сетевые проверки запускаются отдельно с явным конечным бюджетом. Никогда не
 включайте реальные модельные вызовы в обычный тест. Не меняйте автоматически

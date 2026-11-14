@@ -11,8 +11,9 @@
 [Структура SQLite и lock-файлов](architecture.md).
 
 Env-файл задаётся ссылкой через --env. Ключи не копируются в контекст/план и вывод
-CLI. HH token cache находится в workspace/auth. Codex использует собственный
-существующий login на хосте; его auth.json не является частью приложения.
+CLI. HH token cache находится в workspace/auth. Codex/Claude используют собственный
+login на хосте; API-оценщик — переменную окружения или приватный env-файл.
+Подписочная авторизация не является частью приложения. [Подключения](model-providers.md).
 
 Docker Compose использует external volume `career-scout-data`, путь
 `/data/ledger.sqlite3`, read-only `.env` и search.toml. Это прежний collector CLI,
@@ -49,7 +50,8 @@ career-scout --workspace private/me evaluation resume EVALUATION_RUN_ID --db DAT
 
 Не добавляйте бюджет без проверки execution_error. Decisions имеет отдельный
 additional-decisions. Retry-errors открывает конечную попытку известной технической
-ошибки; batch_outcome_unknown требует сверки попытки/процесса. Не стирайте журнал
+ошибки; batch_outcome_unknown и model_outcome_unknown требуют сверки попытки и
+истории провайдера. Native-коды с outcome_unknown имеют ту же границу. Не стирайте журнал
 и не меняйте хэши ради повторного вызова. Ошибка модели не становится REJECT.
 
 Внешние вызовы выключены в примере подключения. Их явное включение через
@@ -76,8 +78,9 @@ career-scout --workspace private/me operation show REQUEST_ID
 копирование полного остановленного workspace с его файлами SQLite/WAL.
 Не копируйте только основной sqlite-файл работающего writer.
 
-На новом хосте настройте Python/Codex/разрешённый Decisions-коннектор и собственные
-credentials. Не публикуйте backup и не переносите подписочный auth в Docker image.
+На новом хосте настройте Python, выбранный API или подписочный CLI, нужный
+Decisions-коннектор и свои credentials. Не публикуйте backup и не переносите
+подписочный auth в Docker image.
 Изменившиеся абсолютные пути и native workspace/root нужно перенастроить явно.
 Приложение не предоставляет автоматическую миграцию всего окружения между хостами.
 

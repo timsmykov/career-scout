@@ -63,13 +63,14 @@ Start with one resume to avoid the external routing dependency.
 
 ## Evidence and limitations
 
-The public-alpha validation recorded 489 passing offline tests, package builds, Docker persistence
-and an installed-package workflow with explicit HTTP/Codex simulators. Separate
-bounded live probes checked search and full details on all four sources. These
+The current suite has 526 passing offline tests, package builds, Docker persistence
+and installed-package checks. API and Claude contracts use explicit simulators;
+live access to every provider is not claimed. Earlier bounded live probes checked
+search and full details on all four sources. These
 checks establish execution, not broad semantic accuracy. Automatic probability-based
 Decisions exclusion is disabled by default until quality is calibrated.
 
-[Detailed audit](https://github.com/timsmykov/career-scout/blob/main/docs/product-audit-0.1.md) · [Documentation](https://github.com/timsmykov/career-scout/blob/main/docs/README.md) ·
+[Current CLI audit](docs/cli-audit-20261114.md) · [Initial product audit](docs/product-audit-0.1.md) · [Documentation](https://github.com/timsmykov/career-scout/blob/main/docs/README.md) ·
 [Contributing](https://github.com/timsmykov/career-scout/blob/main/CONTRIBUTING.md) · [Security](https://github.com/timsmykov/career-scout/blob/main/SECURITY.md) · [MIT license](https://github.com/timsmykov/career-scout/blob/main/LICENSE)
 
 ## Agent skill and model providers

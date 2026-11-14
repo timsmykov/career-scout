@@ -16,7 +16,7 @@
   Его конфигурация по-прежнему задаётся прежним JSON с четырьмя профилями.
 
 **Персональный контекст подключён к новому evaluation-пути**: динамические
-Choices Decisions, оценка Codex с PASS/UNCERTAIN/REJECT, проверка пожеланий,
+Choices Decisions, оценка выбранной моделью с PASS/UNCERTAIN/REJECT, проверка пожеланий,
 категории по резюме, история и метрики. `generic_context_evaluation=true`.
 [Полный контракт и команды](context-evaluation.md). Описанные ниже analysis-команды
 сохраняют прежний четырёхпрофильный режим; он явно возвращает
@@ -34,8 +34,23 @@ uv run --no-sync career-scout --help
 
 Эквивалент без установленного executable: `python -m career_scout.agent_cli`.
 Старый `python -m career_scout` сохраняет прежний интерфейс коллектора и TOML;
-его фильтры и рабочие данные не меняются. Новый CLI не подхватывает автоматически
-`configs/search.toml` с прежними четырьмя семействами и IT/стажевыми ограничениями.
+его фильтры и рабочие данные не меняются. Новый CLI получает поиск из JSON-плана,
+не подхватывает автоматически `configs/search.toml`. Публичный TOML нейтрален.
+
+Полный список из 37 операций возвращает `schema`; параметры — `--help` команды.
+
+| Область | Команды |
+|---|---|
+| Обнаружение и диагностика | `version`, `schema`, `provider list`, `doctor` |
+| Контекст | `context create`, `context show`, `context update`, `context list` |
+| Поисковый план | `plan put`, `plan show`, `plan preview`, `plan list` |
+| Сбор | `run start`, `run execute`, `run resume`, `run status`, `run results`, `run list` |
+| Подключение | `connection put`, `connection show` |
+| Персональный анализ | `evaluation prepare`, `evaluation run`, `evaluation resume`, `evaluation status`, `evaluation shortlist`, `evaluation metrics` |
+| История и квитанции | `history import`, `history list`, `operation show` |
+| Прежний анализ | `analysis prepare`, `analysis run`, `analysis resume`, `analysis status` |
+| Чтение подборки | `shortlist list`, `explain` |
+| Навык агента | `skill install`, `skill show` |
 
 Все операции, кроме help, печатают один JSON-объект в stdout, без вопросов и
 неструктурированного прогресса. `--json` допустим, JSON уже является форматом
@@ -73,6 +88,10 @@ JSON и нечисловые NaN/Infinity запрещены. `resumes[].text` �
 до64символов; специальность не является enum. Пожелание — строка или объект
 `{statement, priority, provenance, structured}`. Приоритет: required/preferred/avoid.
 Неизвестный факт остаётся неизвестным, CLI его не дополняет.
+
+В квитанциях `context create` возвращает `result.context_id`, а `plan put` —
+`result.id`: это значение подставляется вместо PLAN_ID. `run start` возвращает
+`result.run_id`; `evaluation prepare` — отдельные `result.run_id` и `result.database`.
 
 Изменение — JSON с заменяемыми полями верхнего уровня, например
 `{"goals":"Новая цель","preferences":["Только удалённо"]}`:
@@ -156,7 +175,8 @@ snapshot (`report_origin=collector_snapshot`); до появления камп�
 
 ## Повторные команды и неопределённый результат
 
-Каждая изменяющая команда требует `--request-id`. Повтор с тем же ID и теми же
+Изменяющие workspace команды требуют `--request-id`; `skill install` идемпотентен
+по содержимому и не использует квитанции workspace. Повтор с тем же ID и теми же
 аргументами возвращает **первоначальную квитанцию**, без повторного выполнения.
 Другие аргументы с тем же ID дают `request_id_conflict`. Это не команда обновления
 статуса: за актуальным состоянием нужно обращаться к `run status`/`analysis status`.
@@ -189,7 +209,7 @@ career-scout explain --analysis-db data/analysis.sqlite3 --source hh --id VACANC
 
 prepare фиксирует входы без вызова модели. run/resume требуют существующего
 явного разрешения в analysis-конфигурации; `external_calls_enabled=false` блокирует
-модели. Codex batches ограничены `max-calls`, Decisions — отдельным бюджетом в
+модели. Модельные вызовы ограничены `max-calls`, Decisions — отдельным бюджетом в
 прежнем routing-конфиге. Эта обвязка не обходит прежние бюджеты/политику повторов.
 Четыре профиля и критерии существующего анализа не заменяются новым контекстом.
 Для произвольного контекста используйте новый [evaluation-путь](context-evaluation.md).
