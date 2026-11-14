@@ -223,3 +223,20 @@ docker run --rm --network none --entrypoint /app/.venv/bin/career-scout \
 версии/конкуренцию, квитанции, budgets/resume, stdin/ошибки, чтение прежней БД и
 запрет модельных вызовов. `scripts/check_container.py` проверяет установленный
 executable в image и сохранение синтетических данных после пересоздания контейнера.
+
+## Навык и каталог провайдеров
+
+```sh
+career-scout provider list
+career-scout skill show
+career-scout skill install --agent codex
+career-scout skill install --agent claude --directory /path/to/skills
+career-scout --workspace private/me doctor --context CONTEXT_ID
+```
+
+`skill install/show` и `provider list` работают до создания workspace. Установка
+идемпотентна по содержимому, сохраняет отличающуюся папку; request-id не требуется.
+Остальные workspace-мутации сохраняют прежний контракт request-id.
+[Навык](agent-skill.md), [провайдеры](model-providers.md). `--env` у evaluation
+run/resume задаёт runtime-ссылку на model credentials; ключи не входят в connection
+или квитанцию. `doctor` проверяет настройку оценщика; источники/живой вход отдельно.

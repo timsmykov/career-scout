@@ -17,7 +17,6 @@ from career_scout import exclusions, intake
 from career_scout.analysis_graph import AnalysisGraph
 from career_scout.analysis_store import AnalysisStore
 from career_scout.campaigns import Campaigns
-from career_scout.codex_worker import CodexWorker
 from career_scout.common import digest
 from career_scout.evaluation import (
     ORDER,
@@ -27,6 +26,7 @@ from career_scout.evaluation import (
     ResumeSnapshot,
     make_input,
 )
+from career_scout.model_providers import batch_worker
 from career_scout.models import Model, Vacancy
 from career_scout.storage import Store
 
@@ -324,7 +324,9 @@ def report(store, run_id):
         }
         if usages
         else None,
-        "billing": "codex_subscription",
+        "billing": json.loads(run["config_json"])
+        .get("model", {})
+        .get("provider", "codex_subscription"),
         "cost_usd": None,
         "batch_calls": len(batches),
         "batch_items": sum(len(json.loads(b["keys_json"])) for b in batches),
@@ -333,6 +335,7 @@ def report(store, run_id):
 
 
 def run_pending(store, run_id, *, additional_calls=0, retry_errors=False):
+    store.ensure_known_delivery(run_id)
     exclusions.apply_run(store, run_id)
     if retry_errors or additional_calls:
         store.retry(run_id, additional_calls)
@@ -350,7 +353,7 @@ def run_pending(store, run_id, *, additional_calls=0, retry_errors=False):
         return result
     graph = AnalysisGraph(
         store,
-        CodexWorker(config),
+        batch_worker(config),
         config,
         order=frozen["order"],
         order_confirmed=frozen["order_confirmed"],

@@ -1,11 +1,77 @@
 {
   "$defs": {
+    "APISettings": {
+      "additionalProperties": false,
+      "properties": {
+        "key_env": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Z][A-Z0-9_]{0,127}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Key Env"
+        },
+        "max_output_tokens": {
+          "default": 16000,
+          "maximum": 128000,
+          "minimum": 256,
+          "title": "Max Output Tokens",
+          "type": "integer"
+        },
+        "output_mode": {
+          "default": "json",
+          "enum": [
+            "json",
+            "schema"
+          ],
+          "title": "Output Mode",
+          "type": "string"
+        },
+        "reasoning_effort": {
+          "anyOf": [
+            {
+              "enum": [
+                "low",
+                "medium",
+                "high"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reasoning Effort"
+        }
+      },
+      "title": "APISettings",
+      "type": "object"
+    },
     "EvaluatorConfig": {
       "additionalProperties": false,
       "properties": {
         "provider": {
-          "const": "codex_subscription",
           "default": "codex_subscription",
+          "enum": [
+            "codex_subscription",
+            "claude_subscription",
+            "openai",
+            "anthropic",
+            "gemini",
+            "openrouter",
+            "deepseek",
+            "mistral",
+            "xai",
+            "groq",
+            "together",
+            "fireworks"
+          ],
           "title": "Provider",
           "type": "string"
         },
@@ -59,6 +125,17 @@
           ],
           "default": null,
           "title": "Executable"
+        },
+        "api": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/APISettings"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         }
       },
       "title": "EvaluatorConfig",

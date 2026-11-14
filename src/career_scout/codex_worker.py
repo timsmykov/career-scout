@@ -264,7 +264,7 @@ def provider_error(events, stderr):
     ):
         if any(value in text for value in needles):
             return EvaluationError(code, fatal=True)
-    return EvaluationError("codex_execution_failed")
+    return EvaluationError("codex_execution_outcome_unknown", fatal=True)
 
 
 class CodexWorker:
@@ -369,7 +369,7 @@ class CodexWorker:
                     process.communicate()
                 if isinstance(interrupted, KeyboardInterrupt):
                     raise
-                raise EvaluationError("codex_timeout") from None
+                raise EvaluationError("codex_timeout_outcome_unknown", fatal=True) from None
             finally:
                 with self._process_lock:
                     self._processes.discard(process)

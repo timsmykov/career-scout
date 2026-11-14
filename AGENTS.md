@@ -33,8 +33,9 @@ Read README.md and docs/README.md, then the relevant contract before changing co
   Evaluation reads collector snapshots and writes a separate context-version DB.
 - Preserve completed evaluations, source identities, immutable inputs and request-id
   receipts. Resume completes the old run; prepare selects the next unadmitted input.
-- Models use the user's own host Codex/ChatGPT login. Do not copy auth.json or API
-  credentials into worker inputs, images or repositories. No automatic applications.
+- Evaluators use an explicit subscription CLI or API provider. Preserve native
+  logins; store API environment references only, never key values in inputs,
+  databases, images or repositories. No automatic applications.
 
 ## Development
 

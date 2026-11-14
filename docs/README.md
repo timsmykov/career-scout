@@ -4,6 +4,9 @@
 Основной интерфейс — `career-scout`, личный JSON CLI. Документы о ранних четырёх
 профилях и рабочих запусках собраны отдельно от инструкций для нового пользователя.
 
+- [agent-skill.md](agent-skill.md) — установка навыка для Codex/Claude и работа агента.
+- [model-providers.md](model-providers.md) — десять API, две подписки и границы проверки.
+
 ## Начать с результата
 
 | Мне нужно | Читать |
@@ -46,6 +49,8 @@
 - [reuse.md](reuse.md), [component-adaptation.md](component-adaptation.md), [NOTICE](../NOTICE.md) — референсы, происхождение и права.
 
 ## Проверки, развитие и история
+
+- [cli-audit-20261114.md](cli-audit-20261114.md) — текущий аудит CLI, навыка и модельных подключений.
 
 - [product-audit-0.1.md](product-audit-0.1.md) — продуктовая приёмка; где тест, эмулятор, live и историческое свидетельство.
 - [documentation-audit.md](documentation-audit.md) — покрытие документацией, проверка примеров и оставшийся долг.
