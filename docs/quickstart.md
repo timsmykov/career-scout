@@ -6,7 +6,7 @@ Codex с входом через ChatGPT, либо Claude Code/свой API
 по [инструкции подключений](model-providers.md). Career Scout не устанавливает
 подписочные CLI и не копирует авторизацию. [Навык для агента](agent-skill.md). [Ограничения и результаты приёмки](product-audit-0.1.md).
 
-Начните с одного резюме: Decisions для этого сценария не нужен. Все изменяющие
+Начните с одного резюме: Decisions для этого сценария не нужен. Изменяющие workspace
 команды требуют уникальный request-id; тот же ID с теми же аргументами возвращает
 прежнюю квитанцию. Секреты и реальные тексты храните только в `private/` или
 отдельном личном каталоге.
@@ -65,7 +65,8 @@ career-scout --workspace private/me run execute COLLECTION_RUN_ID --request-id c
 career-scout --workspace private/me run status COLLECTION_RUN_ID
 ```
 
-CONTEXT_ID, PLAN_ID и COLLECTION_RUN_ID берутся из JSON предыдущей команды.
+CONTEXT_ID — `result.context_id` команды context create, PLAN_ID — `result.id`
+команды plan put, COLLECTION_RUN_ID — `result.run_id` команды run start.
 В примере общий HTTP-бюджет200, порция50; это конечная проба, не обещание полного
 обхода. Статус partial требует продолжения и проверки ошибок источников:
 
@@ -81,8 +82,10 @@ career-scout --workspace private/me run results COLLECTION_RUN_ID --limit 20
 ## Анализ и подборка
 
 Скопируйте [пример подключения](../examples/agent-connection.synthetic.json)
-в приватный JSON и выберите доступную вам модель Codex. В примере реальные
-вызовы выключены; `--enable-calls` ниже явно включает конкретный запуск.
+в приватный JSON и выберите доступное подключение: Codex/ChatGPT, Claude Code или
+[API](model-providers.md). В примере выбран Codex и реальные вызовы выключены;
+`--enable-calls` ниже явно включает конкретный запуск. Для API передайте
+`--env /absolute/path/models.env` в evaluation run/resume либо настройте окружение.
 
 ```sh
 cp examples/agent-connection.synthetic.json private/connection.json
@@ -125,4 +128,5 @@ python3 scripts/check_product.py
 Обе проверки изолированы от рабочих данных; первая проверяет постоянное хранение,
 вторая — полный сценарий через установленный пакет. В ней HTTP и Codex эмулируются,
 поэтому она не подтверждает живую авторизацию или смысловое качество модели.
-Рабочий анализ запускайте на хосте: в стандартный Docker-образ Codex не включён.
+Подписочный анализ запускайте на хосте: стандартный Docker-образ не содержит
+Codex/Claude Code и их авторизацию. API-оценщик использует своё подключение.

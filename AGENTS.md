@@ -38,6 +38,8 @@ Read README.md and docs/README.md, then the relevant contract before changing co
 - Evaluators use an explicit subscription CLI or API provider. Preserve native
   logins; store API environment references only, never key values in inputs,
   databases, images or repositories. No automatic applications.
+  Connection options: [model providers](docs/model-providers.md); agent setup:
+  [installable skill](docs/agent-skill.md).
 
 ## Development
 

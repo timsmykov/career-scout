@@ -32,13 +32,13 @@ flowchart TD
 
 | Слой | Модули | Ответственность |
 |---|---|---|
-| Интерфейс | agent_cli, agent_service, agent_results | JSON-команды, планы, конечное исполнение, выдача |
+| Интерфейс | agent_cli, agent_service, agent_results, agent_skill | JSON-команды, планы, исполнение, выдача и установка навыка |
 | Управление | agent_state | Версии контекста, request-id, сохранённые намерения/квитанции, блокировки |
 | Источники | hh, adapters, transport, source_types | Auth, search/detail, native pagination, timeout/retry/cooldown |
 | Коллектор | campaigns, storage, migrations | Initial/new/resume, ID, snapshots, checkpoint, миграции с backup |
 | Общий формат | models, normalization, source_normalization | Vacancy v2, условия и происхождение без выдуманных значений |
 | Персональная оценка | context_models, context_commands, context_engine | Admission, fact_rules, маршруты, бюджеты и итоговые статусы |
-| Модельный транспорт | decisions, codex_worker, batch_worker | Внешние вызовы с конечными попытками; одно CV на батч |
+| Модельный транспорт | decisions, model_providers, codex_worker, claude_worker, batch_worker | Внешний router, API/подписки, конечные попытки; одно CV на батч |
 | Доказательства | evidence, evaluation, context_policy | Проверка идентичности, исходников, диапазонов и допустимости вывода |
 
 [Карта исходников](../src/career_scout/README.md). Имена в таблице — Python-модули,
@@ -99,8 +99,9 @@ Request-id идентифицирует команду, а не запрос с�
 
 ## Размещение и совместимость
 
-Сбор можно запускать в Docker с постоянным volume. Анализ работает на хосте
-с собственным Codex/ChatGPT login; в image нет Codex и Decisions helper.
+Сбор можно запускать в Docker с постоянным volume. Подписочный анализ требует
+своего хостового Codex/ChatGPT или Claude Code; этих CLI и Decisions helper нет
+в image. API-оценщик использует собственный ключ и доступный из среды endpoint.
 Публичного HTTP API, MCP-сервера, общего multi-user backend и scheduler нет.
 
 `python -m career_scout` — прежний CLI/TOML коллектора.

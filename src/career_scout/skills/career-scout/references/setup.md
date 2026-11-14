@@ -36,7 +36,8 @@ career-scout --workspace /private/search connection put default --input connecti
 career-scout --workspace /private/search doctor --context CONTEXT_ID
 ```
 
-Replace IDs with returned values. Context updates require `--if-version`; a changed
+Use `result.context_id` from context create and `result.id` from plan put for
+CONTEXT_ID and PLAN_ID. Context updates require `--if-version`; a changed
 context needs a new plan and a new evaluation preparation. Old evaluations stay intact.
 
 ## Evaluator choice
