@@ -1,6 +1,6 @@
 # Career Scout
 
-**Turn job listings into a shortlist grounded in your resumes.**
+**Resume-based vacancy search and shortlisting for the Russian job market.**
 
 [Русский](https://github.com/timsmykov/career-scout/blob/main/README.md) · [Getting started](https://github.com/timsmykov/career-scout/blob/main/docs/quickstart.md) ·
 [Architecture](https://github.com/timsmykov/career-scout/blob/main/docs/architecture.md) · [0.1 audit](https://github.com/timsmykov/career-scout/blob/main/docs/product-audit-0.1.md)
@@ -9,6 +9,11 @@ Career Scout collects complete vacancies from four Russian job platforms, stores
 source records in SQLite and matches them against full resumes and candidate
 preferences. Its JSON CLI lets a person or an agent configure a personal search,
 resume interrupted work and read recommendations with supporting evidence.
+
+**Currently focused on the Russian job market:** HH, Habr Career, SuperJob and
+Trudvsem. International-market search is outside this version's scope and requires
+different sources and a separate search and selection workflow. Changing the
+resume language or location settings alone does not add international support.
 
 **0.1.0 alpha · MIT · Linux · Python 3.12.** The configurable implementation is on main; this is not a stable 1.x release.
 

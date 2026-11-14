@@ -1,6 +1,6 @@
 ---
 name: career-scout
-description: Configure and operate Career Scout through its JSON CLI to collect vacancies, compare them with full resumes and produce a shortlist. Use for a personal job search with Career Scout, including setup and resuming interrupted runs.
+description: Configure and operate Career Scout through its JSON CLI to collect vacancies, compare them with full resumes and produce a shortlist. Use for a personal search on the Russian job market with Career Scout, including setup and resuming interrupted runs.
 ---
 
 # Career Scout
@@ -9,6 +9,12 @@ Use the installed `career-scout` CLI. If running from a checkout, use
 `uv run --no-sync career-scout`. The tool owns storage, pagination, deduplication,
 queue admission, finite budgets and validation; the agent supplies the candidate's
 context and search plan. There is no fixed set of professions.
+
+Current coverage is the Russian job market through HH, Habr Career, SuperJob and
+Trudvsem. International-market search is outside this version's scope and needs
+different sources and a separate workflow. If asked for international search,
+explain this boundary; changing resume language or location preferences alone
+does not extend source coverage.
 
 ## Establish the installation and intent
 

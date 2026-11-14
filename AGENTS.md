@@ -1,6 +1,8 @@
 # Working on Career Scout
 
-Career Scout is a configurable personal vacancy-collection and resume-review tool.
+Career Scout is a configurable personal vacancy-collection and resume-review tool
+for the Russian job market. International search requires different sources and a
+separate workflow and is outside the current product scope.
 Read README.md and docs/README.md, then the relevant contract before changing code.
 
 ## Scope and data

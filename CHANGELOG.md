@@ -2,6 +2,10 @@
 
 ## 0.1.0 alpha — Unreleased
 
+- Clarify the current Russian-market scope in public documentation and the agent
+  skill; international search requires separate sources and workflow.
+
+
 - Bundled installable Career Scout Agent Skill for Codex and Claude Code, with
   JSON discovery and non-destructive installer.
 - Ten evaluator API providers and official Claude Code subscription transport;
